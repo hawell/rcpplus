@@ -5,6 +5,12 @@
  *      Author: arash
  */
 
+/*
+ * WARNING: this is a minimal implementation of rtp payload format defined in rfc 3984 for h264 and sould not be 
+ * considered as part of rcpplus.
+ * a practical application should use a full implenetation, this file is only for test purposes.
+*/
+
 #ifndef RTP_H_
 #define RTP_H_
 
