@@ -1,4 +1,5 @@
 rcpplus
 =======
 
-rcpplus is a C implementation of "VCS Video Communication Systems AG" RCP+ version 3 protocol
+rcpplus is a C implementation of Bosch (formerly known as VCS Video Communication Systems AG) RCP+ version 3 protocol
+
