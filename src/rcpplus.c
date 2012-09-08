@@ -32,6 +32,7 @@
 
 #include "rcpplus.h"
 #include "rcpdefs.h"
+#include "rcplog.h"
 
 rcp_connection con;
 
@@ -161,7 +162,7 @@ int rcp_connect(char* ip)
 	con.control_socket = socket(PF_INET, SOCK_STREAM, 0);
 	if (con.control_socket == -1)
 	{
-		fprintf(stderr, "cannot open socket : %d - %s", errno, strerror(errno));
+		ERROR("cannot open socket : %d - %s", errno, strerror(errno));
 		return -1;
 	}
 
@@ -177,7 +178,7 @@ int rcp_connect(char* ip)
 	int res = connect(con.control_socket, (struct sockaddr *)&con.ctrl_addr, sizeof (con.ctrl_addr));
 	if (res == -1)
 	{
-		fprintf(stderr, "connection failed : %d - %s\n", errno, strerror(errno));
+		ERROR("connection failed : %d - %s\n", errno, strerror(errno));
 	}
 
 	return 0;
@@ -194,7 +195,7 @@ int stream_connect()
 	int res = bind(con.stream_socket, (struct sockaddr*)&con.stream_addr, sizeof(con.stream_addr));
 	if (res == -1)
 	{
-		fprintf(stderr, "cannot bind %d - %s\n", errno, strerror(errno));
+		ERROR("cannot bind %d - %s\n", errno, strerror(errno));
 		return -1;
 	}
 
@@ -227,12 +228,12 @@ int rcp_send(rcp_packet* hdr)
 
 	memcpy(buffer + RCP_HEADER_LENGTH + TPKT_HEADER_LENGTH, hdr->payload, hdr->payload_length);
 
-	//fprintf(stderr, "sending %d bytes...\n", len);
-	log_hex("data", buffer, len);
+	DEBUG("sending %d bytes...", len);
+	log_hex(LOG_DEBUG, "data", buffer, len);
 	int res = send(con.control_socket, buffer, len, 0);
-	//fprintf(stderr, "%d sent\n", res);
+	DEBUG("%d sent", res);
 	if (res == -1)
-		fprintf(stderr, "unable to send packet: %d - %s\n", errno, strerror(errno));
+		ERROR("unable to send packet: %d - %s\n", errno, strerror(errno));
 
 	return res;
 }
@@ -280,9 +281,11 @@ int rcp_recv(rcp_packet* hdr)
 		res = recv(con.control_socket, buffer+received, len-received, 0);
 		if (res == -1)
 			goto error;
-		//fprintf(stderr, "%d bytes received\n", res);
+		DEBUG("%d bytes received", res);
 		received += res;
 	}
+
+	log_hex(LOG_DEBUG, "received", buffer, received);
 
 	read_rcp_header(buffer, hdr);
 
@@ -290,13 +293,13 @@ int rcp_recv(rcp_packet* hdr)
 
 	if (hdr->action == RCP_PACKET_ACTION_ERROR)
 	{
-		error_message(hdr->payload[0]);
+		ERROR(error_str(hdr->payload[0]));
 		return -1;
 	}
 
 	return len;
 
 error:
-	fprintf(stderr, "ERROR : rcp_recv: %d - %s\n", errno, strerror(errno));
+	ERROR("rcp_recv: %d - %s\n", errno, strerror(errno));
 	return -1;
 }

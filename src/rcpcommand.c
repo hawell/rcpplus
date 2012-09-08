@@ -29,6 +29,7 @@
 #include "rcpdefs.h"
 #include "rcpplus.h"
 #include "md5.h"
+#include "rcplog.h"
 
 #define MAX_PAYLOAD_LENGHT	1000
 #define MAX_PASSPHRASE_LEN	1000
@@ -113,7 +114,7 @@ int generate_passphrase(int mode, int user_level, char* password, char* pphrase,
 		break;
 
 		default:
-			fprintf(stderr, "ERROR : generate_passphrase() - invalid encryption mode %d\n", mode);
+			ERROR("generate_passphrase() - invalid encryption mode %d", mode);
 			return -1;
 		break;
 	}
@@ -128,23 +129,23 @@ int get_md5_random(unsigned char* md5)
 
 	int res;
 
-	//fprintf(stderr, "sending md5 reg\n");
+	DEBUG("sending md5 reg");
 	res = rcp_send(&md5_reg);
 	if (res == -1)
 		goto error;
-	//fprintf(stderr, "sent\n");
+	DEBUG("sent");
 
 	rcp_packet md5_resp;
 	res = rcp_recv(&md5_resp);
 	if (res == -1)
 		goto error;
-	//fprintf(stderr, "payload len = %d\n", md5_resp.payload_length);
+	DEBUG("payload len = %d", md5_resp.payload_length);
 	memcpy(md5, md5_resp.payload, md5_resp.payload_length);
 
 	return 0;
 
 error:
-	fprintf(stderr, "ERROR : get_md5_random()\n");
+	ERROR("get_md5_random()");
 	return -1;
 }
 
@@ -157,7 +158,7 @@ int client_register(int type, int mode, rcp_session* session)
 	char pphrase[MAX_PASSPHRASE_LEN];
 	int plen;
 	generate_passphrase(mode, session->user_level, session->password, pphrase, &plen);
-	//log_hex("passphrase", pphrase, plen);
+	log_hex(LOG_DEBUG, "passphrase", pphrase, plen);
 
 	unsigned short tmp16;
 	cl_reg.payload[0] = type;
@@ -185,13 +186,13 @@ int client_register(int type, int mode, rcp_session* session)
 	if (res == -1)
 		goto error;
 
-	log_hex("client register response", reg_resp.payload, reg_resp.payload_length);
+	log_hex(LOG_DEBUG, "client register response", reg_resp.payload, reg_resp.payload_length);
 	session->client_id = ntohs(*(unsigned short*)(reg_resp.payload+2));
 
 	return 0;
 
 error:
-	fprintf(stderr, "ERROR : client_register()\n");
+	ERROR("client_register()");
 	return -1;
 }
 
@@ -240,8 +241,8 @@ int client_connect(rcp_session* session, int method, int media, int flags, rcp_m
 	rcp_packet con_resp;
 	rcp_recv(&con_resp);
 	session->session_id = con_resp.session_id;
-	fprintf(stderr, "$$$$$$$$$$$$$$$$$$$$$$$$$$$ session id = %d - %d\n", con_resp.session_id, session->session_id);
-	log_hex("client connection resp", con_resp.payload, con_resp.payload_length);
+	DEBUG("session id = %d - %d", con_resp.session_id, session->session_id);
+	log_hex(LOG_DEBUG, "client connection resp", con_resp.payload, con_resp.payload_length);
 
 	return 0;
 }
@@ -263,11 +264,11 @@ int get_capability_list(rcp_session* session)
 	if (res == -1)
 		goto error;
 
-	log_hex("cap list response", caps_resp.payload, caps_resp.payload_length);
+	log_hex(LOG_INFO, "cap list response", caps_resp.payload, caps_resp.payload_length);
 	return 0;
 
 error:
-	fprintf(stderr, "ERROR : capability_list()\n");
+	ERROR("capability_list()");
 	return -1;
 }
 
@@ -316,7 +317,7 @@ int get_coder_list(rcp_session* session, int coder_type, int media_type, rcp_cod
 	return 0;
 
 error:
-	fprintf(stderr, "ERROR : coder_list()\n");
+	ERROR("coder_list()");
 	return -1;
 }
 
@@ -341,6 +342,6 @@ int keep_alive(rcp_session* session)
 	return alive_resp.payload[0];
 
 error:
-	fprintf(stderr, "ERROR : keep_alive()\n");
+	ERROR("keep_alive()");
 	return -1;
 }
