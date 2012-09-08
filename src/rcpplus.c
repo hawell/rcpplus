@@ -186,30 +186,6 @@ int rcp_send(rcp_packet* hdr)
 	return res;
 }
 
-void error_message(int error_code)
-{
-	switch (error_code)
-	{
-		case RCP_ERROR_INVALID_VERSION:fprintf(stderr, "invalid version\n");break;
-		case RCP_ERROR_NOT_REGISTERED:fprintf(stderr, "not registered\n");break;
-		case RCP_ERROR_INVALID_CLIENT_ID:fprintf(stderr, "invalid client id\n");break;
-		case RCP_ERROR_INVALID_METHOD:fprintf(stderr, "invalid method\n");break;
-		case RCP_ERROR_INVALID_CMD:fprintf(stderr, "invalid command\n");break;
-		case RCP_ERROR_INVALID_ACCESS_TYPE:fprintf(stderr, "invalid access\n");break;
-		case RCP_ERROR_INVALID_DATA_TYPE:fprintf(stderr, "invalid data type\n");break;
-		case RCP_ERROR_WRITE_ERROR:fprintf(stderr, "write error\n");break;
-		case RCP_ERROR_PACKET_SIZE:fprintf(stderr, "invalid packet size\n");break;
-		case RCP_ERROR_READ_NOT_SUPPORTED:fprintf(stderr, "read not supported\n");break;
-		case RCP_ERROR_INVALID_AUTH_LEVEL:fprintf(stderr, "invalid authentication level\n");break;
-		case RCP_ERROR_INVAILD_SESSION_ID:fprintf(stderr, "invalid session id\n");break;
-		case RCP_ERROR_TRY_LATER:fprintf(stderr, "try later\n");break;
-		case RCP_ERROR_COMMAND_SPECIFIC:fprintf(stderr, "command specific error\n");break;
-		case RCP_ERROR_UNKNOWN:
-		default:
-			fprintf(stderr, "unknown error\n");break;
-	}
-}
-
 int rcp_recv(rcp_packet* hdr)
 {
 	int res;
