@@ -34,16 +34,6 @@
 #define MAX_PAYLOAD_LENGHT	1000
 #define MAX_PASSPHRASE_LEN	1000
 
-void log_hex(const char* str, void* d, int l)
-{
-	unsigned char* p = (unsigned char*)d;
-	fprintf(stderr, "%s: (%d) ", str, l);
-
-	for (int i=0; i<l; i++)
-		fprintf(stderr, "%02hhx:", p[i]);
-	fprintf(stderr, "\n");
-}
-
 void md5(unsigned char* in, int len, unsigned char* digest)
 {
 	MD5_CTX ctx;
@@ -252,7 +242,6 @@ int get_capability_list(rcp_session* session)
 	int res;
 
 	init_rcp_header(&caps, session, RCP_COMMAND_CONF_CAPABILITY_LIST, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_OCTET);
-	caps.client_id = session->client_id;
 
 	res = rcp_send(&caps);
 	if (res == -1)
@@ -280,7 +269,6 @@ int get_coder_list(rcp_session* session, int coder_type, int media_type, rcp_cod
 
 	init_rcp_header(&coders_req, session, RCP_COMMAND_CONF_RCP_CODER_LIST, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_OCTET);
 	coders_req.numeric_descriptor = 1; // line number - where do we get this?!!
-	coders_req.client_id = session->client_id;
 
 	coders_req.payload[0] = RCP_MEDIA_TYPE_VIDEO;
 	coders_req.payload[1] = coder_type;
