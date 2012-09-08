@@ -51,7 +51,7 @@ typedef struct {
 	char password[MAX_PASSWORD_LENGTH];
 } rcp_session;
 
-int init_rcp_header(rcp_packet* hdr, int tag);
+int init_rcp_header(rcp_packet* hdr, rcp_session* session, int tag, int rw, int data_type);
 int write_rcp_header(unsigned char* packet, rcp_packet* hdr);
 int read_rcp_header(unsigned char* packet, rcp_packet* hdr);
 

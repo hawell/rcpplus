@@ -38,72 +38,20 @@ rcp_connection con;
 
 unsigned char buffer[RCP_MAX_PACKET_LEN];
 
-int init_rcp_header(rcp_packet* hdr, int tag)
+int init_rcp_header(rcp_packet* hdr, rcp_session* session, int tag, int rw, int data_type)
 {
 	memset(hdr, 0, sizeof(rcp_packet));
 
 	hdr->version = RCP_VERSION;
 	hdr->tag = tag;
+	hdr->rw = rw;
+	hdr->action = RCP_PACKET_ACTION_REQUEST;
+	hdr->data_type = data_type;
 
-	switch (tag)
+	if (session != NULL) // session is not required for all requests
 	{
-		case RCP_COMMAND_CONF_RCP_REG_MD5_RANDOM:
-		{
-			hdr->data_type = RCP_DATA_TYPE_P_STRING;
-			hdr->continuation = 0;
-			hdr->action = RCP_PACKET_ACTION_REQUEST;
-			hdr->rw = RCP_COMMAND_MODE_READ;
-		}
-		break;
-
-		case RCP_COMMAND_CONF_RCP_CLIENT_REGISTRATION:
-		{
-			hdr->data_type = RCP_DATA_TYPE_P_OCTET;
-			hdr->continuation = 0;
-			hdr->action = RCP_PACKET_ACTION_REQUEST;
-			hdr->rw = RCP_COMMAND_MODE_WRITE;
-		}
-		break;
-
-		case RCP_COMMAND_CONF_CONNECT_PRIMITIVE:
-		{
-			hdr->data_type = RCP_DATA_TYPE_P_OCTET;
-			hdr->continuation = 0;
-			hdr->action = RCP_PACKET_ACTION_REQUEST;
-			hdr->rw = RCP_COMMAND_MODE_WRITE;
-		}
-		break;
-
-		case RCP_COMMAND_CONF_CAPABILITY_LIST:
-		{
-			hdr->data_type = RCP_DATA_TYPE_P_OCTET;
-			hdr->continuation = 0;
-			hdr->action = RCP_PACKET_ACTION_REQUEST;
-			hdr->rw = RCP_COMMAND_MODE_READ;
-		}
-		break;
-
-		case RCP_COMMAND_CONF_RCP_CODER_LIST:
-		{
-			hdr->data_type = RCP_DATA_TYPE_P_OCTET;
-			hdr->continuation = 0;
-			hdr->action = RCP_PACKET_ACTION_REQUEST;
-			hdr->rw = RCP_COMMAND_MODE_READ;
-		}
-		break;
-
-		case RCP_COMMAND_CONF_RCP_CONNECTIONS_ALIVE:
-		{
-			hdr->data_type = RCP_DATA_TYPE_F_FLAG;
-			hdr->continuation = 0;
-			hdr->action = RCP_PACKET_ACTION_REQUEST;
-			hdr->rw = RCP_COMMAND_MODE_READ;
-		}
-		break;
-
-		default:
-			fprintf(stderr, "header tag not supported : %d\n", tag);
-		break;
+		hdr->client_id = session->client_id;
+		hdr->session_id = session->session_id;
 	}
 
 	return 0;

@@ -125,7 +125,7 @@ int generate_passphrase(int mode, int user_level, char* password, char* pphrase,
 int get_md5_random(unsigned char* md5)
 {
 	rcp_packet md5_reg;
-	init_rcp_header(&md5_reg, RCP_COMMAND_CONF_RCP_REG_MD5_RANDOM);
+	init_rcp_header(&md5_reg, NULL, RCP_COMMAND_CONF_RCP_REG_MD5_RANDOM, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_STRING);
 
 	int res;
 
@@ -153,7 +153,7 @@ int client_register(int type, int mode, rcp_session* session)
 {
 	int res;
 	rcp_packet cl_reg;
-	init_rcp_header(&cl_reg, RCP_COMMAND_CONF_RCP_CLIENT_REGISTRATION);
+	init_rcp_header(&cl_reg, NULL, RCP_COMMAND_CONF_RCP_CLIENT_REGISTRATION, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_P_OCTET);
 
 	char pphrase[MAX_PASSPHRASE_LEN];
 	int plen;
@@ -199,8 +199,7 @@ error:
 int client_connect(rcp_session* session, int method, int media, int flags, rcp_media_descriptor* desc)
 {
 	rcp_packet cl_con;
-	init_rcp_header(&cl_con, RCP_COMMAND_CONF_CONNECT_PRIMITIVE);
-	cl_con.client_id = session->client_id;
+	init_rcp_header(&cl_con, session, RCP_COMMAND_CONF_CONNECT_PRIMITIVE, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_P_OCTET);
 
 	int len = 0;
 	unsigned char* mdesc = cl_con.payload;
@@ -252,7 +251,7 @@ int get_capability_list(rcp_session* session)
 	rcp_packet caps;
 	int res;
 
-	init_rcp_header(&caps, RCP_COMMAND_CONF_CAPABILITY_LIST);
+	init_rcp_header(&caps, session, RCP_COMMAND_CONF_CAPABILITY_LIST, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_OCTET);
 	caps.client_id = session->client_id;
 
 	res = rcp_send(&caps);
@@ -279,7 +278,7 @@ int get_coder_list(rcp_session* session, int coder_type, int media_type, rcp_cod
 	rcp_packet coders_req;
 	int res;
 
-	init_rcp_header(&coders_req, RCP_COMMAND_CONF_RCP_CODER_LIST);
+	init_rcp_header(&coders_req, session, RCP_COMMAND_CONF_RCP_CODER_LIST, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_OCTET);
 	coders_req.numeric_descriptor = 1; // line number - where do we get this?!!
 	coders_req.client_id = session->client_id;
 
@@ -326,9 +325,7 @@ int keep_alive(rcp_session* session)
 	rcp_packet alive_req;
 	int res;
 
-	init_rcp_header(&alive_req, RCP_COMMAND_CONF_RCP_CONNECTIONS_ALIVE);
-	alive_req.client_id = session->client_id;
-	alive_req.session_id = session->session_id;
+	init_rcp_header(&alive_req, session, RCP_COMMAND_CONF_RCP_CONNECTIONS_ALIVE, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_F_FLAG);
 
 	res = rcp_send(&alive_req);
 	if (res == -1)
