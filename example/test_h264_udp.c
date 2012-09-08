@@ -14,19 +14,13 @@
 #include "rcpplus.h"
 #include "rcpcommand.h"
 #include "rtp.h"
+#include "rcplog.h"
 
 int main()
 {
-	rcp_connect("174.0.0.236");
+	rcplog_init(LOG_MODE_STDERR, LOG_INFO, NULL);
 
-	/*
-	unsigned char md5[17];
-
-	get_md5_random(&con, md5);
-	for (int i=0; i<17; i++)
-		printf("%02hhx:", md5[i]);
-	printf("\n");
-	*/
+	rcp_connect("174.0.0.224");
 
 	rcp_session session;
 	memset(&session, 0, sizeof(rcp_session));
@@ -38,19 +32,19 @@ int main()
 
 	rcp_coder_list encoders, decoders;
 	get_coder_list(&session, RCP_CODER_ENCODER, RCP_MEDIA_TYPE_VIDEO, &encoders);
-	fprintf(stderr, "***\n");
+	DEBUG("***");
 	for (int i=0; i<encoders.count; i++)
-		fprintf(stderr, "%x %x %x %x %x\n", encoders.coder[i].number, encoders.coder[i].caps, encoders.coder[i].current_cap, encoders.coder[i].param_caps, encoders.coder[i].current_param);
-	fprintf(stderr, "***\n");
+		DEBUG("%x %x %x %x %x", encoders.coder[i].number, encoders.coder[i].caps, encoders.coder[i].current_cap, encoders.coder[i].param_caps, encoders.coder[i].current_param);
+	DEBUG("***");
 	get_coder_list(&session, RCP_CODER_DECODER, RCP_MEDIA_TYPE_VIDEO, &decoders);
-	fprintf(stderr, "***\n");
+	DEBUG("***");
 	for (int i=0; i<decoders.count; i++)
-		fprintf(stderr, "%x %x %x %x %x\n", decoders.coder[i].number, decoders.coder[i].caps, decoders.coder[i].current_cap, decoders.coder[i].param_caps, decoders.coder[i].current_param);
-	fprintf(stderr, "***\n");
+		DEBUG("%x %x %x %x %x", decoders.coder[i].number, decoders.coder[i].caps, decoders.coder[i].current_cap, decoders.coder[i].param_caps, decoders.coder[i].current_param);
+	DEBUG("***");
 
 	unsigned short udp_port = stream_connect();
 
-	fprintf(stderr, "udp port = %d\n", udp_port);
+	DEBUG("udp port = %d", udp_port);
 
 	rcp_media_descriptor desc[] = {
 			{RCP_MEP_UDP, 1, 1, 0, udp_port, 1, 1, RCP_VIDEO_CODING_H264, RCP_VIDEO_RESOLUTION_4CIF},
@@ -66,7 +60,7 @@ int main()
 		while (1)
 		{
 			int n = keep_alive(&session);
-			//fprintf(stderr, "active connections = %d\n", n);
+			//DEBUG("active connections = %d", n);
 			if (n < 0)
 				break;
 
