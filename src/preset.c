@@ -1,0 +1,402 @@
+/*
+ * preset.c
+ *
+ *  Created on: Sep 5, 2012
+ *      Author: arash
+ */
+
+#include <stdlib.h>
+#include <string.h>
+
+#include "preset.h"
+#include "rcplog.h"
+
+int get_current_preset(rcp_session* session, int coder)
+{
+	rcp_packet mp4_req;
+	int res;
+
+	init_rcp_header(&mp4_req, session, RCP_COMMAND_CONF_MPEG4_CURRENT_PARAMS, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_T_DWORD);
+	mp4_req.numeric_descriptor = coder;
+
+	res = rcp_send(&mp4_req);
+	if (res == -1)
+		goto error;
+
+	rcp_packet mp4_resp;
+	res = rcp_recv(&mp4_resp);
+	if (res == -1)
+		goto error;
+
+	//log_hex(LOG_DEBUG, "mp4 conf", mp4_resp.payload, mp4_resp.payload_length);
+	return ntohl(*(unsigned int*)mp4_resp.payload);
+
+error:
+	ERROR("get_mp4_current_config()");
+	return -1;
+}
+
+int get_preset(rcp_session* session, int preset_id, rcp_mpeg4_preset* preset, int basic)
+{
+	get_preset_name(session, preset_id, preset->name);
+	get_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_BANDWIDTH_KBPS, &preset->bandwidth);
+	get_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_BANDWIDTH_KBPS_SOFT_LIMIT, &preset->bandwidth_soft_limit);
+	get_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_BANDWIDTH_KBPS_HARD_LIMIT, &preset->bandwidth_hard_limit);
+	get_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_FRAME_SKIP_RATIO, &preset->frameskip_ratio);
+	get_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_INTRA_FRAME_DISTANCE, &preset->iframe_distance);
+	get_preset_param(session, preset_id, RCP_COMMAND_CONF_VIDEO_QUALITY, &preset->video_quality);
+	get_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_RESOLUTION, &preset->resolution);
+	get_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_FIELD_MODE, &preset->field_mode);
+
+	if (!basic)
+	{
+		get_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_I_FRAME_QUANT, &preset->iframe_quantizer);
+		get_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_P_FRAME_QUANT, &preset->pframe_quantizer);
+		get_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_AVC_I_FRAME_QUANT, &preset->avc_iframe_qunatizer);
+		get_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_AVC_P_FRAME_QUANT, &preset->avc_pframe_qunatizer);
+		get_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_AVC_P_FRAME_QUANT_MIN, &preset->avc_pframe_qunatizer_min);
+		get_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_AVC_DELTA_IPQUANT, &preset->avc_delta_ipquantizer);
+		get_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_AVC_DEBLOCKING_ENABLE, &preset->avc_deblocking_enabled);
+		get_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_AVC_DEBLOCKING_ALPHA, &preset->avc_deblocking_alpha);
+		get_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_AVC_DEBLOCKING_BETA, &preset->avc_deblocking_beta);
+		get_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_AVC_CHROMA_QUANT_OFF, &preset->avc_chroma_quantisation_offset);
+		get_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_AVC_CODING_MODE, &preset->avc_coding_mode);
+		get_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_AVC_GOP_STRUCTURE, &preset->avc_gop_structure);
+		get_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_AVC_CABAC, &preset->avc_cabac);
+	}
+
+	return 0;
+}
+
+int set_preset(rcp_session* session, int preset_id, rcp_mpeg4_preset* preset, int basic)
+{
+	set_preset_name(session, preset_id, preset->name);
+	set_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_BANDWIDTH_KBPS, preset->bandwidth);
+	set_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_BANDWIDTH_KBPS_SOFT_LIMIT, preset->bandwidth_soft_limit);
+	set_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_BANDWIDTH_KBPS_HARD_LIMIT, preset->bandwidth_hard_limit);
+	set_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_FRAME_SKIP_RATIO, preset->frameskip_ratio);
+	set_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_INTRA_FRAME_DISTANCE, preset->iframe_distance);
+	set_preset_param(session, preset_id, RCP_COMMAND_CONF_VIDEO_QUALITY, preset->video_quality);
+	set_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_RESOLUTION, preset->resolution);
+	set_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_FIELD_MODE, preset->field_mode);
+
+	if (!basic)
+	{
+		set_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_I_FRAME_QUANT, preset->iframe_quantizer);
+		set_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_P_FRAME_QUANT, preset->pframe_quantizer);
+		set_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_AVC_I_FRAME_QUANT, preset->avc_iframe_qunatizer);
+		set_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_AVC_P_FRAME_QUANT, preset->avc_pframe_qunatizer);
+		set_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_AVC_P_FRAME_QUANT_MIN, preset->avc_pframe_qunatizer_min);
+		set_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_AVC_DELTA_IPQUANT, preset->avc_delta_ipquantizer);
+		set_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_AVC_DEBLOCKING_ENABLE, preset->avc_deblocking_enabled);
+		set_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_AVC_DEBLOCKING_ALPHA, preset->avc_deblocking_alpha);
+		set_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_AVC_DEBLOCKING_BETA, preset->avc_deblocking_beta);
+		set_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_AVC_CHROMA_QUANT_OFF, preset->avc_chroma_quantisation_offset);
+		set_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_AVC_CODING_MODE, preset->avc_coding_mode);
+		set_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_AVC_GOP_STRUCTURE, preset->avc_gop_structure);
+		set_preset_param(session, preset_id, RCP_COMMAND_CONF_MPEG4_AVC_CABAC, preset->avc_cabac);
+	}
+
+	return 0;
+}
+
+int preset_set_default(rcp_session* session, int preset_id)
+{
+	rcp_packet def_req;
+	int res;
+
+	init_rcp_header(&def_req, session, RCP_COMMAND_CONF_MPEG4_DEFAULTS, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_F_FLAG);
+	def_req.numeric_descriptor = preset_id;
+	def_req.payload[0] = 0;
+	def_req.payload_length = 1;
+
+	res = rcp_send(&def_req);
+	if (res == -1)
+		goto error;
+
+	rcp_packet def_resp;
+	res = rcp_recv(&def_resp);
+	if (res == -1)
+		goto error;
+
+	return 0;
+
+error:
+	ERROR("preset_set_default()");
+	return -1;
+}
+
+int get_preset_name(rcp_session* session, int preset_id, char* name)
+{
+	rcp_packet pn_req;
+	int res;
+
+	init_rcp_header(&pn_req, session, RCP_COMMAND_CONF_MPEG4_NAME, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_STRING);
+	pn_req.numeric_descriptor = preset_id;
+
+	res = rcp_send(&pn_req);
+	if (res == -1)
+		goto error;
+
+	rcp_packet pn_resp;
+	res = rcp_recv(&pn_resp);
+	if (res == -1)
+		goto error;
+
+	memcpy(name, pn_resp.payload, pn_resp.payload_length);
+	name[pn_resp.payload_length] = 0;
+
+	return 0;
+
+error:
+	ERROR("get_preset_name()");
+	return -1;
+}
+
+int set_preset_name(rcp_session* session, int preset_id, char* name)
+{
+	rcp_packet pn_req;
+	int res;
+
+	init_rcp_header(&pn_req, session, RCP_COMMAND_CONF_MPEG4_NAME, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_P_STRING);
+	pn_req.numeric_descriptor = preset_id;
+
+	pn_req.payload_length = strlen(name) + 1;
+	memcpy(pn_req.payload, name, pn_req.payload_length);
+
+	res = rcp_send(&pn_req);
+	if (res == -1)
+		goto error;
+
+	rcp_packet pn_resp;
+	res = rcp_recv(&pn_resp);
+	if (res == -1)
+		goto error;
+
+	DEBUG("preset name set to '%s'", pn_resp.payload);
+	return 0;
+
+error:
+	ERROR("set_preset_name()");
+	return -1;
+}
+
+
+int get_param_type(int param)
+{
+	switch (param)
+	{
+		case RCP_COMMAND_CONF_MPEG4_BANDWIDTH_KBPS:
+		case RCP_COMMAND_CONF_MPEG4_BANDWIDTH_KBPS_SOFT_LIMIT:
+		case RCP_COMMAND_CONF_MPEG4_BANDWIDTH_KBPS_HARD_LIMIT:
+		case RCP_COMMAND_CONF_MPEG4_INTRA_FRAME_DISTANCE:
+		case RCP_COMMAND_CONF_MPEG4_FRAME_SKIP_RATIO:
+		case RCP_COMMAND_CONF_MPEG4_RESOLUTION:
+		case RCP_COMMAND_CONF_MPEG4_I_FRAME_QUANT:
+		case RCP_COMMAND_CONF_MPEG4_P_FRAME_QUANT:
+		case RCP_COMMAND_CONF_MPEG4_AVC_I_FRAME_QUANT:
+		case RCP_COMMAND_CONF_MPEG4_AVC_P_FRAME_QUANT:
+		case RCP_COMMAND_CONF_VIDEO_QUALITY:
+			return RCP_DATA_TYPE_T_DWORD;
+
+		case RCP_COMMAND_CONF_MPEG4_FIELD_MODE:
+		case RCP_COMMAND_CONF_MPEG4_AVC_CODING_MODE:
+		case RCP_COMMAND_CONF_MPEG4_AVC_GOP_STRUCTURE:
+		case RCP_COMMAND_CONF_MPEG4_AVC_CABAC:
+		case RCP_COMMAND_CONF_MPEG4_AVC_P_FRAME_QUANT_MIN:
+		case RCP_COMMAND_CONF_MPEG4_AVC_DELTA_IPQUANT:
+			return RCP_DATA_TYPE_T_OCTET;
+
+		case RCP_COMMAND_CONF_MPEG4_AVC_DEBLOCKING_ALPHA:
+		case RCP_COMMAND_CONF_MPEG4_AVC_DEBLOCKING_BETA:
+		case RCP_COMMAND_CONF_MPEG4_AVC_CHROMA_QUANT_OFF:
+			return RCP_DATA_TYPE_T_INT;
+
+		case RCP_COMMAND_CONF_MPEG4_AVC_DEBLOCKING_ENABLE:
+			return RCP_DATA_TYPE_F_FLAG;
+
+		default:
+			ERROR("invalid parameter %d", param);
+			return -1;
+	}
+}
+
+int get_preset_param(rcp_session* session, int preset_id, int param, int* value)
+{
+	rcp_packet p_req;
+	int res;
+
+	int data_type = get_param_type(param);
+	if (data_type == -1)
+		goto error;
+
+	init_rcp_header(&p_req, session, param, RCP_COMMAND_MODE_READ, data_type);
+	p_req.numeric_descriptor = preset_id;
+
+	res = rcp_send(&p_req);
+	if (res == -1)
+		goto error;
+
+	rcp_packet p_resp;
+	res = rcp_recv(&p_resp);
+	if (res == -1)
+		goto error;
+
+	switch (data_type)
+	{
+		case RCP_DATA_TYPE_F_FLAG:
+		case RCP_DATA_TYPE_T_OCTET:
+			*value = p_resp.payload[0];
+		break;
+
+		case RCP_DATA_TYPE_T_WORD:
+			*value = ntohs(*(unsigned short*)p_resp.payload);
+		break;
+
+		case RCP_DATA_TYPE_T_INT:
+		case RCP_DATA_TYPE_T_DWORD:
+			*value = ntohl(*(unsigned int*)p_resp.payload);
+		break;
+	}
+	return 0;
+
+error:
+	ERROR("get_preset_param()");
+	return -1;
+}
+
+int set_preset_param(rcp_session* session, int preset_id, int param, int value)
+{
+	rcp_packet p_req;
+	int res;
+
+	int data_type = get_param_type(param);
+	if (data_type == -1)
+		goto error;
+
+	init_rcp_header(&p_req, session, param, RCP_COMMAND_MODE_WRITE, data_type);
+	p_req.numeric_descriptor = preset_id;
+
+	unsigned char tmp8;
+	unsigned short tmp16;
+	unsigned int tmp32;
+	switch (data_type)
+	{
+		case RCP_DATA_TYPE_F_FLAG:
+		case RCP_DATA_TYPE_T_OCTET:
+			tmp8 = value;
+			memcpy(p_req.payload, &tmp8, 1);
+			p_req.payload_length = 1;
+		break;
+
+		case RCP_DATA_TYPE_T_WORD:
+			tmp16 = htons(value);
+			memcpy(p_req.payload, &tmp16, 2);
+			p_req.payload_length = 2;
+		break;
+
+		case RCP_DATA_TYPE_T_INT:
+		case RCP_DATA_TYPE_T_DWORD:
+			tmp32 = htonl(value);
+			memcpy(p_req.payload, &tmp32, 4);
+			p_req.payload_length = 4;
+		break;
+	}
+
+	res = rcp_send(&p_req);
+	if (res == -1)
+		goto error;
+
+	rcp_packet p_resp;
+	res = rcp_recv(&p_resp);
+	if (res == -1)
+		goto error;
+
+	return 0;
+
+error:
+	ERROR("set_preset_param()");
+	return -1;
+}
+
+void log_preset(int level, rcp_mpeg4_preset* preset, int basic)
+{
+	const char* val;
+	rcplog(level, "%-25s %s", "name", preset->name);
+	switch (preset->resolution)
+	{
+		case PRESET_RESOLUTION_QCIF:val = "QCIF";break;
+		case PRESET_RESOLUTION_CIF:val = "CIF";break;
+		case PRESET_RESOLUTION_2CIF:val = "2CIF";break;
+		case PRESET_RESOLUTION_4CIF:val = "4CIF";break;
+		case PRESET_RESOLUTION_12D1:val = "1/2 D1";break;
+		case PRESET_RESOLUTION_23D1:val = "2/3 D1";break;
+		case PRESET_RESOLUTION_QVGA:val = "QVGA";break;
+		case PRESET_RESOLUTION_VGA:val = "VGA";break;
+		case PRESET_RESOLUTION_720P:val = "720P";break;
+	}
+	rcplog(level, "%-25s %s", "resolution", val);
+	rcplog(level, "%-25s %d kbps", "bandwidth", preset->bandwidth);
+	rcplog(level, "%-25s %d", "frameskip", preset->frameskip_ratio);
+	rcplog(level, "%-25s %d kbps", "bw soft", preset->bandwidth_soft_limit);
+	rcplog(level, "%-25s %d kbps", "bw hard", preset->bandwidth_hard_limit);
+	rcplog(level, "%-25s %d", "iframe dist", preset->iframe_distance);
+	switch (preset->field_mode)
+	{
+		case PRESET_FIELD_MODE_PROGRESSIVE:val = "progressive";break;
+		case PRESET_FIELD_MODE_MERGED:val = "merged";break;
+		case PRESET_FIELD_MODE_SEPERATED:val = "seperated";break;
+	}
+	rcplog(level, "%-25s %s", "field mode", val);
+
+	if (!basic)
+	{
+		if (preset->iframe_quantizer)
+			rcplog(level, "%-25s %d", "iframe quant", preset->iframe_quantizer);
+		else
+			rcplog(level, "%-25s %s", "iframe quant", "auto");
+		if (preset->pframe_quantizer)
+			rcplog(level, "%-25s %d", "pframe quant", preset->pframe_quantizer);
+		else
+			rcplog(level, "%-25s %s", "pframe quant", "auto");
+		rcplog(level, "%-25s %d", "video quality", preset->video_quality);
+		if (preset->avc_iframe_qunatizer)
+			rcplog(level, "%-25s %d", "avc iframe quant", preset->avc_iframe_qunatizer);
+		else
+			rcplog(level, "%-25s %s", "avc iframe quant", "auto");
+		if (preset->avc_pframe_qunatizer)
+			rcplog(level, "%-25s %d", "avc pframe quant", preset->avc_pframe_qunatizer);
+		else
+			rcplog(level, "%-25s %s", "avc pframe quant", "auto");
+		if (preset->avc_pframe_qunatizer_min)
+			rcplog(level, "%-25s %d", "avc pframe quant min", preset->avc_pframe_qunatizer_min);
+		else
+			rcplog(level, "%-25s %s", "avc pframe quant min", "auto");
+		rcplog(level, "%-25s %d", "avc i/p delta", preset->avc_delta_ipquantizer);
+		rcplog(level, "%-25s %d", "avc deblock enabled", preset->avc_deblocking_enabled);
+		rcplog(level, "%-25s %d", "avc deblock alpha", preset->avc_deblocking_alpha);
+		rcplog(level, "%-25s %d", "avc deblock beta", preset->avc_deblocking_beta);
+		rcplog(level, "%-25s %d", "avc chroma offset", preset->avc_chroma_quantisation_offset);
+		switch (preset->avc_coding_mode)
+		{
+			case PRESET_CODING_MODE_FRAME:val="frame";break;
+			case PRESET_CODING_MODE_FIELD:val="field";break;
+			case PRESET_CODING_MODE_MACRO:val="macro";break;
+			case PRESET_CODING_MODE_PICTURE:val="picture";break;
+		}
+		rcplog(level, "%-25s %s", "avc coding mode", val);
+		switch (preset->avc_gop_structure)
+		{
+			case PRESET_GOP_STRUCT_IP:val="IP";break;
+			case PRESET_GOP_STRUCT_IBP:val="IBP";break;
+			case PRESET_GOP_STRUCT_IBBP:val="IBBP";break;
+			case PRESET_GOP_STRUCT_IBBRBP:val="IBBRBP";break;
+		}
+		rcplog(level, "%-25s %s", "avc gop struct", val);
+		if (preset->avc_cabac == 0)
+			val = "off";
+		else
+			val = "on";
+		rcplog(level, "%-25s %s", "avc cabac", val);
+	}
+}
