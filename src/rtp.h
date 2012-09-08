@@ -53,7 +53,7 @@ typedef struct {
 	unsigned char f:1;
 } nal_unit_header;
 
-#define MAX_NAL_FRAME_LENGTH	65536
+#define MAX_NAL_FRAME_LENGTH	200000
 
 typedef struct {
 	nal_unit_header nh;
@@ -78,4 +78,36 @@ typedef struct {
 
 int defrag(nal_packet* np, void* buffer, int len);
 
+/**************************/
+
+typedef struct {
+	unsigned char ebit:3;
+	unsigned char sbit:3;
+	unsigned char p:1;
+	unsigned char f:1;
+} h263_header;
+
+typedef struct {
+	unsigned int tr:8;
+	unsigned int trb:3;
+	unsigned int dbq:2;
+	unsigned int r:4;
+	unsigned int a:1;
+	unsigned int s:1;
+	unsigned int u:1;
+	unsigned int i:1;
+	unsigned int src:3;
+	unsigned int ebit:3;
+	unsigned int sbit:3;
+	unsigned int p:1;
+	unsigned int f:1;
+} h263_a;
+
+typedef struct {
+	unsigned char ebit:3;
+	unsigned char sbit:3;
+	unsigned char p:1;
+	unsigned char f:1;
+
+} h263_b;
 #endif /* RTP_H_ */
