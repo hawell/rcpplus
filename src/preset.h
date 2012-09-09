@@ -3,6 +3,21 @@
  *
  *  Created on: Sep 5, 2012
  *      Author: arash
+ *
+ *  This file is part of rcpplus
+ *
+ *  rcpplus is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  rcpplus is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with rcpplus.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef PRESET_H_
@@ -67,7 +82,8 @@ typedef struct {
 	int avc_cabac;                         // 0=off; 1=on
 } rcp_mpeg4_preset;
 
-int get_current_preset(rcp_session* session, int coder);
+int get_coder_preset(rcp_session* session, int coder);
+int set_coder_preset(rcp_session* session, int coder, int preset);
 
 int get_preset(rcp_session* session, int preset_id, rcp_mpeg4_preset* preset, int basic);
 int set_preset(rcp_session* session, int preset_id, rcp_mpeg4_preset* preset, int basic);

@@ -27,7 +27,7 @@ int main()
 
 	client_register(RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_MD5, &session);
 
-	get_current_preset(&session, 1);
+	get_coder_preset(&session, 1);
 
 	preset_set_default(&session, 1);
 

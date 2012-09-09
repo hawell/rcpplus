@@ -3,6 +3,21 @@
  *
  *  Created on: Sep 5, 2012
  *      Author: arash
+*
+ *  This file is part of rcpplus
+ *
+ *  rcpplus is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  rcpplus is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with rcpplus.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdlib.h>
@@ -11,7 +26,7 @@
 #include "preset.h"
 #include "rcplog.h"
 
-int get_current_preset(rcp_session* session, int coder)
+int get_coder_preset(rcp_session* session, int coder)
 {
 	rcp_packet mp4_req;
 	int res;
@@ -33,6 +48,34 @@ int get_current_preset(rcp_session* session, int coder)
 
 error:
 	ERROR("get_mp4_current_config()");
+	return -1;
+}
+
+int set_coder_preset(rcp_session* session, int coder, int preset)
+{
+	rcp_packet preset_req;
+	int res;
+
+	init_rcp_header(&preset_req, session, RCP_COMMAND_CONF_MPEG4_CURRENT_PARAMS, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_T_DWORD);
+	preset_req.numeric_descriptor = coder;
+
+	unsigned int tmp32 = htonl(preset);
+	memcpy(preset_req.payload, &tmp32, 4);
+	preset_req.payload_length = 4;
+
+	res = rcp_send(&preset_req);
+	if (res == -1)
+		goto error;
+
+	rcp_packet preset_resp;
+	res = rcp_recv(&preset_resp);
+	if (res == -1)
+		goto error;
+
+	return 0;
+
+error:
+	ERROR("set_coder_preset()");
 	return -1;
 }
 
