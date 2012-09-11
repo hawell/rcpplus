@@ -182,3 +182,129 @@ error:
 	return -1;
 }
 
+static char* coder_cap_str(int cap, int media_type)
+{
+	switch (media_type)
+	{
+		case RCP_MEDIA_TYPE_VIDEO:
+			switch (cap)
+			{
+				case RCP_VIDEO_CODING_H263:return "H.263";
+				case RCP_VIDEO_CODING_MPEG4:return "Mpeg4";
+				case RCP_VIDEO_CODING_MPEG2V:return "Mpeg2 VideoOnly";
+				case RCP_VIDEO_CODING_METADATA:return "Meta Data";
+				case RCP_VIDEO_CODING_H263P:return "H.263+ 1998";
+				case RCP_VIDEO_CODING_H264:return "H.264";
+				case RCP_VIDEO_CODING_JPEG:return "Jpeg";
+				case RCP_VIDEO_CODING_RECORDED:return "Recorded Media";
+				case RCP_VIDEO_CODING_MPEG2S:return "Mpeg2 PrgStr";
+			}
+		break;
+
+		case RCP_MEDIA_TYPE_AUDIO:
+			switch (cap)
+			{
+				case RCP_AUDIO_CODING_G711:return "G.711";
+				case RCP_AUDIO_CODING_MPEG2P:return "Mpeg2 PrgStr";
+			}
+		break;
+
+		case RCP_MEDIA_TYPE_DATA:
+			switch (cap)
+			{
+				case RCP_DATA_CODING_RCP:return "RCP";
+			}
+		break;
+	}
+
+	return "Unknown";
+}
+
+static char* coder_codparam_str(int codparam, int media_type)
+{
+	switch (media_type)
+	{
+		case RCP_MEDIA_TYPE_VIDEO:
+			switch (codparam)
+			{
+				case RCP_VIDEO_RESOLUTION_QCIF:return "QCIF";
+				case RCP_VIDEO_RESOLUTION_CIF:return "CIF";
+				case RCP_VIDEO_RESOLUTION_2CIF:return "2CIF";
+				case RCP_VIDEO_RESOLUTION_4CIF:return "4CIF";
+				case RCP_VIDEO_RESOLUTION_QVGA:return "QVGA";
+				case RCP_VIDEO_RESOLUTION_VGA:return "VGA";
+				case RCP_VIDEO_RESOLUTION_HD720:return "HD720";
+				case RCP_VIDEO_RESOLUTION_HD_1080:return "HD1080";
+			}
+		break;
+
+		case RCP_MEDIA_TYPE_AUDIO:
+			return "none";
+		break;
+
+		case RCP_MEDIA_TYPE_DATA:
+			switch (codparam)
+			{
+				case RCP_DATA_CODPARAM_RS232:return "RS232";
+				case RCP_DATA_CODPARAM_RS485:return "RS485";
+				case RCP_DATA_CODPARAM_RS422:return "RS422";
+			}
+		break;
+	}
+
+	return "Unknown";
+}
+
+void log_coder(int level, rcp_coder* coder)
+{
+	char tmp[200];
+
+	rcplog(level, "%-20s %d", "Coder Number", coder->number);
+	switch (coder->direction)
+	{
+		case 0:strcpy(tmp, "Input");break;
+		case 1:strcpy(tmp, "Output");break;
+		default:strcpy(tmp, "Unknown");break;
+	}
+	rcplog(level, "%-20s %s", "Direction", tmp);
+	switch (coder->media_type)
+	{
+		case RCP_MEDIA_TYPE_AUDIO:strcpy(tmp, "Audio");break;
+		case RCP_MEDIA_TYPE_VIDEO:strcpy(tmp, "Video");break;
+		case RCP_MEDIA_TYPE_DATA:strcpy(tmp, "Data");break;
+		default:strcpy(tmp, "Unknown");break;
+	}
+	rcplog(level, "%-20s %s", "Media Type", tmp);
+	tmp[0] = 0;
+	for (int i=1; i<=0x8000; i<<=1)
+		if ( (coder->caps & i) && strcmp(coder_cap_str(i, coder->media_type), "Unknown")!=0 )
+		{
+			strcat(tmp, coder_cap_str(i, coder->media_type));
+			strcat(tmp, ", ");
+		}
+	rcplog(level, "%-20s %s", "Encoding Caps", tmp);
+	tmp[0] = 0;
+	for (int i=1; i<=0x8000; i<<=1)
+		if ( (coder->current_cap & i) && strcmp(coder_cap_str(i, coder->media_type), "Unknown")!=0 )
+		{
+			strcat(tmp, coder_cap_str(i, coder->media_type));
+			strcat(tmp, ", ");
+		}
+	rcplog(level, "%-20s %s", "Current Cap", tmp);
+	tmp[0] = 0;
+	for (int i=1; i<=0x1000; i<<=1)
+		if ( (coder->param_caps & i) && strcmp(coder_codparam_str(i, coder->media_type), "Unknown")!=0 )
+		{
+			strcat(tmp, coder_codparam_str(i, coder->media_type));
+			strcat(tmp, ", ");
+		}
+	rcplog(level, "%-20s %s", "CodParam Caps", tmp);
+	tmp[0] = 0;
+	for (int i=1; i<=0x1000; i<<=1)
+		if ( (coder->current_param & i) && strcmp(coder_codparam_str(i, coder->media_type), "Unknown")!=0 )
+		{
+			strcat(tmp, coder_codparam_str(i, coder->media_type));
+			strcat(tmp, ", ");
+		}
+	rcplog(level, "%-20s %s", "Current CodParam", tmp);
+}

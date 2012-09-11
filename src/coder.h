@@ -51,4 +51,6 @@ int set_coder_video_operation_mode(rcp_session* session, int coder, int mode);
 int get_coder_preset(rcp_session* session, int coder);
 int set_coder_preset(rcp_session* session, int coder, int preset);
 
+void log_coder(int level, rcp_coder* coder);
+
 #endif /* CODER_H_ */
