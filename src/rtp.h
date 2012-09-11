@@ -47,6 +47,8 @@ typedef struct {
     unsigned int csrc[];        // optional CSRC list
 } rtp_header;
 
+/****** h264 payload ******/
+
 typedef struct {
 	unsigned char type:5;
 	unsigned char nri:2;

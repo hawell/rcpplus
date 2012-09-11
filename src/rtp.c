@@ -122,7 +122,7 @@ int defrag(nal_packet* np, void* buffer, int len)
 		break;
 
 		default:
-			ERROR("unsupported nal type");
+			ERROR("unsupported nal type: %d", nal_type);
 			break;
 	}
 
