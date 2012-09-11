@@ -82,9 +82,6 @@ typedef struct {
 	int avc_cabac;                         // 0=off; 1=on
 } rcp_mpeg4_preset;
 
-int get_coder_preset(rcp_session* session, int coder);
-int set_coder_preset(rcp_session* session, int coder, int preset);
-
 int get_preset(rcp_session* session, int preset_id, rcp_mpeg4_preset* preset, int basic);
 int set_preset(rcp_session* session, int preset_id, rcp_mpeg4_preset* preset, int basic);
 

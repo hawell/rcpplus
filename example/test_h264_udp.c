@@ -15,6 +15,7 @@
 #include "rcpcommand.h"
 #include "rtp.h"
 #include "rcplog.h"
+#include "coder.h"
 
 int main()
 {

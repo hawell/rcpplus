@@ -37,8 +37,10 @@ int main()
 
 	strcpy(preset.name, "myConfig");
 	preset.resolution = PRESET_RESOLUTION_4CIF;
-	preset.bandwidth = 10000;
-	preset.bandwidth_soft_limit = 10000;
+	preset.field_mode = PRESET_FIELD_MODE_PROGRESSIVE;
+	preset.bandwidth = 100000;
+	preset.bandwidth_soft_limit = 100000;
+	preset.video_quality = 1;
 
 	set_preset(&session, 1, &preset, 1);
 

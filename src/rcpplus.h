@@ -83,19 +83,6 @@ typedef struct {
 	unsigned short resolution;
 } rcp_media_descriptor;
 
-typedef struct {
-	unsigned char media_type;		// video, audio or data
-	unsigned char direction;		// input/output
-	unsigned short number;			// the absolute coder number
-	unsigned short caps;			// all coding capabilities
-	unsigned short current_cap;		// current available coding capability
-	unsigned short param_caps;		// all CodParameter capabilities (resolution capabilities for video)
-	unsigned short current_param;	// current CodParameter capability (current resolution for video)
-} rcp_coder;
 
-typedef struct {
-	int count;
-	rcp_coder *coder;
-} rcp_coder_list;
 
 #endif /* RCPPLUS_H_ */

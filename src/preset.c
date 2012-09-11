@@ -26,59 +26,6 @@
 #include "preset.h"
 #include "rcplog.h"
 
-int get_coder_preset(rcp_session* session, int coder)
-{
-	rcp_packet mp4_req;
-	int res;
-
-	init_rcp_header(&mp4_req, session, RCP_COMMAND_CONF_MPEG4_CURRENT_PARAMS, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_T_DWORD);
-	mp4_req.numeric_descriptor = coder;
-
-	res = rcp_send(&mp4_req);
-	if (res == -1)
-		goto error;
-
-	rcp_packet mp4_resp;
-	res = rcp_recv(&mp4_resp);
-	if (res == -1)
-		goto error;
-
-	//log_hex(LOG_DEBUG, "mp4 conf", mp4_resp.payload, mp4_resp.payload_length);
-	return ntohl(*(unsigned int*)mp4_resp.payload);
-
-error:
-	ERROR("get_mp4_current_config()");
-	return -1;
-}
-
-int set_coder_preset(rcp_session* session, int coder, int preset)
-{
-	rcp_packet preset_req;
-	int res;
-
-	init_rcp_header(&preset_req, session, RCP_COMMAND_CONF_MPEG4_CURRENT_PARAMS, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_T_DWORD);
-	preset_req.numeric_descriptor = coder;
-
-	unsigned int tmp32 = htonl(preset);
-	memcpy(preset_req.payload, &tmp32, 4);
-	preset_req.payload_length = 4;
-
-	res = rcp_send(&preset_req);
-	if (res == -1)
-		goto error;
-
-	rcp_packet preset_resp;
-	res = rcp_recv(&preset_resp);
-	if (res == -1)
-		goto error;
-
-	return 0;
-
-error:
-	ERROR("set_coder_preset()");
-	return -1;
-}
-
 int get_preset(rcp_session* session, int preset_id, rcp_mpeg4_preset* preset, int basic)
 {
 	get_preset_name(session, preset_id, preset->name);

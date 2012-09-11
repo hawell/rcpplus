@@ -33,8 +33,7 @@ int client_connect(rcp_session* session, int method, int media, int flags, rcp_m
 
 int get_capability_list(rcp_session* session);
 
-int get_coder_list(rcp_session* session, int coder_type, int media_type, rcp_coder_list* coder_list);
-
 int keep_alive(rcp_session* session);
+
 
 #endif /* RCPCOMMAND_H_ */

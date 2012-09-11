@@ -231,7 +231,7 @@ int client_connect(rcp_session* session, int method, int media, int flags, rcp_m
 	rcp_recv(&con_resp);
 	session->session_id = con_resp.session_id;
 	DEBUG("session id = %d - %d", con_resp.session_id, session->session_id);
-	log_hex(LOG_DEBUG, "client connection resp", con_resp.payload, con_resp.payload_length);
+	log_hex(LOG_INFO, "client connection resp", con_resp.payload, con_resp.payload_length);
 
 	return 0;
 }
@@ -257,54 +257,6 @@ int get_capability_list(rcp_session* session)
 
 error:
 	ERROR("capability_list()");
-	return -1;
-}
-
-#define CODER_SIZE_IN_PAYLOAD	16
-
-int get_coder_list(rcp_session* session, int coder_type, int media_type, rcp_coder_list* coder_list)
-{
-	rcp_packet coders_req;
-	int res;
-
-	init_rcp_header(&coders_req, session, RCP_COMMAND_CONF_RCP_CODER_LIST, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_OCTET);
-	coders_req.numeric_descriptor = 1; // line number - where do we get this?!!
-
-	coders_req.payload[0] = RCP_MEDIA_TYPE_VIDEO;
-	coders_req.payload[1] = coder_type;
-	coders_req.payload[2] = 1;
-	coders_req.payload_length = 3;
-
-	res = rcp_send(&coders_req);
-	if (res == -1)
-		goto error;
-
-	rcp_packet coders_resp;
-	res = rcp_recv(&coders_resp);
-	if (res == -1)
-		goto error;
-
-	coder_list->count = coders_resp.payload_length / CODER_SIZE_IN_PAYLOAD;
-	coder_list->coder = (rcp_coder*)malloc(sizeof(rcp_coder) * coder_list->count);
-
-	unsigned char* pos = coders_resp.payload;
-	for (int i=0; i<coder_list->count; i++)
-	{
-		rcp_coder* c = coder_list->coder + i;
-		c->direction = coder_type;
-		c->media_type = media_type;
-		c->number = ntohs(*(unsigned short*)(pos));
-		c->caps = ntohs(*(unsigned short*)(pos + 2));
-		c->current_cap = ntohs(*(unsigned short*)(pos + 4));
-		c->param_caps = ntohs(*(unsigned short*)(pos + 6));
-		c->current_param = ntohs(*(unsigned short*)(pos + 8));
-		pos += CODER_SIZE_IN_PAYLOAD;
-	}
-
-	return 0;
-
-error:
-	ERROR("coder_list()");
 	return -1;
 }
 

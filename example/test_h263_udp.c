@@ -23,6 +23,7 @@
 #include "rcpcommand.h"
 #include "rtp.h"
 #include "rcplog.h"
+#include "coder.h"
 
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
@@ -93,7 +94,6 @@ int main()
 
 	uint8_t complete_frame[MAX_FRAME_LEN];
 	int complete_frame_size = 0;
-	int num = 1000;
 
 	unsigned short last_seq = 0;
 	int ebit = 0;
@@ -101,13 +101,13 @@ int main()
 	{
 		int num = recvfrom(con.stream_socket, buffer, 1500, 0, (struct sockaddr*)&si_remote, &slen);
 
-		rtp_header *hdr = buffer;
+		rtp_header *hdr = (rtp_header*)buffer;
 		int header_len = RTP_HEADER_LENGTH_MANDATORY + hdr->cc*4;
 		DEBUG("m=%d pt=%d hlen=%d len=%d seq=%d", hdr->m, hdr->pt, header_len, num, hdr->seq);
 
 		last_seq = hdr->seq;
 
-		h263_header *hdr2 = buffer+header_len;
+		h263_header *hdr2 = (h263_header*)(buffer+header_len);
 		DEBUG("sbit=%d ebit=%d", hdr2->sbit, hdr2->ebit);
 		unsigned char* pos = buffer+header_len;
 		int len = num - header_len;

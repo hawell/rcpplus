@@ -134,7 +134,7 @@ int rcp_connect(char* ip)
 
 int stream_connect()
 {
-	con.stream_socket = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
+	con.stream_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
 	con.stream_addr.sin_family = AF_INET;
 	con.stream_addr.sin_port = htons(0);
