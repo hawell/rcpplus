@@ -56,7 +56,7 @@
 #define RCP_COMMAND_CONF_RCP_CODER_LIST					0xff11
 #define RCP_COMMAND_CONF_CODER_VIDEO_OPERATION_MODE			0x0a9c
 
-typedef struct {
+typedef struct rcp_coder_tag {
 	unsigned char media_type;		// video, audio or data
 	unsigned char direction;		// input/output
 	unsigned short number;			// the absolute coder number

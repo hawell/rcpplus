@@ -62,7 +62,7 @@ int main()
 		DEBUG("%x %x %x %x %x", decoders.coder[i].number, decoders.coder[i].caps, decoders.coder[i].current_cap, decoders.coder[i].param_caps, decoders.coder[i].current_param);
 	DEBUG("***");
 
-	unsigned short udp_port = stream_connect();
+	unsigned short udp_port = stream_connect_udp();
 
 	DEBUG("udp port = %d", udp_port);
 

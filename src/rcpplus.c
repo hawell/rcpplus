@@ -33,6 +33,7 @@
 #include "rcpplus.h"
 #include "rcpdefs.h"
 #include "rcplog.h"
+#include "coder.h"
 
 rcp_connection con;
 
@@ -129,10 +130,14 @@ int rcp_connect(char* ip)
 		ERROR("connection failed : %d - %s\n", errno, strerror(errno));
 	}
 
+	memset(&con.tcp_stream_addr, 0, sizeof(struct sockaddr_in));
+	con.tcp_stream_addr.sin_family = AF_INET;
+	memcpy((char *)&con.tcp_stream_addr.sin_addr, hp->h_addr_list[0],  hp->h_length);
+	con.tcp_stream_addr.sin_port = htons(80);
 	return 0;
 }
 
-int stream_connect()
+int stream_connect_udp()
 {
 	con.stream_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
@@ -143,7 +148,7 @@ int stream_connect()
 	int res = bind(con.stream_socket, (struct sockaddr*)&con.stream_addr, sizeof(con.stream_addr));
 	if (res == -1)
 	{
-		ERROR("cannot bind %d - %s\n", errno, strerror(errno));
+		ERROR("cannot bind %d - %s", errno, strerror(errno));
 		return -1;
 	}
 
@@ -152,6 +157,43 @@ int stream_connect()
 	struct sockaddr_in addr;
 	socklen_t len = sizeof(addr);
 	getsockname(con.stream_socket, (struct sockaddr*)&addr, &len);
+
+	return ntohs(addr.sin_port);
+}
+
+int stream_connect_tcp(rcp_session* session, struct rcp_coder_tag* coder)
+{
+	con.stream_socket = socket(AF_INET, SOCK_STREAM, 0);
+
+	con.stream_addr.sin_family = AF_INET;
+	con.stream_addr.sin_port = htons(0);
+	con.stream_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+	int res = bind(con.stream_socket, (struct sockaddr*)&con.stream_addr, sizeof(con.stream_addr));
+	if (res == -1)
+	{
+		ERROR("cannot bind %d - %s", errno, strerror(errno));
+		return -1;
+	}
+
+	res = connect(con.stream_socket, (struct sockaddr*)&con.tcp_stream_addr, sizeof(con.tcp_stream_addr));
+	if (res == -1)
+	{
+		ERROR("cannot connect: %d - %s", errno, strerror(errno));
+		return -1;
+	}
+
+	struct sockaddr_in addr;
+	socklen_t len = sizeof(addr);
+	getsockname(con.stream_socket, (struct sockaddr*)&addr, &len);
+
+	int size = sprintf((char*)buffer, "GET /media_tunnel/%08u/%d/%d/%d/%d HTTP 1.0\r\n\r\n", session->session_id, coder->media_type, coder->direction, 1, coder->number);
+	res = send(con.stream_socket, buffer, size, 0);
+	if (res == -1)
+	{
+		ERROR("cannot sent initiative sequence: %d - %s", errno, strerror(errno));
+		return -1;
+	}
 
 	return ntohs(addr.sin_port);
 }

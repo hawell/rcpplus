@@ -25,6 +25,8 @@
 
 #include <netinet/in.h>
 
+struct rcp_coder_tag;
+
 #define MAX_PAYLOAD_LENGTH		1000
 #define MAX_PASSWORD_LENGTH		255
 
@@ -61,12 +63,16 @@ typedef struct {
 
 	struct sockaddr_in ctrl_addr;
 	int control_socket;
+
+	struct sockaddr_in tcp_stream_addr;
 } rcp_connection;
 
 extern rcp_connection con;
 
 int rcp_connect(char* ip);
-int stream_connect();
+
+int stream_connect_udp();
+int stream_connect_tcp(rcp_session* session, struct rcp_coder_tag* coder);
 
 int rcp_send(rcp_packet* hdr);
 int rcp_recv(rcp_packet* hdr);
