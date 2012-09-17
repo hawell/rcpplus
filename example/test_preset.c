@@ -14,6 +14,7 @@
 #include "rcpcommand.h"
 #include "rcplog.h"
 #include "preset.h"
+#include "coder.h"
 
 int main()
 {

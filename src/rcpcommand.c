@@ -34,7 +34,7 @@
 #define MAX_PAYLOAD_LENGHT	1000
 #define MAX_PASSPHRASE_LEN	1000
 
-void md5(unsigned char* in, int len, unsigned char* digest)
+static void md5(unsigned char* in, int len, unsigned char* digest)
 {
 	MD5_CTX ctx;
 	MD5Init(&ctx);
@@ -44,7 +44,7 @@ void md5(unsigned char* in, int len, unsigned char* digest)
 	memcpy(digest, ctx.digest, 16);
 }
 
-int generate_passphrase(int mode, int user_level, char* password, char* pphrase, int* len)
+static int generate_passphrase(int mode, int user_level, char* password, char* pphrase, int* len)
 {
 	char uname[20];
 	switch (user_level)
@@ -112,23 +112,38 @@ int generate_passphrase(int mode, int user_level, char* password, char* pphrase,
 	return 0;
 }
 
+static int rcp_command(rcp_packet* req, rcp_packet* rsp)
+{
+	int res = rcp_send(req);
+	if (res == -1)
+		goto error;
+
+	do
+	{
+		res = rcp_recv(rsp);
+		if (res == -1)
+			goto error;
+	}
+	while (req->request_id != rsp->request_id);
+
+	return 0;
+
+error:
+	ERROR("rcp_command()");
+	return -1;
+}
+
 int get_md5_random(unsigned char* md5)
 {
-	rcp_packet md5_reg;
-	init_rcp_header(&md5_reg, NULL, RCP_COMMAND_CONF_RCP_REG_MD5_RANDOM, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_STRING);
-
+	rcp_packet md5_req, md5_resp;
 	int res;
 
-	DEBUG("sending md5 reg");
-	res = rcp_send(&md5_reg);
-	if (res == -1)
-		goto error;
-	DEBUG("sent");
+	init_rcp_header(&md5_req, NULL, RCP_COMMAND_CONF_RCP_REG_MD5_RANDOM, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_STRING);
 
-	rcp_packet md5_resp;
-	res = rcp_recv(&md5_resp);
+	res = rcp_command(&md5_req, &md5_resp);
 	if (res == -1)
 		goto error;
+
 	DEBUG("payload len = %d", md5_resp.payload_length);
 	memcpy(md5, md5_resp.payload, md5_resp.payload_length);
 
@@ -141,42 +156,45 @@ error:
 
 int client_register(int type, int mode, rcp_session* session)
 {
+	rcp_packet reg_req, reg_resp;
 	int res;
-	rcp_packet cl_reg;
-	init_rcp_header(&cl_reg, NULL, RCP_COMMAND_CONF_RCP_CLIENT_REGISTRATION, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_P_OCTET);
+
+	init_rcp_header(&reg_req, NULL, RCP_COMMAND_CONF_RCP_CLIENT_REGISTRATION, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_P_OCTET);
 
 	char pphrase[MAX_PASSPHRASE_LEN];
 	int plen;
-	generate_passphrase(mode, session->user_level, session->password, pphrase, &plen);
+	res = generate_passphrase(mode, session->user_level, session->password, pphrase, &plen);
+	if (res == -1)
+		goto error;
+
 	log_hex(LOG_DEBUG, "passphrase", pphrase, plen);
 
 	unsigned short tmp16;
-	cl_reg.payload[0] = type;
-	cl_reg.payload[1] = 0;
+	reg_req.payload[0] = type;
+	reg_req.payload[1] = 0;
 	tmp16 = htons(0);
-	memcpy(cl_reg.payload+2, &tmp16, 2);
-	cl_reg.payload[4] = mode;
-	cl_reg.payload[5] = plen;
+	memcpy(reg_req.payload+2, &tmp16, 2);
+	reg_req.payload[4] = mode;
+	reg_req.payload[5] = plen;
 	tmp16 = htons(1);
-	memcpy(cl_reg.payload+6, &tmp16, 2);
+	memcpy(reg_req.payload+6, &tmp16, 2);
 	tmp16 = htons(0xffff);
-	memcpy(cl_reg.payload+8, &tmp16, 2);
-	memcpy(cl_reg.payload+10, pphrase, plen);
+	memcpy(reg_req.payload+8, &tmp16, 2);
+	memcpy(reg_req.payload+10, pphrase, plen);
 	//cl_reg.payload[plen+10] = 0;
-	cl_reg.payload_length = plen + 10;
+	reg_req.payload_length = plen + 10;
 
 	//log_hex("client register payload", cl_reg.payload, cl_reg.payload_length);
 
-	res = rcp_send(&cl_reg);
+	res = rcp_command(&reg_req, &reg_resp);
 	if (res == -1)
 		goto error;
 
-	rcp_packet reg_resp;
-	res = rcp_recv(&reg_resp);
-	if (res == -1)
+	log_hex(LOG_INFO, "client register response", reg_resp.payload, reg_resp.payload_length);
+	if (reg_resp.payload[0] == 0)
 		goto error;
 
-	log_hex(LOG_DEBUG, "client register response", reg_resp.payload, reg_resp.payload_length);
+	session->user_level = reg_resp.payload[1];
 	session->client_id = ntohs(*(unsigned short*)(reg_resp.payload+2));
 
 	return 0;
@@ -186,13 +204,48 @@ error:
 	return -1;
 }
 
+static char* connect_stat_str(int stat)
+{
+	switch (stat)
+	{
+		case 0:
+			return ("Interface not available");
+
+		case 1:
+			return ("Access granted");
+
+		case 2:
+			return ("Access rejected");
+
+		case 3:
+			return ("Session Id invalid or connection no longer active");
+
+		case 4:
+			return ("Coding parameter incompatible");
+
+		case 5:
+			return ("Interface data will be supplied by another media descriptor");
+
+		case 8:
+			return ("The method field in the header does not carry a known method");
+
+		case 9:
+			return ("The media field in the header does not carry a known media type");
+
+	}
+
+	return ("Unknown status");
+}
+
 int client_connect(rcp_session* session, int method, int media, int flags, rcp_media_descriptor* desc)
 {
-	rcp_packet cl_con;
-	init_rcp_header(&cl_con, session, RCP_COMMAND_CONF_CONNECT_PRIMITIVE, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_P_OCTET);
+	rcp_packet con_req, con_resp;
+	int res;
+
+	init_rcp_header(&con_req, session, RCP_COMMAND_CONF_CONNECT_PRIMITIVE, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_P_OCTET);
 
 	int len = 0;
-	unsigned char* mdesc = cl_con.payload;
+	unsigned char* mdesc = con_req.payload;
 	while (desc->encapsulation_protocol != 0)
 	{
 		unsigned short tmp16;
@@ -223,32 +276,35 @@ int client_connect(rcp_session* session, int method, int media, int flags, rcp_m
 		desc++;
 	}
 
-	cl_con.payload_length = len;
+	con_req.payload_length = len;
 
-	rcp_send(&cl_con);
+	res = rcp_command(&con_req, &con_resp);
+	if (res == -1)
+		goto error;
 
-	rcp_packet con_resp;
-	rcp_recv(&con_resp);
+	INFO("%s", connect_stat_str(con_resp.payload[2]));
+	if (con_resp.payload[2] != 1)
+		goto error;
+
 	session->session_id = con_resp.session_id;
 	DEBUG("session id = %d - %d", con_resp.session_id, session->session_id);
 	log_hex(LOG_INFO, "client connection resp", con_resp.payload, con_resp.payload_length);
 
 	return 0;
+
+error:
+	ERROR("client_connect()");
+	return -1;
 }
 
 int get_capability_list(rcp_session* session)
 {
-	rcp_packet caps;
+	rcp_packet caps_req, caps_resp;
 	int res;
 
-	init_rcp_header(&caps, session, RCP_COMMAND_CONF_CAPABILITY_LIST, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_OCTET);
+	init_rcp_header(&caps_req, session, RCP_COMMAND_CONF_CAPABILITY_LIST, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_OCTET);
 
-	res = rcp_send(&caps);
-	if (res == -1)
-		goto error;
-
-	rcp_packet caps_resp;
-	res = rcp_recv(&caps_resp);
+	res = rcp_command(&caps_req, &caps_resp);
 	if (res == -1)
 		goto error;
 
@@ -262,21 +318,16 @@ error:
 
 int keep_alive(rcp_session* session)
 {
-	rcp_packet alive_req;
+	rcp_packet alive_req, alive_resp;
 	int res;
 
 	init_rcp_header(&alive_req, session, RCP_COMMAND_CONF_RCP_CONNECTIONS_ALIVE, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_F_FLAG);
 
-	res = rcp_send(&alive_req);
+	res = rcp_command(&alive_req, &alive_resp);
 	if (res == -1)
 		goto error;
 
-	rcp_packet alive_resp;
-	res = rcp_recv(&alive_resp);
-	if (res == -1)
-		goto error;
-
-	return alive_resp.payload[0];
+	return ntohl(*(unsigned int*)alive_resp.payload);
 
 error:
 	ERROR("keep_alive()");

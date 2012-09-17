@@ -48,6 +48,7 @@ int init_rcp_header(rcp_packet* hdr, rcp_session* session, int tag, int rw, int 
 	hdr->rw = rw;
 	hdr->action = RCP_PACKET_ACTION_REQUEST;
 	hdr->data_type = data_type;
+	hdr->request_id = rand() % 0x100;
 
 	if (session != NULL) // session is not required for all requests
 	{
