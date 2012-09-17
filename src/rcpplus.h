@@ -72,7 +72,9 @@ extern rcp_connection con;
 int rcp_connect(char* ip);
 
 int stream_connect_udp();
-int stream_connect_tcp(rcp_session* session, struct rcp_coder_tag* coder);
+int stream_connect_tcp();
+
+int initiate_tcp_stream(rcp_session* session, struct rcp_coder_tag* coder);
 
 int rcp_send(rcp_packet* hdr);
 int rcp_recv(rcp_packet* hdr);

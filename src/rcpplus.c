@@ -21,6 +21,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
@@ -36,8 +37,6 @@
 #include "coder.h"
 
 rcp_connection con;
-
-unsigned char buffer[RCP_MAX_PACKET_LEN];
 
 int init_rcp_header(rcp_packet* hdr, rcp_session* session, int tag, int rw, int data_type)
 {
@@ -99,10 +98,10 @@ int read_rcp_header(unsigned char* packet, rcp_packet* hdr)
 	hdr->continuation = packet[4] >> 7;
 	hdr->action = packet[4] & 0x80;
 	hdr->request_id = packet[5];
-	hdr->client_id = ntohs(*(unsigned short*)(buffer+6));
-	hdr->session_id = ntohl(*(unsigned int*)(buffer+8));
-	hdr->numeric_descriptor = ntohs(*(unsigned short*)(buffer+12));
-	hdr->payload_length = ntohs(*(unsigned short*)(buffer+14));
+	hdr->client_id = ntohs(*(unsigned short*)(packet+6));
+	hdr->session_id = ntohl(*(unsigned int*)(packet+8));
+	hdr->numeric_descriptor = ntohs(*(unsigned short*)(packet+12));
+	hdr->payload_length = ntohs(*(unsigned short*)(packet+14));
 
 	return 0;
 }
@@ -162,7 +161,7 @@ int stream_connect_udp()
 	return ntohs(addr.sin_port);
 }
 
-int stream_connect_tcp(rcp_session* session, struct rcp_coder_tag* coder)
+int stream_connect_tcp()
 {
 	con.stream_socket = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -188,15 +187,23 @@ int stream_connect_tcp(rcp_session* session, struct rcp_coder_tag* coder)
 	socklen_t len = sizeof(addr);
 	getsockname(con.stream_socket, (struct sockaddr*)&addr, &len);
 
+
+	return ntohs(addr.sin_port);
+}
+
+int initiate_tcp_stream(rcp_session* session, struct rcp_coder_tag* coder)
+{
+	unsigned char buffer[RCP_MAX_PACKET_LEN];
+
 	int size = sprintf((char*)buffer, "GET /media_tunnel/%08u/%d/%d/%d/%d HTTP 1.0\r\n\r\n", session->session_id, coder->media_type, coder->direction, 1, coder->number);
-	res = send(con.stream_socket, buffer, size, 0);
+	int res = send(con.stream_socket, buffer, size, 0);
 	if (res == -1)
 	{
 		ERROR("cannot sent initiative sequence: %d - %s", errno, strerror(errno));
 		return -1;
 	}
 
-	return ntohs(addr.sin_port);
+	return 0;
 }
 
 int write_TPKT_header(unsigned char* buffer, int len)
@@ -211,6 +218,8 @@ int write_TPKT_header(unsigned char* buffer, int len)
 
 int rcp_send(rcp_packet* hdr)
 {
+	unsigned char buffer[RCP_MAX_PACKET_LEN];
+
 	int len = hdr->payload_length + RCP_HEADER_LENGTH + TPKT_HEADER_LENGTH;
 
 	write_TPKT_header(buffer, len);
@@ -234,6 +243,8 @@ int rcp_recv(rcp_packet* hdr)
 	int res;
 	int len;
 	int received;
+
+	unsigned char buffer[RCP_MAX_PACKET_LEN];
 
 	res = recv(con.control_socket, buffer, TPKT_HEADER_LENGTH, 0);
 	if (res == -1)

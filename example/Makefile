@@ -5,7 +5,7 @@ INCS = -I../src/
 CFLAGS = -g -std=c99 -Wall -W
 LIB = ../$(LIBNAME)
 
-all: preset h264_udp h263_upd detect coder ptz
+all: preset h264_udp h263_udp detect coder ptz
 
 preset: test_preset.o
 	$(CC) test_preset.o $(LIB) -o preset
@@ -13,7 +13,7 @@ preset: test_preset.o
 h264_udp: test_h264_udp.o
 	$(CC) test_h264_udp.o $(LIB) -o h264_udp
 	
-h263_upd: test_h263_udp.o
+h263_udp: test_h263_udp.o
 	$(CC) test_h263_udp.o $(LIB) -o h263_udp
 
 detect: test_detect.o
