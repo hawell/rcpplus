@@ -190,7 +190,7 @@ int client_register(int type, int mode, rcp_session* session)
 	if (res == -1)
 		goto error;
 
-	log_hex(LOG_INFO, "client register response", reg_resp.payload, reg_resp.payload_length);
+	log_hex(LOG_DEBUG, "client register response", reg_resp.payload, reg_resp.payload_length);
 	if (reg_resp.payload[0] == 0)
 		goto error;
 
@@ -246,35 +246,32 @@ int client_connect(rcp_session* session, int method, int media, int flags, rcp_m
 
 	int len = 0;
 	unsigned char* mdesc = con_req.payload;
-	while (desc->encapsulation_protocol != 0)
-	{
-		unsigned short tmp16;
-		mdesc[0] = method;
-		mdesc[1] = media;
-		mdesc[2] = 0;
-		mdesc[3] = flags;
-		mdesc[4] = mdesc[5] = mdesc[6] = mdesc[7] = 0;
 
-		mdesc[8] = desc->encapsulation_protocol;
-		mdesc[9] = desc->substitude_connection | (desc->relative_addressing << 1);
-		tmp16 = htons(desc->mta_port);
-		memcpy(mdesc+10, &tmp16, 2);
-		memcpy(mdesc+12, &desc->mta_ip, 4);
-		mdesc[16] = desc->coder;
-		mdesc[17] = desc->line;
-		tmp16 = htons(desc->coding);
-		memcpy(mdesc+24, &tmp16, 2);
-		tmp16 = htons(desc->resolution);
-		memcpy(mdesc+26, &tmp16, 2);
-		mdesc[28] = 0;
-		mdesc[29] = 0;
-		tmp16 = htons(1000);
-		memcpy(mdesc+30, &tmp16, 2);
+	unsigned short tmp16;
+	mdesc[0] = method;
+	mdesc[1] = media;
+	mdesc[2] = 0;
+	mdesc[3] = flags;
+	mdesc[4] = mdesc[5] = mdesc[6] = mdesc[7] = 0;
 
-		mdesc += 32;
-		len += 32;
-		desc++;
-	}
+	mdesc[8] = desc->encapsulation_protocol;
+	mdesc[9] = desc->substitude_connection | (desc->relative_addressing << 1);
+	tmp16 = htons(desc->mta_port);
+	memcpy(mdesc+10, &tmp16, 2);
+	memcpy(mdesc+12, &desc->mta_ip, 4);
+	mdesc[16] = desc->coder;
+	mdesc[17] = desc->line;
+	tmp16 = htons(desc->coding);
+	memcpy(mdesc+24, &tmp16, 2);
+	tmp16 = htons(desc->resolution);
+	memcpy(mdesc+26, &tmp16, 2);
+	mdesc[28] = 0;
+	mdesc[29] = 0;
+	tmp16 = htons(1000);
+	memcpy(mdesc+30, &tmp16, 2);
+
+	mdesc += 32;
+	len += 32;
 
 	con_req.payload_length = len;
 

@@ -1,14 +1,7 @@
 /*
- * test_mpeg4.c
+ * test_h263_udp.c
  *
  *  Created on: Sep 1, 2012
- *      Author: arash
- */
-
-/*
- * test.c
- *
- *  Created on: Aug 22, 2012
  *      Author: arash
  */
 
@@ -24,12 +17,6 @@
 #include "rtp.h"
 #include "rcplog.h"
 #include "coder.h"
-
-#include <libavcodec/avcodec.h>
-#include <libavformat/avformat.h>
-#include <libavfilter/avfilter.h>
-#include <libavutil/avutil.h>
-#include <libswscale/swscale.h>
 
 #define MAX_FRAME_LEN	100000
 
@@ -66,13 +53,11 @@ int main()
 
 	DEBUG("udp port = %d", udp_port);
 
-	rcp_media_descriptor desc[] = {
-			{RCP_MEP_UDP, 1, 1, 0, udp_port, 1, 1, RCP_VIDEO_CODING_MPEG4, RCP_VIDEO_RESOLUTION_2CIF},
-			//{RCP_MEP_UDP, 1, 1, 0, udp_port, 1, 1, RCP_VIDEO_CODING_JPEG, RCP_VIDEO_RESOLUTION_4CIF},
-			{0}
+	rcp_media_descriptor desc = {
+			RCP_MEP_UDP, 1, 1, 0, udp_port, 1, 1, RCP_VIDEO_CODING_MPEG4, RCP_VIDEO_RESOLUTION_4CIF
 	};
 
-	client_connect(&session, RCP_CONNECTION_METHOD_GET, RCP_MEDIA_TYPE_VIDEO, 0, desc);
+	client_connect(&session, RCP_CONNECTION_METHOD_GET, RCP_MEDIA_TYPE_VIDEO, 0, &desc);
 
 	int res = fork();
 	if (res == 0)

@@ -1,11 +1,12 @@
 CC = gcc
-SRCS = test_preset.c test_h264_udp.c test_h263_udp.c test_detect.c test_coder.c test_ptz.c
+SRCS = test_preset.c test_h264_udp.c test_h263_udp.c test_detect.c test_coder.c test_ptz.c test_transcode.c
 OBJS = $(SRCS:.c=.o)
 INCS = -I../src/
 CFLAGS = -g -std=c99 -Wall -W
 LIB = ../$(LIBNAME)
+FFMPEG = -lavutil -lavformat -lavcodec -lswscale -lavutil -lz -lm
 
-all: preset h264_udp h263_udp detect coder ptz
+all: preset h264_udp h263_udp detect coder ptz transcode
 
 preset: test_preset.o
 	$(CC) test_preset.o $(LIB) -o preset
@@ -25,8 +26,11 @@ coder: test_coder.o
 ptz: test_ptz.o
 	$(CC) test_ptz.o $(LIB) -o ptz
 	
+transcode: test_transcode.o
+	$(CC) test_transcode.o $(LIB) $(FFMPEG) -o transcode
+	
 .c.o:
 	$(CC) $(CFLAGS) $(INCS) -c $< -o $@ 
 	
 clean:
-	rm -f *.o  h264_udp h263_udp preset detect coder ptz
+	rm -f *.o  h264_udp h263_udp preset detect coder ptz transcode

@@ -1,5 +1,5 @@
 /*
- * test.c
+ * test_h264_udp.c
  *
  *  Created on: Aug 22, 2012
  *      Author: arash
@@ -47,13 +47,11 @@ int main()
 
 	DEBUG("udp port = %d", udp_port);
 
-	rcp_media_descriptor desc[] = {
-			{RCP_MEP_UDP, 1, 1, 0, udp_port, 1, 1, RCP_VIDEO_CODING_H264, RCP_VIDEO_RESOLUTION_4CIF},
-			//{RCP_MEP_UDP, 1, 1, 0, udp_port, 1, 1, RCP_VIDEO_CODING_JPEG, RCP_VIDEO_RESOLUTION_4CIF},
-			{0}
+	rcp_media_descriptor desc = {
+			RCP_MEP_UDP, 1, 1, 0, udp_port, 1, 1, RCP_VIDEO_CODING_H264, RCP_VIDEO_RESOLUTION_4CIF
 	};
 
-	client_connect(&session, RCP_CONNECTION_METHOD_GET, RCP_MEDIA_TYPE_VIDEO, 0, desc);
+	client_connect(&session, RCP_CONNECTION_METHOD_GET, RCP_MEDIA_TYPE_VIDEO, 0, &desc);
 
 	int res = fork();
 	if (res == 0)
