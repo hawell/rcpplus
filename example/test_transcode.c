@@ -22,20 +22,20 @@
 #include "rcplog.h"
 #include "coder.h"
 
-#include <libavcodec/avcodec.h>
-#include <libavformat/avformat.h>
-#include <libavfilter/avfilter.h>
-#include <libavutil/avutil.h>
-#include <libswscale/swscale.h>
+#include "libavcodec/avcodec.h"
+#include "libavformat/avformat.h"
+#include "libavfilter/avfilter.h"
+#include "libavutil/avutil.h"
+#include "libswscale/swscale.h"
 
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+//#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 #define MAX_FRAME_LEN	100000
 
 unsigned char sbit_mask[] = {0xFF, 0x7F, 0x3F, 0x1F, 0x0F, 0x07, 0x03, 0x01, 0x00};
 unsigned char ebit_mask[] = {0xFF, 0xFE, 0xFC, 0xF8, 0xF0, 0xE0, 0xC0, 0x80, 0x00};
 
-char* fname = "x.mp4";
+char* fname = "x.avi";
 
 void save_frame(AVFrame *frame, int width, int height)
 {
@@ -81,9 +81,9 @@ int main()
 		return -1;
 	}
 
-	if (avcodec_open(codec_ctx_in, codec_in) < 0)
+	if (avcodec_open2(codec_ctx_in, codec_in, NULL) < 0)
 	{
-		ERROR("cannot opne codec");
+		ERROR("cannot open codec");
 		return -1;
 	}
 
@@ -97,6 +97,9 @@ int main()
 		ERROR("cannot allocate frame");
 		return -1;
 	}
+
+	AVPacket in_pkt;
+	av_init_packet(&in_pkt);
 
 	AVFrame* rgb = avcodec_alloc_frame();
 	int num_bytes = avpicture_get_size(PIX_FMT_RGB24, codec_ctx_in->width, codec_ctx_in->height);
@@ -119,14 +122,14 @@ int main()
 	int video_outbuf_size;
 	int64_t pts=0;
 
-	of = guess_format( "mp4", fname, NULL);
+	of = av_guess_format( "avi", fname, NULL);
 	if ( !of )
 	{
 		ERROR("Could not find suitable output format");
 		return -1;
 	}
 
-	of->video_codec = CODEC_ID_H264;
+	of->video_codec = CODEC_ID_H263;
 
 	ofc = (AVFormatContext *)av_mallocz(sizeof(AVFormatContext));
 	if ( !ofc )
@@ -137,17 +140,17 @@ int main()
 	ofc->oformat = of;
 
 	pf = PIX_FMT_RGB24;
-	ost_v = av_new_stream(ofc, 0);
+	ost_v = avformat_new_stream(ofc, NULL);
 	if (!ost_v)
 	{
 		ERROR("Could not alloc stream");
 		return -1;
 	}
 	AVCodecContext *c = ost_v->codec;
-	avcodec_get_context_defaults2(c, AVMEDIA_TYPE_VIDEO);
+	avcodec_get_context_defaults3(c, AVMEDIA_TYPE_VIDEO);
 
 	c->codec_id = of->video_codec;
-	c->codec_type = CODEC_TYPE_VIDEO;
+	c->codec_type = AVMEDIA_TYPE_VIDEO;
 	c->bit_rate = 1000000;
 	c->pix_fmt = PIX_FMT_YUV420P;
 	c->width = 704;
@@ -173,18 +176,13 @@ int main()
 		c->qcompress = 0.6;
 	}
 
-	if ( av_set_parameters(ofc, NULL) < 0 )
-	{
-		ERROR("Invalid output format parameters");
-		return -1;
-	}
 	AVCodec *codec = avcodec_find_encoder(c->codec_id);
 	if ( !codec )
 	{
 		ERROR("codec not found");
 		return -1;
 	}
-	if ( avcodec_open(c, codec) < 0 )
+	if ( avcodec_open2(c, codec, NULL) < 0 )
 	{
 		ERROR("Could not open codec");
 		return -1;
@@ -224,7 +222,7 @@ int main()
 	}
 	avpicture_fill( (AVPicture *)tmp_opicture, tmp_opicture_buf, PIX_FMT_YUV420P, c->width, c->height );
 
-	if ( url_fopen(&ofc->pb, fname, URL_WRONLY) < 0 )
+	if ( avio_open(&ofc->pb, fname, AVIO_FLAG_WRITE) < 0 )
 	{
 		ERROR("Could not open '%s'", fname);
 		return -1;
@@ -239,9 +237,9 @@ int main()
 	}
 
 	/* write the stream header, if any */
-	av_write_header(ofc);
+	avformat_write_header(ofc, NULL);
 
-	dump_format(ofc, 0, "stdout", 1);
+	av_dump_format(ofc, 0, "stdout", 1);
 
 
 	rcp_connect("10.25.25.223");
@@ -353,26 +351,31 @@ int main()
 			pts += hdr->timestamp;
 
 			int have_frame=0;
+			in_pkt.data = complete_frame;
+			in_pkt.size = complete_frame_size;
 			//ERROR("1");
-			int ret = avcodec_decode_video(codec_ctx_in, raw_frame, &have_frame, complete_frame, complete_frame_size);
+			int ret = avcodec_decode_video2(codec_ctx_in, raw_frame, &have_frame, &in_pkt);
 			if (ret && have_frame)
 			{
 				sws_scale(yuv2rgb, (const uint8_t * const*)raw_frame->data, raw_frame->linesize, 0, codec_ctx_in->height, rgb->data, rgb->linesize);
 
 				//save_frame(rgb, codec_ctx_in->width, codec_ctx_in->height);
 
-				int out_size = avcodec_encode_video(c, video_outbuf, video_outbuf_size, raw_frame);
+				int got_packet = 0;
 				AVPacket pkt;
 				av_init_packet(&pkt);
+				pkt.data = video_outbuf;
+				pkt.size = video_outbuf_size;
 				pkt.pts = AV_NOPTS_VALUE;
 				if(c->coded_frame->key_frame)
 					pkt.flags |= pts;
 				pkt.stream_index = ost_v->index;
-				pkt.data = video_outbuf;
-				pkt.size = out_size;
-
-				//fprintf(stderr, "video pts : %lld\n", pkt.pts);
-				ret = av_write_frame( ofc, &pkt );
+				avcodec_encode_video2(c, &pkt, raw_frame, &got_packet);
+				if (got_packet)
+				{
+					//fprintf(stderr, "video pts : %lld\n", pkt.pts);
+					ret = av_write_frame( ofc, &pkt );
+				}
 			}
 
 			complete_frame_size = 0;

@@ -4,7 +4,14 @@ OBJS = $(SRCS:.c=.o)
 INCS = -I../src/
 CFLAGS = -g -std=c99 -Wall -W
 LIB = ../$(LIBNAME)
-FFMPEG = -lavutil -lavformat -lavcodec -lswscale -lavutil -lz -lm
+FFMPEGLIB = \
+		/home/arash/Programs/ffmpeg/libavformat/libavformat.a \
+		/home/arash/Programs/ffmpeg/libavcodec/libavcodec.a \
+		/home/arash/Programs/ffmpeg/libavutil/libavutil.a \
+		/home/arash/Programs/ffmpeg/libswscale/libswscale.a \
+		/home/arash/Programs/ffmpeg/libavfilter/libavfilter.a -lz -lm -lpthread -lmp3lame -lfaac
+		
+FFMPEGINC = -I/home/arash/Programs/ffmpeg/
 
 all: preset h264_udp h263_udp detect coder ptz transcode
 
@@ -27,10 +34,10 @@ ptz: test_ptz.o
 	$(CC) test_ptz.o $(LIB) -o ptz
 	
 transcode: test_transcode.o
-	$(CC) test_transcode.o $(LIB) $(FFMPEG) -o transcode
+	$(CC) test_transcode.o $(LIB) $(FFMPEGLIB) -o transcode
 	
 .c.o:
-	$(CC) $(CFLAGS) $(INCS) -c $< -o $@ 
+	$(CC) $(CFLAGS) $(INCS) $(FFMPEGINC) -c $< -o $@ 
 	
 clean:
 	rm -f *.o  h264_udp h263_udp preset detect coder ptz transcode
