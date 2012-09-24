@@ -4,14 +4,16 @@ OBJS = $(SRCS:.c=.o)
 INCS = -I../src/
 CFLAGS = -g -std=c99 -Wall -W
 LIB = ../$(LIBNAME)
+
+FFMPEG = /home/arash/Programs/ffmpeg
 FFMPEGLIB = \
-		/home/arash/Programs/ffmpeg/libavformat/libavformat.a \
-		/home/arash/Programs/ffmpeg/libavcodec/libavcodec.a \
-		/home/arash/Programs/ffmpeg/libavutil/libavutil.a \
-		/home/arash/Programs/ffmpeg/libswscale/libswscale.a \
-		/home/arash/Programs/ffmpeg/libavfilter/libavfilter.a -lz -lm -lpthread -lmp3lame -lfaac
+		$(FFMPEG)/libavformat/libavformat.a \
+		$(FFMPEG)/libavcodec/libavcodec.a \
+		$(FFMPEG)/libavutil/libavutil.a \
+		$(FFMPEG)/libswscale/libswscale.a \
+		$(FFMPEG)/libavfilter/libavfilter.a -lz -lm -lpthread -lmp3lame -lfaac
 		
-FFMPEGINC = -I/home/arash/Programs/ffmpeg/
+FFMPEGINC = -I$(FFMPEG)
 
 all: preset h264_udp h263_udp detect coder ptz transcode
 

@@ -30,11 +30,6 @@
 
 //#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
-#define MAX_FRAME_LEN	100000
-
-unsigned char sbit_mask[] = {0xFF, 0x7F, 0x3F, 0x1F, 0x0F, 0x07, 0x03, 0x01, 0x00};
-unsigned char ebit_mask[] = {0xFF, 0xFE, 0xFC, 0xF8, 0xF0, 0xE0, 0xC0, 0x80, 0x00};
-
 char* fname = "x.avi";
 
 void save_frame(AVFrame *frame, int width, int height)
@@ -292,67 +287,22 @@ int main()
 	socklen_t slen = sizeof(si_remote);
 	unsigned char buffer[1500];
 
-	uint8_t complete_frame[MAX_FRAME_LEN];
-	int complete_frame_size = 0;
+	rtp_merge_desc mdesc;
+	rtp_init(RTP_PAYLOAD_TYPE_H263, &mdesc);
+	video_frame vframe;
 
-	unsigned short last_seq = 0;
-	int ebit = 0;
 	time_t end_time = time(NULL) + 10;
 	while (time(NULL) < end_time)
 	{
 		int num = recvfrom(con.stream_socket, buffer, 1500, 0, (struct sockaddr*)&si_remote, &slen);
 
-		rtp_header *hdr = (rtp_header*)buffer;
-		int header_len = RTP_HEADER_LENGTH_MANDATORY + hdr->cc*4;
-		DEBUG("m=%d pt=%d hlen=%d len=%d seq=%d ts=%u", hdr->m, hdr->pt, header_len, num, hdr->seq, hdr->timestamp);
+		rtp_push_frame(buffer, num, &mdesc);
 
-		last_seq = hdr->seq;
-
-		h263_header *hdr2 = (h263_header*)(buffer+header_len);
-		DEBUG("sbit=%d ebit=%d", hdr2->sbit, hdr2->ebit);
-		unsigned char* pos = buffer+header_len;
-		int len = num - header_len;
-		if (hdr2->f == 0)	// type A
+		if (rtp_pop_frame(&vframe, &mdesc) == 0)
 		{
-			pos += 4;
-			len -= 4;
-		}
-		else if (hdr2->p == 0)	// type B
-		{
-			pos += 8;
-			len -= 8;
-		}
-		else	// type C
-		{
-			pos += 12;
-			len -= 12;
-		}
-		//fwrite(pos, len, 1, stdout);
-
-		DEBUG("%d %d", ebit, hdr2->sbit);
-		assert((ebit + hdr2->sbit) % 8 == 0);
-		if (hdr2->sbit)
-		{
-			complete_frame[complete_frame_size - 1] &= ebit_mask[ebit];
-			pos[0] &= sbit_mask[hdr2->sbit];
-			complete_frame[complete_frame_size - 1] |= pos[0];
-			pos++;
-			len--;
-		}
-		memcpy(complete_frame+complete_frame_size, pos, len);
-		complete_frame_size += len;
-		ebit = hdr2->ebit;
-
-		if (hdr->m == 1) // end of frame
-		{
-			//DEBUG("writing %d bytes", complete_frame_size);
-			//int ret = fwrite(complete_frame, complete_frame_size, 1, stdout);
-			//DEBUG("written %d", ret);
-			pts += hdr->timestamp;
-
 			int have_frame=0;
-			in_pkt.data = complete_frame;
-			in_pkt.size = complete_frame_size;
+			in_pkt.data = vframe.data;
+			in_pkt.size = vframe.len;
 			//ERROR("1");
 			int ret = avcodec_decode_video2(codec_ctx_in, raw_frame, &have_frame, &in_pkt);
 			if (ret && have_frame)
@@ -378,7 +328,6 @@ int main()
 				}
 			}
 
-			complete_frame_size = 0;
 		}
 	}
 

@@ -21,7 +21,7 @@ int main()
 {
 	rcplog_init(LOG_MODE_STDERR, LOG_INFO, NULL);
 
-	rcp_connect("174.0.0.224");
+	rcp_connect("10.25.25.223");
 
 	rcp_session session;
 	memset(&session, 0, sizeof(rcp_session));
@@ -71,21 +71,18 @@ int main()
 	socklen_t slen = sizeof(si_remote);
 	unsigned char buffer[1500];
 
-	nal_packet np[2];
-	np[0].size = 0;
-	np[1].size = 0;
+	rtp_merge_desc mdesc;
+	rtp_init(RTP_PAYLOAD_TYPE_H264, &mdesc);
+	video_frame vframe;
+
 	while (1)
 	{
 		int num = recvfrom(con.stream_socket, buffer, 1500, 0, (struct sockaddr*)&si_remote, &slen);
 
-		int count = defrag(np, buffer, num);
-		for (int i=0; i<count; i++)
-		{
-			fwrite(NAL_START_FRAME, NAL_START_FRAME_LENGTH, 1, stdout);
-			fwrite(&np[i].nh, 1, 1, stdout);
-			fwrite(np[i].payload, np[i].size, 1, stdout);
-			np[i].size = 0;
-		}
+		rtp_push_frame(buffer, num, &mdesc);
+
+		if (rtp_pop_frame(&vframe, &mdesc) == 0)
+			fwrite(vframe.data, vframe.len, 1, stdout);
 		//char cmd[100];
 		//sprintf(cmd, "kill %d", res);
 		//system(cmd);

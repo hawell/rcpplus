@@ -58,12 +58,6 @@ typedef struct {
 #define MAX_NAL_FRAME_LENGTH	200000
 
 typedef struct {
-	nal_unit_header nh;
-	int size;
-	unsigned char payload[MAX_NAL_FRAME_LENGTH];
-} nal_packet;
-
-typedef struct {
 	unsigned char type:5;
 	unsigned char r:1;
 	unsigned char e:1;
@@ -77,8 +71,6 @@ typedef struct {
 	fu_header fuh;
 	unsigned char payload[MAX_NAL_FRAME_LENGTH];
 } fu_a_packet;
-
-int defrag(nal_packet* np, void* buffer, int len);
 
 /**************************/
 
@@ -112,4 +104,32 @@ typedef struct {
 	unsigned char f:1;
 
 } h263_b;
+
+#define MAX_FRAME_LENGTH	100000
+
+#define RTP_PAYLOAD_TYPE_H263	1
+#define RTP_PAYLOAD_TYPE_H264	2
+
+typedef struct rtp_merge_desc {
+	int type;
+	unsigned char data[MAX_FRAME_LENGTH];
+	int len;
+	int timestamp;
+	int frame_complete;
+	int (*append)(unsigned char* fragment, int frag_len, struct rtp_merge_desc* mdesc);
+
+	int ebit;
+} rtp_merge_desc;
+
+typedef struct {
+	unsigned char* data;
+	int len;
+	int timestamp;
+} video_frame;
+
+int rtp_init(int type, rtp_merge_desc* mdesc);
+
+int rtp_push_frame(unsigned char* frame, int frame_size, rtp_merge_desc* mdesc);
+int rtp_pop_frame(video_frame* frame, rtp_merge_desc* mdesc);
+
 #endif /* RTP_H_ */
