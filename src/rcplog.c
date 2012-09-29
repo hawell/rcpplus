@@ -30,6 +30,7 @@ static int min_level = LOG_WARNING;
 static FILE* log_file;
 static char log_str[2048];
 static const char log_prestr[] = "rcpplus";
+static const char level_str[][10] = {"EMERG", "ALERT", "CRIT", "ERR", "WARN", "NOTICE", "INFO", "DEBUG"};
 
 int rcplog_init(int mode, int level, void* param)
 {
@@ -75,9 +76,10 @@ void rcplog(int level, const char* format, ...)
 	vsprintf(log_str, format, args);
 
 	if (log_mode == LOG_MODE_SYSLOG)
-		syslog(level, "%s", log_str);
+		syslog(level, "%s %s", level_str[level], log_str);
 	else
 	{
+		fprintf(log_file, "%s ", level_str[level]);
 		fputs(log_str, log_file);
 		fputs("\n", log_file);
 	}
