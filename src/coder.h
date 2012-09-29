@@ -42,7 +42,7 @@
 #define RCP_VIDEO_RESOLUTION_QVGA		0x0200
 #define RCP_VIDEO_RESOLUTION_VGA		0x0400
 #define RCP_VIDEO_RESOLUTION_HD720		0x0800
-#define RCP_VIDEO_RESOLUTION_HD_1080	0x1000
+#define RCP_VIDEO_RESOLUTION_HD1080		0x1000
 
 #define RCP_AUDIO_CODING_G711		0x0001
 #define RCP_AUDIO_CODING_MPEG2P		0x8000
@@ -55,6 +55,9 @@
 
 #define RCP_COMMAND_CONF_RCP_CODER_LIST					0xff11
 #define RCP_COMMAND_CONF_CODER_VIDEO_OPERATION_MODE			0x0a9c
+
+#define RCP_CODER_MODE_H263	1
+#define RCP_CODER_MODE_H264	2
 
 typedef struct rcp_coder_tag {
 	unsigned char media_type;		// video, audio or data

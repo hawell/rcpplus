@@ -127,7 +127,11 @@ int set_coder_video_operation_mode(rcp_session* session, int coder, int mode)
 	if (res == -1)
 		goto error;
 
-	return ntohl(*(unsigned int*)mode_resp.payload);
+	res = ntohl(*(unsigned int*)mode_resp.payload);
+	if (res != mode)
+		goto error;
+
+	return res;
 
 error:
 	ERROR("set_coder_video_operation_mode()");
@@ -234,7 +238,7 @@ static char* coder_codparam_str(int codparam, int media_type)
 				case RCP_VIDEO_RESOLUTION_QVGA:return "QVGA";
 				case RCP_VIDEO_RESOLUTION_VGA:return "VGA";
 				case RCP_VIDEO_RESOLUTION_HD720:return "HD720";
-				case RCP_VIDEO_RESOLUTION_HD_1080:return "HD1080";
+				case RCP_VIDEO_RESOLUTION_HD1080:return "HD1080";
 			}
 		break;
 
