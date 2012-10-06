@@ -28,6 +28,80 @@
 #include "rtp.h"
 #include "rcplog.h"
 
+#define RTP_HEADER_LENGTH_MANDATORY		12
+
+typedef struct {
+    unsigned char cc:4;         // CSRC count
+    unsigned char x:1;          // header extension flag
+    unsigned char p:1;          // padding flag
+    unsigned char version:2;    // protocol version
+    unsigned char pt:7;         // payload type
+    unsigned char m:1;          // marker bit
+    unsigned short seq;         // sequence number, network order
+    unsigned int timestamp;     // timestamp, network order
+    unsigned int ssrc;          // synchronization source, network order
+    unsigned int csrc[];        // optional CSRC list
+} rtp_header;
+
+/****** h264 payload ******/
+
+typedef struct {
+	unsigned char type:5;
+	unsigned char nri:2;
+	unsigned char f:1;
+} nal_unit_header;
+
+#define MAX_NAL_FRAME_LENGTH	200000
+
+typedef struct {
+	unsigned char type:5;
+	unsigned char r:1;
+	unsigned char e:1;
+	unsigned char s:1;
+} fu_header;
+
+#define FU_A_HEADER_LENGTH	2
+
+typedef struct {
+	nal_unit_header nh;
+	fu_header fuh;
+	unsigned char payload[MAX_NAL_FRAME_LENGTH];
+} fu_a_packet;
+
+/**************************/
+
+typedef struct {
+	unsigned char ebit:3;
+	unsigned char sbit:3;
+	unsigned char p:1;
+	unsigned char f:1;
+} h263_header;
+
+typedef struct {
+	unsigned int tr:8;
+	unsigned int trb:3;
+	unsigned int dbq:2;
+	unsigned int r:4;
+	unsigned int a:1;
+	unsigned int s:1;
+	unsigned int u:1;
+	unsigned int i:1;
+	unsigned int src:3;
+	unsigned int ebit:3;
+	unsigned int sbit:3;
+	unsigned int p:1;
+	unsigned int f:1;
+} h263_a;
+
+typedef struct {
+	unsigned char ebit:3;
+	unsigned char sbit:3;
+	unsigned char p:1;
+	unsigned char f:1;
+
+} h263_b;
+
+#define NAL_START_FRAME_LENGTH	3
 unsigned char NAL_START_FRAME[] = {0x00, 0x00, 0x01};
 
 unsigned char sbit_mask[] = {0xFF, 0x7F, 0x3F, 0x1F, 0x0F, 0x07, 0x03, 0x01, 0x00};
@@ -115,9 +189,19 @@ int append_stap_a(unsigned char* data, rtp_merge_desc* mdesc)
 
 static int append_h263(unsigned char *fragment, int fragment_len, rtp_merge_desc* mdesc)
 {
+	static int ebit = 0;
+
 	rtp_header *rtp_hdr = (rtp_header*)fragment;
 	int rtp_header_len = RTP_HEADER_LENGTH_MANDATORY + rtp_hdr->cc*4;
-	DEBUG("m=%d pt=%d hlen=%d len=%d seq=%d ts=%u", rtp_hdr->m, rtp_hdr->pt, rtp_header_len, fragment_len, rtp_hdr->seq, rtp_hdr->timestamp);
+	INFO("m=%d pt=%d hlen=%d len=%d seq=%d ts=%u", rtp_hdr->m, rtp_hdr->pt, rtp_header_len, fragment_len, ntohs(rtp_hdr->seq), ntohl(rtp_hdr->timestamp));
+
+	if (mdesc->frame_error)
+	{
+		mdesc->len = 0;
+		if (rtp_hdr->m)
+			mdesc->frame_error = 0;
+		return 0;
+	}
 
 	h263_header *h263_hdr = (h263_header*)(fragment+rtp_header_len);
 	DEBUG("sbit=%d ebit=%d", h263_hdr->sbit, h263_hdr->ebit);
@@ -140,11 +224,17 @@ static int append_h263(unsigned char *fragment, int fragment_len, rtp_merge_desc
 	}
 	//fwrite(pos, len, 1, stdout);
 
-	DEBUG("%d %d", mdesc->ebit, h263_hdr->sbit);
-	assert((mdesc->ebit + h263_hdr->sbit) % 8 == 0);
+	DEBUG("%d %d", ebit, h263_hdr->sbit);
+	//assert((mdesc->ebit + h263_hdr->sbit) % 8 == 0);
+	if (((ebit + h263_hdr->sbit) % 8 != 0))
+	{
+		mdesc->frame_error = 1;
+		ERROR("malformed frame received");
+		return 0;
+	}
 	if (h263_hdr->sbit)
 	{
-		mdesc->data[mdesc->len - 1] &= ebit_mask[mdesc->ebit];
+		mdesc->data[mdesc->len - 1] &= ebit_mask[ebit];
 		pos[0] &= sbit_mask[h263_hdr->sbit];
 		mdesc->data[mdesc->len - 1] |= pos[0];
 		pos++;
@@ -152,7 +242,7 @@ static int append_h263(unsigned char *fragment, int fragment_len, rtp_merge_desc
 	}
 	memcpy(mdesc->data+mdesc->len, pos, len);
 	mdesc->len += len;
-	mdesc->ebit = h263_hdr->ebit;
+	ebit = h263_hdr->ebit;
 
 	if (rtp_hdr->m == 1) // end of frame
 	{
@@ -207,7 +297,7 @@ int rtp_init(int type, rtp_merge_desc* mdesc)
 	mdesc->len = 0;
 	mdesc->type = type;
 	mdesc->frame_complete = 0;
-	mdesc->ebit = 0;
+	mdesc->frame_error = 0;
 	switch (type)
 	{
 		case RTP_PAYLOAD_TYPE_H263:
@@ -248,7 +338,7 @@ int rtp_pop_frame(video_frame* frame, rtp_merge_desc* mdesc)
 		frame->timestamp = mdesc->timestamp;
 		mdesc->frame_complete = 0;
 		mdesc->len = 0;
-		mdesc->ebit = 0;
+		//mdesc->ebit = 0;
 
 		return 0;
 	}

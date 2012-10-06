@@ -56,9 +56,15 @@ void save_frame(AVFrame *frame, int width, int height)
 	fclose(f);
 }
 
-int main()
+int main(int argc, char* argv[])
 {
 	rcplog_init(LOG_MODE_STDERR, LOG_INFO, NULL);
+
+	if (argc < 2)
+	{
+		INFO("transcode ip");
+		return -1;
+	}
 
 	av_register_all();
 
@@ -237,7 +243,7 @@ int main()
 	av_dump_format(ofc, 0, "stdout", 1);
 
 
-	rcp_connect("10.25.25.223");
+	rcp_connect(argv[1]);
 
 	rcp_session session;
 	memset(&session, 0, sizeof(rcp_session));
