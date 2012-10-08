@@ -32,11 +32,11 @@ int main()
 	get_coder_list(&session, RCP_CODER_DECODER, RCP_MEDIA_TYPE_VIDEO, &encoders);
 	for (int i=0; i<encoders.count; i++)
 	{
-		INFO("%x %x %x %x %x", encoders.coder[i].number, encoders.coder[i].caps, encoders.coder[i].current_cap, encoders.coder[i].param_caps, encoders.coder[i].current_param);
-		log_coder(LOG_INFO, &encoders.coder[i]);
 		int mode;
 		get_coder_video_operation_mode(&session, encoders.coder[i].number, &mode);
 		INFO("video mode is %d", mode);
+		INFO("%x %x %x %x %x", encoders.coder[i].number, encoders.coder[i].caps, encoders.coder[i].current_cap, encoders.coder[i].param_caps, encoders.coder[i].current_param);
+		log_coder(LOG_INFO, &encoders.coder[i]);
 
 		mode = (mode==1)?2:1;
 		mode = set_coder_video_operation_mode(&session, encoders.coder[i].number, mode);

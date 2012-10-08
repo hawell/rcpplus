@@ -289,10 +289,6 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	struct sockaddr_in si_remote;
-	socklen_t slen = sizeof(si_remote);
-	unsigned char buffer[1500];
-
 	rtp_merge_desc mdesc;
 	rtp_init(RTP_PAYLOAD_TYPE_H263, &mdesc);
 	video_frame vframe;
@@ -300,9 +296,12 @@ int main(int argc, char* argv[])
 	time_t end_time = time(NULL) + 10;
 	while (time(NULL) < end_time)
 	{
+/*
 		int num = recvfrom(con.stream_socket, buffer, 1500, 0, (struct sockaddr*)&si_remote, &slen);
 
 		rtp_push_frame(buffer, num, &mdesc);
+*/
+		rtp_recv(con.stream_socket, &mdesc);
 
 		if (rtp_pop_frame(&vframe, &mdesc) == 0)
 		{

@@ -30,11 +30,22 @@
 #define RTP_H_
 
 #define MAX_FRAME_LENGTH	200000
+#define MTU_LENGTH			1500
+#define FRAGMENT_COUNT		30
 
 #define RTP_PAYLOAD_TYPE_H263	1
 #define RTP_PAYLOAD_TYPE_H264	2
 
 typedef struct rtp_merge_desc {
+	unsigned char fragment[FRAGMENT_COUNT][MTU_LENGTH];
+	int fragment_size[FRAGMENT_COUNT];
+
+	int fragments_queue[FRAGMENT_COUNT];
+	int queue_start, queue_end, queue_size;
+
+	int fragments_heap[FRAGMENT_COUNT];
+	int heap_size;
+
 	int type;
 	unsigned char data[MAX_FRAME_LENGTH];
 	int len;
@@ -53,7 +64,8 @@ typedef struct {
 
 int rtp_init(int type, rtp_merge_desc* mdesc);
 
-int rtp_push_frame(unsigned char* frame, int frame_size, rtp_merge_desc* mdesc);
+int rtp_recv(int socket, rtp_merge_desc* mdesc);
+
 int rtp_pop_frame(video_frame* frame, rtp_merge_desc* mdesc);
 
 #endif /* RTP_H_ */

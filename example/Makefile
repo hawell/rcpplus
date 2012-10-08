@@ -7,11 +7,15 @@ LIB = ../$(LIBNAME)
 
 FFMPEG = /home/arash/Programs/ffmpeg
 FFMPEGLIB = \
+		$(FFMPEG)/libavdevice/libavdevice.a \
 		$(FFMPEG)/libavformat/libavformat.a \
+		$(FFMPEG)/libavfilter/libavfilter.a \
 		$(FFMPEG)/libavcodec/libavcodec.a \
-		$(FFMPEG)/libavutil/libavutil.a \
+		$(FFMPEG)/libswresample/libswresample.a \
 		$(FFMPEG)/libswscale/libswscale.a \
-		$(FFMPEG)/libavfilter/libavfilter.a -lz -lm -lpthread -lmp3lame -lfaac
+		$(FFMPEG)/libavutil/libavutil.a \
+		$(FFMPEG)/libpostproc/libpostproc.a \
+		 -lz -lm -lpthread -lmp3lame -lfaac
 		
 FFMPEGINC = -I$(FFMPEG)
 

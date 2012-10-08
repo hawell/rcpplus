@@ -30,7 +30,7 @@ static int min_level = LOG_WARNING;
 static FILE* log_file;
 static char log_str[2048];
 static const char log_prestr[] = "rcpplus";
-static const char level_str[][10] = {"EMERG", "ALERT", "CRIT", "ERR", "WARN", "NOTICE", "INFO", "DEBUG"};
+static const char level_str[][10] = {"[EMERG]", "[ALERT]", "[CRIT]", "[ERR]", "[WARN]", "[NOTICE]", "[INFO]", "[DEBUG]"};
 
 int rcplog_init(int mode, int level, void* param)
 {

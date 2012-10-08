@@ -23,6 +23,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
+#include <limits.h>
 #include <arpa/inet.h>
 
 #include "rtp.h"
@@ -102,12 +103,126 @@ typedef struct {
 } h263_b;
 
 #define NAL_START_FRAME_LENGTH	3
-unsigned char NAL_START_FRAME[] = {0x00, 0x00, 0x01};
+static unsigned char NAL_START_FRAME[] = {0x00, 0x00, 0x01};
 
-unsigned char sbit_mask[] = {0xFF, 0x7F, 0x3F, 0x1F, 0x0F, 0x07, 0x03, 0x01, 0x00};
-unsigned char ebit_mask[] = {0xFF, 0xFE, 0xFC, 0xF8, 0xF0, 0xE0, 0xC0, 0x80, 0x00};
+static unsigned char sbit_mask[] = {0xFF, 0x7F, 0x3F, 0x1F, 0x0F, 0x07, 0x03, 0x01, 0x00};
+static unsigned char ebit_mask[] = {0xFF, 0xFE, 0xFC, 0xF8, 0xF0, 0xE0, 0xC0, 0x80, 0x00};
 
-int append_fu_a(unsigned char* data, int len, rtp_merge_desc* mdesc)
+int seq_cmp(int x, int y, rtp_merge_desc* mdesc)
+{
+	if (x == -INT_MAX)
+		return -1;
+
+	int t1 = ntohl(((rtp_header*)mdesc->fragment[x])->timestamp);
+	int t2 = ntohl(((rtp_header*)mdesc->fragment[y])->timestamp);
+
+	int s1 = ntohs(((rtp_header*)mdesc->fragment[x])->seq);
+	int s2 = ntohs(((rtp_header*)mdesc->fragment[y])->seq);
+
+	if (s1 < 100 && s2 > 65500)
+		return 1;
+	if (s2 < 100 && s1 > 65500)
+		return -1;
+
+	if (t1 > t2)
+		return 1;
+	else if (t1 < t2)
+		return -1;
+	else
+	{
+		if (s1 > s2)
+			return 1;
+		else if (s1 < s2)
+			return -1;
+	}
+
+	return 0;
+}
+
+static void heap_init(rtp_merge_desc* mdesc)
+{
+	mdesc->heap_size = 0;
+	mdesc->fragments_heap[0] = -INT_MAX;
+}
+
+static int heap_push(rtp_merge_desc* mdesc, int x)
+{
+	if (mdesc->heap_size == FRAGMENT_COUNT)
+		return -1;
+
+	mdesc->heap_size++;
+	mdesc->fragments_heap[mdesc->heap_size] = x;
+	int now = mdesc->heap_size;
+	while (seq_cmp(mdesc->fragments_heap[now/2], x, mdesc) > 0)
+	{
+		mdesc->fragments_heap[now] = mdesc->fragments_heap[now/2];
+		now /= 2;
+	}
+	mdesc->fragments_heap[now] = x;
+
+	return 0;
+}
+
+static int heap_pop(rtp_merge_desc* mdesc)
+{
+	if (mdesc->heap_size == 0)
+		return -1;
+
+	int min, last, child, now;
+	min = mdesc->fragments_heap[1];
+	last = mdesc->fragments_heap[mdesc->heap_size--];
+
+	for(now = 1; now*2 <= mdesc->heap_size; now = child)
+	{
+		child = now*2;
+		if(child != mdesc->heap_size && seq_cmp(mdesc->fragments_heap[child+1], mdesc->fragments_heap[child], mdesc) < 0 )
+				child++;
+
+		if( seq_cmp(last, mdesc->fragments_heap[child], mdesc) > 0)
+				mdesc->fragments_heap[now] = mdesc->fragments_heap[child];
+		else
+			break;
+	}
+
+	mdesc->fragments_heap[now] = last;
+
+	return min;
+}
+
+static void queue_init(rtp_merge_desc* mdesc)
+{
+	for (int i=0; i<FRAGMENT_COUNT; i++)
+		mdesc->fragments_queue[i] = i;
+	mdesc->queue_start = 0;
+	mdesc->queue_end = FRAGMENT_COUNT-1;
+	mdesc->queue_size = FRAGMENT_COUNT;
+}
+
+static int queue_push(rtp_merge_desc* mdesc, int x)
+{
+	if (mdesc->queue_size == FRAGMENT_COUNT)
+		return -1;
+
+	mdesc->fragments_queue[mdesc->queue_end] = x;
+	mdesc->queue_size++;
+	mdesc->queue_end = (mdesc->queue_end+1) % FRAGMENT_COUNT;
+
+	return 0;
+}
+
+static int queue_pop(rtp_merge_desc* mdesc)
+{
+	if (mdesc->queue_size == 0)
+		return -1;
+
+	int ret = mdesc->queue_start;
+	mdesc->queue_start = (mdesc->queue_start+1) % FRAGMENT_COUNT;
+	mdesc->queue_size--;
+
+	return ret;
+}
+
+static int append_fu_a(unsigned char* data, int len, rtp_merge_desc* mdesc)
 {
 	fu_a_packet *fp = (fu_a_packet*)data;
 	if (fp->fuh.s == 1)
@@ -161,7 +276,7 @@ int append_fu_a(unsigned char* data, int len, rtp_merge_desc* mdesc)
 	return 0;
 }
 
-int append_stap_a(unsigned char* data, rtp_merge_desc* mdesc)
+static int append_stap_a(unsigned char* data, rtp_merge_desc* mdesc)
 {
 	assert(mdesc->len == 0);
 	memcpy(mdesc->data + mdesc->len, NAL_START_FRAME, 3);
@@ -193,13 +308,17 @@ static int append_h263(unsigned char *fragment, int fragment_len, rtp_merge_desc
 
 	rtp_header *rtp_hdr = (rtp_header*)fragment;
 	int rtp_header_len = RTP_HEADER_LENGTH_MANDATORY + rtp_hdr->cc*4;
-	INFO("m=%d pt=%d hlen=%d len=%d seq=%d ts=%u", rtp_hdr->m, rtp_hdr->pt, rtp_header_len, fragment_len, ntohs(rtp_hdr->seq), ntohl(rtp_hdr->timestamp));
+	DEBUG("m=%d pt=%d hlen=%d len=%d seq=%d ts=%u", rtp_hdr->m, rtp_hdr->pt, rtp_header_len, fragment_len, ntohs(rtp_hdr->seq), ntohl(rtp_hdr->timestamp));
 
 	if (mdesc->frame_error)
 	{
+		WARNING("frame skipped");
 		mdesc->len = 0;
 		if (rtp_hdr->m)
+		{
 			mdesc->frame_error = 0;
+			ebit = 0;
+		}
 		return 0;
 	}
 
@@ -229,7 +348,7 @@ static int append_h263(unsigned char *fragment, int fragment_len, rtp_merge_desc
 	if (((ebit + h263_hdr->sbit) % 8 != 0))
 	{
 		mdesc->frame_error = 1;
-		ERROR("malformed frame received");
+		ERROR("malformed frame received sbit=%d ebit=%d", h263_hdr->sbit, ebit);
 		return 0;
 	}
 	if (h263_hdr->sbit)
@@ -314,11 +433,32 @@ int rtp_init(int type, rtp_merge_desc* mdesc)
 		break;
 	}
 
+	queue_init(mdesc);
+	heap_init(mdesc);
+
 	return 0;
 }
 
-int rtp_push_frame(unsigned char* frame, int frame_size, rtp_merge_desc* mdesc)
+int rtp_recv(int socket, rtp_merge_desc* mdesc)
 {
+	int qp = queue_pop(mdesc);
+	if (qp == -1)
+		ERROR("cannot pop from queue");
+
+	mdesc->fragment_size[qp] = recvfrom(socket, mdesc->fragment[qp], MTU_LENGTH, 0, NULL, NULL);
+
+	int res = heap_push(mdesc, qp);
+	if (res == -1)
+		ERROR("cannot push to heap");
+
+	int hp = heap_pop(mdesc);
+	if (hp == -1)
+		ERROR("cannot pop from heap");
+
+	res = queue_push(mdesc, hp);
+	if (res == -1)
+		ERROR("cannot push to queue");
+
 	if (mdesc->frame_complete)
 	{
 		WARNING("overwriting existing frame");
@@ -326,7 +466,7 @@ int rtp_push_frame(unsigned char* frame, int frame_size, rtp_merge_desc* mdesc)
 		mdesc->frame_complete = 0;
 	}
 
-	return mdesc->append(frame, frame_size, mdesc);
+	return mdesc->append(mdesc->fragment[hp], mdesc->fragment_size[hp], mdesc);
 }
 
 int rtp_pop_frame(video_frame* frame, rtp_merge_desc* mdesc)
