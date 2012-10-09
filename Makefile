@@ -5,6 +5,7 @@ PATCH = 0
 PREFIX = /usr/local
 LIBNAME = lib$(NAME)-$(MAJOR).$(MINOR).$(PATCH).a
 export LIBNAME
+export PREFIX
 
 .PHONY: src example
 
@@ -17,5 +18,5 @@ clean:
 	$(MAKE) -C example clean
 	
 install:
-	for i in `ls src/*.h`; do install -D -m 644 src/$i $(PREFIX)/include/rcpplus/$i; done
+	$(MAKE) -C src install
 	install -D -m 644 $(LIBNAME) $(PREFIX)/lib/$(LIBNAME) 
