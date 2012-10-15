@@ -26,21 +26,17 @@
 #include "coder.h"
 #include "rcpdefs.h"
 #include "rcplog.h"
+#include "rcpcommand.h"
 
 int get_coder_preset(rcp_session* session, int coder)
 {
-	rcp_packet mp4_req;
+	rcp_packet mp4_req, mp4_resp;
 	int res;
 
 	init_rcp_header(&mp4_req, session, RCP_COMMAND_CONF_MPEG4_CURRENT_PARAMS, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_T_DWORD);
 	mp4_req.numeric_descriptor = coder;
 
-	res = rcp_send(&mp4_req);
-	if (res == -1)
-		goto error;
-
-	rcp_packet mp4_resp;
-	res = rcp_recv(&mp4_resp);
+	res = rcp_command(&mp4_req, &mp4_resp);
 	if (res == -1)
 		goto error;
 
@@ -54,7 +50,7 @@ error:
 
 int set_coder_preset(rcp_session* session, int coder, int preset)
 {
-	rcp_packet preset_req;
+	rcp_packet preset_req, preset_resp;
 	int res;
 
 	init_rcp_header(&preset_req, session, RCP_COMMAND_CONF_MPEG4_CURRENT_PARAMS, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_T_DWORD);
@@ -64,12 +60,7 @@ int set_coder_preset(rcp_session* session, int coder, int preset)
 	memcpy(preset_req.payload, &tmp32, 4);
 	preset_req.payload_length = 4;
 
-	res = rcp_send(&preset_req);
-	if (res == -1)
-		goto error;
-
-	rcp_packet preset_resp;
-	res = rcp_recv(&preset_resp);
+	res = rcp_command(&preset_req, &preset_resp);
 	if (res == -1)
 		goto error;
 
@@ -82,18 +73,13 @@ error:
 
 int get_coder_video_operation_mode(rcp_session* session, int coder, int *mode)
 {
-	rcp_packet mode_req;
+	rcp_packet mode_req, mode_resp;
 	int res;
 
 	init_rcp_header(&mode_req, session, RCP_COMMAND_CONF_CODER_VIDEO_OPERATION_MODE, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_T_DWORD);
 	mode_req.numeric_descriptor = coder;
 
-	res = rcp_send(&mode_req);
-	if (res == -1)
-		goto error;
-
-	rcp_packet mode_resp;
-	res = rcp_recv(&mode_resp);
+	res = rcp_command(&mode_req, &mode_resp);
 	if (res == -1)
 		goto error;
 
@@ -108,7 +94,7 @@ error:
 
 int set_coder_video_operation_mode(rcp_session* session, int coder, int mode)
 {
-	rcp_packet mode_req;
+	rcp_packet mode_req, mode_resp;
 	int res;
 
 	init_rcp_header(&mode_req, session, RCP_COMMAND_CONF_CODER_VIDEO_OPERATION_MODE, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_T_DWORD);
@@ -118,12 +104,7 @@ int set_coder_video_operation_mode(rcp_session* session, int coder, int mode)
 	memcpy(mode_req.payload, &tmp32, 4);
 	mode_req.payload_length = 4;
 
-	res = rcp_send(&mode_req);
-	if (res == -1)
-		goto error;
-
-	rcp_packet mode_resp;
-	res = rcp_recv(&mode_resp);
+	res = rcp_command(&mode_req, &mode_resp);
 	if (res == -1)
 		goto error;
 
@@ -142,7 +123,7 @@ error:
 
 int get_coder_list(rcp_session* session, int coder_type, int media_type, rcp_coder_list* coder_list)
 {
-	rcp_packet coders_req;
+	rcp_packet coders_req, coders_resp;
 	int res;
 
 	init_rcp_header(&coders_req, session, RCP_COMMAND_CONF_RCP_CODER_LIST, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_OCTET);
@@ -153,12 +134,7 @@ int get_coder_list(rcp_session* session, int coder_type, int media_type, rcp_cod
 	coders_req.payload[2] = 1;
 	coders_req.payload_length = 3;
 
-	res = rcp_send(&coders_req);
-	if (res == -1)
-		goto error;
-
-	rcp_packet coders_resp;
-	res = rcp_recv(&coders_resp);
+	res = rcp_command(&coders_req, &coders_resp);
 	if (res == -1)
 		goto error;
 

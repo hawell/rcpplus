@@ -76,9 +76,6 @@ int stream_connect_tcp();
 
 int initiate_tcp_stream(rcp_session* session, struct rcp_coder_tag* coder);
 
-int rcp_send(rcp_packet* hdr);
-int rcp_recv(rcp_packet* hdr);
-
 typedef struct {
 	unsigned char encapsulation_protocol;
 	unsigned char substitude_connection;

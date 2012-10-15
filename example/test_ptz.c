@@ -30,7 +30,7 @@ int main()
 	if (ptz_available(&session) == 0)
 	{
 		INFO("ptz is not available for this camera");
-		exit(0);
+		return 0;
 	}
 
 	move_right(&session, 5);

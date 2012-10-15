@@ -26,6 +26,7 @@
 #include "ptz.h"
 #include "rcpdefs.h"
 #include "rcplog.h"
+#include "rcpcommand.h"
 
 typedef struct {
 	unsigned char option;
@@ -47,7 +48,7 @@ static unsigned char checksum(unsigned char* data, int len)
 
 static int send_osrd(rcp_session* session, int lease_time, int opcode, unsigned char* data, int data_len)
 {
-	rcp_packet osrd_req;
+	rcp_packet osrd_req, osrd_resp;
 	int res;
 
 	init_rcp_header(&osrd_req, session, RCP_COMMAND_CONF_RCP_TRANSFER_TRANSPARENT_DATA, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_P_OCTET);
@@ -72,12 +73,7 @@ static int send_osrd(rcp_session* session, int lease_time, int opcode, unsigned 
 
 	osrd_req.payload_length = 8 + data_len + 1;
 
-	res = rcp_send(&osrd_req);
-	if (res == -1)
-		goto error;
-
-	rcp_packet osrd_resp;
-	res = rcp_recv(&osrd_resp);
+	res = rcp_command(&osrd_req, &osrd_resp);
 	if (res == -1)
 		goto error;
 
@@ -90,17 +86,12 @@ error:
 
 int ptz_available(rcp_session* session)
 {
-	rcp_packet ptz_req;
+	rcp_packet ptz_req, ptz_resp;
 	int res;
 
 	init_rcp_header(&ptz_req, session, RCP_COMMAND_CONF_PTZ_CONTROLLER_AVAILABLE, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_F_FLAG);
 
-	res = rcp_send(&ptz_req);
-	if (res == -1)
-		goto error;
-
-	rcp_packet ptz_resp;
-	res = rcp_recv(&ptz_resp);
+	res = rcp_command(&ptz_req, &ptz_resp);
 	if (res == -1)
 		goto error;
 

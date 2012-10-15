@@ -25,6 +25,8 @@
 
 #include "rcpplus.h"
 
+int rcp_command(rcp_packet* req, rcp_packet* rsp);
+
 int get_md5_random(unsigned char* md5);
 
 int client_register(int type, int mode, rcp_session* session);
@@ -34,6 +36,5 @@ int client_connect(rcp_session* session, int method, int media, int flags, rcp_m
 int get_capability_list(rcp_session* session);
 
 int keep_alive(rcp_session* session);
-
 
 #endif /* RCPCOMMAND_H_ */

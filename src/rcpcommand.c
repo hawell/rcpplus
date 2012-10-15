@@ -24,6 +24,7 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include "rcpcommand.h"
 #include "rcpdefs.h"
@@ -112,7 +113,84 @@ static int generate_passphrase(int mode, int user_level, char* password, char* p
 	return 0;
 }
 
-static int rcp_command(rcp_packet* req, rcp_packet* rsp)
+static int write_TPKT_header(unsigned char* buffer, int len)
+{
+	buffer[0] = TPKT_VERSION;
+	buffer[1] = 0;
+	buffer[2] = len / 0x100;
+	buffer[3] = len % 0x100;
+
+	return 0;
+}
+
+static int rcp_send(rcp_packet* hdr)
+{
+	unsigned char buffer[RCP_MAX_PACKET_LEN];
+
+	int len = hdr->payload_length + RCP_HEADER_LENGTH + TPKT_HEADER_LENGTH;
+
+	write_TPKT_header(buffer, len);
+
+	write_rcp_header(buffer+TPKT_HEADER_LENGTH, hdr);
+
+	memcpy(buffer + RCP_HEADER_LENGTH + TPKT_HEADER_LENGTH, hdr->payload, hdr->payload_length);
+
+	DEBUG("sending %d bytes...", len);
+	log_hex(RCP_LOG_DEBUG, "data", buffer, len);
+	int res = send(con.control_socket, buffer, len, 0);
+	DEBUG("%d sent", res);
+	if (res == -1)
+		ERROR("unable to send packet: %d - %s\n", errno, strerror(errno));
+
+	return res;
+}
+
+static int rcp_recv(rcp_packet* hdr)
+{
+	int res;
+	int len;
+	int received;
+
+	unsigned char buffer[RCP_MAX_PACKET_LEN];
+
+	res = recv(con.control_socket, buffer, TPKT_HEADER_LENGTH, 0);
+	if (res == -1)
+		goto error;
+
+	len = ntohs(*(unsigned short*)(buffer+2));
+	len -= TPKT_HEADER_LENGTH;
+
+	received = 0;
+	while (received < len)
+	{
+		res = recv(con.control_socket, buffer+received, len-received, 0);
+		if (res == -1)
+			goto error;
+		DEBUG("%d bytes received", res);
+		received += res;
+	}
+
+	log_hex(RCP_LOG_DEBUG, "received", buffer, received);
+
+	read_rcp_header(buffer, hdr);
+
+	memcpy(hdr->payload, buffer+RCP_HEADER_LENGTH, hdr->payload_length);
+
+	if (hdr->action == RCP_PACKET_ACTION_ERROR)
+	{
+		ERROR(error_str(hdr->payload[0]));
+		return -1;
+	}
+
+	return len;
+
+error:
+	ERROR("rcp_recv: %d - %s\n", errno, strerror(errno));
+	return -1;
+}
+
+
+int rcp_command(rcp_packet* req, rcp_packet* rsp)
 {
 	int res = rcp_send(req);
 	if (res == -1)

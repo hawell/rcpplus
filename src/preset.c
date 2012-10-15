@@ -25,6 +25,7 @@
 
 #include "preset.h"
 #include "rcplog.h"
+#include "rcpcommand.h"
 
 int get_preset(rcp_session* session, int preset_id, rcp_mpeg4_preset* preset, int basic)
 {
@@ -92,7 +93,7 @@ int set_preset(rcp_session* session, int preset_id, rcp_mpeg4_preset* preset, in
 
 int preset_set_default(rcp_session* session, int preset_id)
 {
-	rcp_packet def_req;
+	rcp_packet def_req, def_resp;
 	int res;
 
 	init_rcp_header(&def_req, session, RCP_COMMAND_CONF_MPEG4_DEFAULTS, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_F_FLAG);
@@ -100,16 +101,9 @@ int preset_set_default(rcp_session* session, int preset_id)
 	def_req.payload[0] = 0;
 	def_req.payload_length = 1;
 
-	res = rcp_send(&def_req);
+	res = rcp_command(&def_req, &def_resp);
 	if (res == -1)
 		goto error;
-
-	rcp_packet def_resp;
-	res = rcp_recv(&def_resp);
-	if (res == -1)
-		goto error;
-
-	return 0;
 
 error:
 	ERROR("preset_set_default()");
@@ -118,18 +112,13 @@ error:
 
 int get_preset_name(rcp_session* session, int preset_id, char* name)
 {
-	rcp_packet pn_req;
+	rcp_packet pn_req, pn_resp;
 	int res;
 
 	init_rcp_header(&pn_req, session, RCP_COMMAND_CONF_MPEG4_NAME, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_STRING);
 	pn_req.numeric_descriptor = preset_id;
 
-	res = rcp_send(&pn_req);
-	if (res == -1)
-		goto error;
-
-	rcp_packet pn_resp;
-	res = rcp_recv(&pn_resp);
+	res = rcp_command(&pn_req, &pn_resp);
 	if (res == -1)
 		goto error;
 
@@ -145,7 +134,7 @@ error:
 
 int set_preset_name(rcp_session* session, int preset_id, char* name)
 {
-	rcp_packet pn_req;
+	rcp_packet pn_req, pn_resp;
 	int res;
 
 	init_rcp_header(&pn_req, session, RCP_COMMAND_CONF_MPEG4_NAME, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_P_STRING);
@@ -154,12 +143,7 @@ int set_preset_name(rcp_session* session, int preset_id, char* name)
 	pn_req.payload_length = strlen(name) + 1;
 	memcpy(pn_req.payload, name, pn_req.payload_length);
 
-	res = rcp_send(&pn_req);
-	if (res == -1)
-		goto error;
-
-	rcp_packet pn_resp;
-	res = rcp_recv(&pn_resp);
+	res = rcp_command(&pn_req, &pn_resp);
 	if (res == -1)
 		goto error;
 
@@ -213,7 +197,7 @@ int get_param_type(int param)
 
 int get_preset_param(rcp_session* session, int preset_id, int param, int* value)
 {
-	rcp_packet p_req;
+	rcp_packet p_req, p_resp;
 	int res;
 
 	int data_type = get_param_type(param);
@@ -223,12 +207,7 @@ int get_preset_param(rcp_session* session, int preset_id, int param, int* value)
 	init_rcp_header(&p_req, session, param, RCP_COMMAND_MODE_READ, data_type);
 	p_req.numeric_descriptor = preset_id;
 
-	res = rcp_send(&p_req);
-	if (res == -1)
-		goto error;
-
-	rcp_packet p_resp;
-	res = rcp_recv(&p_resp);
+	res = rcp_command(&p_req, &p_resp);
 	if (res == -1)
 		goto error;
 
@@ -257,7 +236,7 @@ error:
 
 int set_preset_param(rcp_session* session, int preset_id, int param, int value)
 {
-	rcp_packet p_req;
+	rcp_packet p_req, p_resp;
 	int res;
 
 	int data_type = get_param_type(param);
@@ -293,12 +272,7 @@ int set_preset_param(rcp_session* session, int preset_id, int param, int value)
 		break;
 	}
 
-	res = rcp_send(&p_req);
-	if (res == -1)
-		goto error;
-
-	rcp_packet p_resp;
-	res = rcp_recv(&p_resp);
+	res = rcp_command(&p_req, &p_resp);
 	if (res == -1)
 		goto error;
 
