@@ -18,7 +18,7 @@
 
 int main()
 {
-	rcplog_init(LOG_MODE_STDERR, LOG_INFO, NULL);
+	rcplog_init(LOG_MODE_STDERR, RCP_LOG_INFO, NULL);
 
 	rcp_connect("174.0.0.236");
 
@@ -34,7 +34,7 @@ int main()
 
 	rcp_mpeg4_preset preset;
 	get_preset(&session, 1, &preset, 0);
-	log_preset(LOG_INFO, &preset, 1);
+	log_preset(RCP_LOG_INFO, &preset, 1);
 
 	strcpy(preset.name, "myConfig");
 	preset.resolution = PRESET_RESOLUTION_4CIF;
@@ -46,7 +46,7 @@ int main()
 	set_preset(&session, 1, &preset, 1);
 
 	get_preset(&session, 1, &preset, 0);
-	log_preset(LOG_INFO, &preset, 1);
+	log_preset(RCP_LOG_INFO, &preset, 1);
 
 	return 0;
 }

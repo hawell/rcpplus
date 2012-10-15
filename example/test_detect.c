@@ -12,14 +12,14 @@ int main()
 	rcp_device *devs;
 	int num;
 
-	rcplog_init(LOG_MODE_STDERR, LOG_DEBUG, NULL);
+	rcplog_init(LOG_MODE_STDERR, RCP_LOG_DEBUG, NULL);
 
 	autodetect(&devs, &num);
 
 	INFO("%d device%s detected", num, num>1?"s":"");
 	for (int i=0; i<num; i++)
 	{
-		log_device(LOG_INFO, &devs[i]);
+		log_device(RCP_LOG_INFO, &devs[i]);
 		INFO("------------------------");
 	}
 

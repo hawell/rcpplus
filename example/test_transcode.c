@@ -58,7 +58,7 @@ void save_frame(AVFrame *frame, int width, int height)
 
 int main(int argc, char* argv[])
 {
-	rcplog_init(LOG_MODE_STDERR, LOG_INFO, NULL);
+	rcplog_init(LOG_MODE_STDERR, RCP_LOG_INFO, NULL);
 
 	if (argc < 2)
 	{

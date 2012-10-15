@@ -23,7 +23,6 @@
 #ifndef RCPLOG_H_
 #define RCPLOG_H_
 
-#include <syslog.h>
 #include <stdarg.h>
 
 #define LOG_MODE_STDERR		0
@@ -31,10 +30,15 @@
 #define LOG_MODE_SYSLOG		2
 #define LOG_MODE_FILE		3
 
-#define DEBUG(...) rcplog(LOG_DEBUG, __VA_ARGS__)
-#define INFO(...) rcplog(LOG_INFO, __VA_ARGS__)
-#define WARNING(...) rcplog(LOG_WARNING, __VA_ARGS__)
-#define ERROR(...) rcplog(LOG_ERR, __VA_ARGS__)
+#define	RCP_LOG_ERR		3
+#define	RCP_LOG_WARNING	4
+#define	RCP_LOG_INFO	6
+#define	RCP_LOG_DEBUG	7
+
+#define DEBUG(...) rcplog(RCP_LOG_DEBUG, __VA_ARGS__)
+#define INFO(...) rcplog(RCP_LOG_INFO, __VA_ARGS__)
+#define WARNING(...) rcplog(RCP_LOG_WARNING, __VA_ARGS__)
+#define ERROR(...) rcplog(RCP_LOG_ERR, __VA_ARGS__)
 
 int rcplog_init(int mode, int level, void* param);
 

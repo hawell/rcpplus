@@ -17,7 +17,7 @@
 
 int main()
 {
-	rcplog_init(LOG_MODE_STDERR, LOG_INFO, NULL);
+	rcplog_init(LOG_MODE_STDERR, RCP_LOG_DEBUG, NULL);
 
 	rcp_connect("174.0.0.236");
 

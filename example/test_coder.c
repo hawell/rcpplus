@@ -18,7 +18,7 @@
 
 int main()
 {
-	rcplog_init(LOG_MODE_STDERR, LOG_INFO, NULL);
+	rcplog_init(LOG_MODE_STDERR, RCP_LOG_INFO, NULL);
 
 	rcp_connect("174.0.0.236");
 
@@ -36,7 +36,7 @@ int main()
 		get_coder_video_operation_mode(&session, encoders.coder[i].number, &mode);
 		INFO("video mode is %d", mode);
 		INFO("%x %x %x %x %x", encoders.coder[i].number, encoders.coder[i].caps, encoders.coder[i].current_cap, encoders.coder[i].param_caps, encoders.coder[i].current_param);
-		log_coder(LOG_INFO, &encoders.coder[i]);
+		log_coder(RCP_LOG_INFO, &encoders.coder[i]);
 
 		mode = (mode==1)?2:1;
 		mode = set_coder_video_operation_mode(&session, encoders.coder[i].number, mode);

@@ -167,7 +167,7 @@ int client_register(int type, int mode, rcp_session* session)
 	if (res == -1)
 		goto error;
 
-	log_hex(LOG_DEBUG, "passphrase", pphrase, plen);
+	log_hex(RCP_LOG_DEBUG, "passphrase", pphrase, plen);
 
 	unsigned short tmp16;
 	reg_req.payload[0] = type;
@@ -190,7 +190,7 @@ int client_register(int type, int mode, rcp_session* session)
 	if (res == -1)
 		goto error;
 
-	log_hex(LOG_DEBUG, "client register response", reg_resp.payload, reg_resp.payload_length);
+	log_hex(RCP_LOG_DEBUG, "client register response", reg_resp.payload, reg_resp.payload_length);
 	if (reg_resp.payload[0] == 0)
 		goto error;
 
@@ -285,7 +285,7 @@ int client_connect(rcp_session* session, int method, int media, int flags, rcp_m
 
 	session->session_id = con_resp.session_id;
 	DEBUG("session id = %d - %d", con_resp.session_id, session->session_id);
-	log_hex(LOG_INFO, "client connection resp", con_resp.payload, con_resp.payload_length);
+	log_hex(RCP_LOG_INFO, "client connection resp", con_resp.payload, con_resp.payload_length);
 
 	return 0;
 
@@ -305,7 +305,7 @@ int get_capability_list(rcp_session* session)
 	if (res == -1)
 		goto error;
 
-	log_hex(LOG_INFO, "cap list response", caps_resp.payload, caps_resp.payload_length);
+	log_hex(RCP_LOG_INFO, "cap list response", caps_resp.payload, caps_resp.payload_length);
 	return 0;
 
 error:

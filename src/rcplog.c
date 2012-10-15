@@ -21,6 +21,7 @@
  */
 
 #include <stdio.h>
+#include <syslog.h>
 
 #include "rcplog.h"
 #include "rcpdefs.h"

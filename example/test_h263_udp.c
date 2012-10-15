@@ -23,7 +23,7 @@
 
 int main()
 {
-	rcplog_init(LOG_MODE_STDERR, LOG_INFO, NULL);
+	rcplog_init(LOG_MODE_STDERR, RCP_LOG_INFO, NULL);
 
 	rcp_connect("10.25.25.223");
 

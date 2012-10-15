@@ -154,7 +154,7 @@ int autodetect(rcp_device** devs, int* num)
 		// ignore 2nd response packet
 		if (memcmp(buffer, resp1_header_magic, 4) == 0)
 		{
-			log_hex(LOG_DEBUG, "device", buffer, size);
+			log_hex(RCP_LOG_DEBUG, "device", buffer, size);
 
 			dev_list = (rcp_device*)realloc(dev_list, sizeof(rcp_device) * (dev_count+1));
 			rcp_device* dev = &dev_list[dev_count++];

@@ -229,7 +229,7 @@ int rcp_send(rcp_packet* hdr)
 	memcpy(buffer + RCP_HEADER_LENGTH + TPKT_HEADER_LENGTH, hdr->payload, hdr->payload_length);
 
 	DEBUG("sending %d bytes...", len);
-	log_hex(LOG_DEBUG, "data", buffer, len);
+	log_hex(RCP_LOG_DEBUG, "data", buffer, len);
 	int res = send(con.control_socket, buffer, len, 0);
 	DEBUG("%d sent", res);
 	if (res == -1)
@@ -263,7 +263,7 @@ int rcp_recv(rcp_packet* hdr)
 		received += res;
 	}
 
-	log_hex(LOG_DEBUG, "received", buffer, received);
+	log_hex(RCP_LOG_DEBUG, "received", buffer, received);
 
 	read_rcp_header(buffer, hdr);
 
