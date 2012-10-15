@@ -88,6 +88,29 @@ error:
 	return -1;
 }
 
+int ptz_available(rcp_session* session)
+{
+	rcp_packet ptz_req;
+	int res;
+
+	init_rcp_header(&ptz_req, session, RCP_COMMAND_CONF_PTZ_CONTROLLER_AVAILABLE, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_F_FLAG);
+
+	res = rcp_send(&ptz_req);
+	if (res == -1)
+		goto error;
+
+	rcp_packet ptz_resp;
+	res = rcp_recv(&ptz_resp);
+	if (res == -1)
+		goto error;
+
+	return ptz_resp.payload[0];
+
+error:
+	ERROR("send_osrd()");
+	return -1;
+}
+
 int move_right(rcp_session* session, int speed)
 {
 	VarSpeedPTZ ptz;

@@ -27,6 +27,12 @@ int main()
 
 	client_register(RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_MD5, &session);
 
+	if (ptz_available(&session) == 0)
+	{
+		INFO("ptz is not available for this camera");
+		exit(0);
+	}
+
 	move_right(&session, 5);
 	sleep(1);
 	move_left(&session, 5);

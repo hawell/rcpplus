@@ -26,6 +26,7 @@
 #include "rcpplus.h"
 
 #define RCP_COMMAND_CONF_RCP_TRANSFER_TRANSPARENT_DATA	0xffdd
+#define RCP_COMMAND_CONF_PTZ_CONTROLLER_AVAILABLE	0x0a51
 
 typedef struct {
 	unsigned char tilt_speed:4;
@@ -47,6 +48,8 @@ typedef struct {
 	unsigned char focus_near:1;
 	unsigned char db3_res:1;
 } VarSpeedPTZ;
+
+int ptz_available(rcp_session* session);
 
 int move_stop(rcp_session* session);
 
