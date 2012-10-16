@@ -276,6 +276,19 @@ static int append_fu_a(unsigned char* data, int len, rtp_merge_desc* mdesc)
 	return 0;
 }
 
+static int append_single_nal(unsigned char* data, int data_len, rtp_merge_desc* mdesc)
+{
+	assert(mdesc->len == 0);
+	memcpy(mdesc->data + mdesc->len, NAL_START_FRAME, 3);
+	mdesc->len += 3;
+	memcpy(mdesc->data + 3, data, data_len);
+	mdesc->len += data_len;
+
+	mdesc->frame_complete = 1;
+
+	return 0;
+}
+
 static int append_stap_a(unsigned char* data, rtp_merge_desc* mdesc)
 {
 	assert(mdesc->len == 0);
@@ -382,30 +395,39 @@ static int append_h264(unsigned char *fragment, int fragment_len, rtp_merge_desc
 	DEBUG("nal = %hhx", nal_unit_header);
 
 	unsigned char nal_type = nal_unit_header & 0x1F;
-	switch (nal_type)
+	if (nal_type < 24)
 	{
-		case 24: // STAP-A
+		// Single NAL Unit
+		INFO("Single NAL Unit %d", nal_type);
+		return append_single_nal(fragment+rtp_header_len,  fragment_len-rtp_header_len, mdesc);
+	}
+	else
+	{
+		switch (nal_type)
 		{
-			DEBUG("STAP-A");
-			log_hex(RCP_LOG_DEBUG, "STAP-A", fragment + rtp_header_len, fragment_len-rtp_header_len);
-			return append_stap_a(fragment+rtp_header_len, mdesc);
-			//DEBUG("sps: %x %d", *(unsigned char*)&np[0].nh, np[0].size);
-			//log_hex(LOG_DEBUG, "payload", np[0].payload, np[0].size);
-			//DEBUG("pps: %x %d", *(unsigned char*)&np[1].nh, np[1].size);
-			//log_hex(LOG_DEBUG, "payload", np[1].payload, np[1].size);
-		}
-		break;
-
-		case 28: // FU-A
-		{
-			DEBUG("FU-A");
-			return append_fu_a(fragment+rtp_header_len, fragment_len - (rtp_header_len+FU_A_HEADER_LENGTH), mdesc);
-		}
-		break;
-
-		default:
-			ERROR("unsupported nal type: %d", nal_type);
+			case 24: // STAP-A
+			{
+				INFO("STAP-A");
+				log_hex(RCP_LOG_DEBUG, "STAP-A", fragment + rtp_header_len, fragment_len-rtp_header_len);
+				return append_stap_a(fragment+rtp_header_len, mdesc);
+				//DEBUG("sps: %x %d", *(unsigned char*)&np[0].nh, np[0].size);
+				//log_hex(LOG_DEBUG, "payload", np[0].payload, np[0].size);
+				//DEBUG("pps: %x %d", *(unsigned char*)&np[1].nh, np[1].size);
+				//log_hex(LOG_DEBUG, "payload", np[1].payload, np[1].size);
+			}
 			break;
+
+			case 28: // FU-A
+			{
+				INFO("FU-A");
+				return append_fu_a(fragment+rtp_header_len, fragment_len - (rtp_header_len+FU_A_HEADER_LENGTH), mdesc);
+			}
+			break;
+
+			default:
+				ERROR("unsupported nal type: %d", nal_type);
+				break;
+		}
 	}
 
 	return 0;

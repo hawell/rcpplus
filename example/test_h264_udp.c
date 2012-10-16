@@ -17,11 +17,17 @@
 #include "rcplog.h"
 #include "coder.h"
 
-int main()
+int main(int argc, char* argv[])
 {
-	rcplog_init(LOG_MODE_STDERR, RCP_LOG_DEBUG, NULL);
+	rcplog_init(LOG_MODE_STDERR, RCP_LOG_INFO, NULL);
 
-	rcp_connect("10.25.25.223");
+    if (argc < 2)
+    {
+        INFO("%s ip", argv[0]);
+        return 0;
+    }
+
+	rcp_connect(argv[1]);
 
 	rcp_session session;
 	memset(&session, 0, sizeof(rcp_session));
