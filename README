@@ -3,3 +3,18 @@ rcpplus
 
 rcpplus is a C implementation of Bosch (formerly known as VCS Video Communication Systems AG) RCP+ version 3 protocol
 
+supported platforms
+-------------------
+being written in pure c99 it is fairly easy to port this library to any platform including linux, windows, macOS, ...
+
+supported cameras
+-----------------
+this library has been developed and tested using VG4 AutoDome 300 series, VG4 AutoDome 500 series and Dinion 300 series but it should work with any camera supporting RCP+ version 3.0
+
+requirements
+------------
+no additional library is required to use this library however you need ffmpeg and SDL inorder to run some of sample codes
+
+contact
+-------
+if you have any question, suggestion, ... send me an email to arash.cordi[at]gmail.com
