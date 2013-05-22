@@ -106,7 +106,7 @@ int read_rcp_header(unsigned char* packet, rcp_packet* hdr)
 	return 0;
 }
 
-int rcp_connect(char* ip)
+int rcp_connect(const char* ip)
 {
 	con.control_socket = socket(PF_INET, SOCK_STREAM, 0);
 	if (con.control_socket == -1)

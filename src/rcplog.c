@@ -100,9 +100,10 @@ void log_hex(int level, const char* str, void* d, int l)
 		pos += sprintf(log_str+pos, "%02hhx:", p[i]);
 
 	if (log_mode == LOG_MODE_SYSLOG)
-		syslog(level, "%s", log_str);
+		syslog(level, "%s %s",level_str[level], log_str);
 	else
 	{
+		fprintf(log_file, "%s ", level_str[level]);
 		fputs(log_str, log_file);
 		fputs("\n", log_file);
 	}

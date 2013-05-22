@@ -105,6 +105,8 @@ int preset_set_default(rcp_session* session, int preset_id)
 	if (res == -1)
 		goto error;
 
+	return 0;
+
 error:
 	ERROR("preset_set_default()");
 	return -1;

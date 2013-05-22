@@ -69,7 +69,7 @@ typedef struct {
 
 extern rcp_connection con;
 
-int rcp_connect(char* ip);
+int rcp_connect(const char* ip);
 
 int stream_connect_udp();
 int stream_connect_tcp();
