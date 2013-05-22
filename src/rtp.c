@@ -25,9 +25,9 @@
 #include <assert.h>
 #include <limits.h>
 #include <arpa/inet.h>
+#include <tlog/tlog.h>
 
 #include "rtp.h"
-#include "rcplog.h"
 
 #define RTP_HEADER_LENGTH_MANDATORY		12
 
@@ -408,7 +408,7 @@ static int append_h264(unsigned char *fragment, int fragment_len, rtp_merge_desc
 			case 24: // STAP-A
 			{
 				DEBUG("STAP-A");
-				log_hex(RCP_LOG_DEBUG, "STAP-A", fragment + rtp_header_len, fragment_len-rtp_header_len);
+				log_hex(TLOG_DEBUG, "STAP-A", fragment + rtp_header_len, fragment_len-rtp_header_len);
 				return append_stap_a(fragment+rtp_header_len, mdesc);
 				//DEBUG("sps: %x %d", *(unsigned char*)&np[0].nh, np[0].size);
 				//log_hex(LOG_DEBUG, "payload", np[0].payload, np[0].size);

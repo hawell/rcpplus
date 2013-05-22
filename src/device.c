@@ -31,9 +31,9 @@
 #include <errno.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <tlog/tlog.h>
 
 #include "device.h"
-#include "rcplog.h"
 
 #define BC_AUTODETECT_PORT	1757
 #define BC_ADDRESSCHANGE_PORT 1759
@@ -154,7 +154,7 @@ int autodetect(rcp_device** devs, int* num)
 		// ignore 2nd response packet
 		if (memcmp(buffer, resp1_header_magic, 4) == 0)
 		{
-			log_hex(RCP_LOG_DEBUG, "device", buffer, size);
+			log_hex(TLOG_DEBUG, "device", buffer, size);
 
 			dev_list = (rcp_device*)realloc(dev_list, sizeof(rcp_device) * (dev_count+1));
 			rcp_device* dev = &dev_list[dev_count++];
@@ -297,15 +297,15 @@ void log_device(int level, rcp_device* dev)
 		case RCP_HARDWARE_TYPE_VIN_OUT:strcpy(tmp, "Video In/Out");break;
 		default:strcpy(tmp, "Unknown Device Type");break;
 	}
-	rcplog(level, "%-20s %s", "Device Type", tmp);
-	rcplog(level, "%-20s %s", "Device Name", dev->old_id==RCP_DEVICE_ESCAPECODE?oid_str(dev->old_id):nid_str(dev->new_id));
+	tlog(level, "%-20s %s", "Device Type", tmp);
+	tlog(level, "%-20s %s", "Device Name", dev->old_id==RCP_DEVICE_ESCAPECODE?oid_str(dev->old_id):nid_str(dev->new_id));
 	sprintf(tmp, "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx", dev->hw_addr[0], dev->hw_addr[1], dev->hw_addr[2], dev->hw_addr[3], dev->hw_addr[4], dev->hw_addr[5]);
-	rcplog(level, "%-20s %s", "MAC Address", tmp);
+	tlog(level, "%-20s %s", "MAC Address", tmp);
 	sprintf(tmp, "%d.%d.%d.%d", dev->address[0], dev->address[1], dev->address[2], dev->address[3]);
-	rcplog(level, "%-20s %s", "Address", tmp);
+	tlog(level, "%-20s %s", "Address", tmp);
 	sprintf(tmp, "%d.%d.%d.%d", dev->netmask[0], dev->netmask[1], dev->netmask[2], dev->netmask[3]);
-	rcplog(level, "%-20s %s", "Subnet Mask", tmp);
+	tlog(level, "%-20s %s", "Subnet Mask", tmp);
 	sprintf(tmp, "%d.%d.%d.%d", dev->gateway[0], dev->gateway[1], dev->gateway[2], dev->gateway[3]);
-	rcplog(level, "%-20s %s", "Gateway", tmp);
-	rcplog(level, "%-20s %d", "Connections", dev->connections);
+	tlog(level, "%-20s %s", "Gateway", tmp);
+	tlog(level, "%-20s %d", "Connections", dev->connections);
 }

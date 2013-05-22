@@ -8,19 +8,19 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <tlog/tlog.h>
 
 #include "rcpdefs.h"
 #include "rcpplus.h"
 #include "rcpcommand.h"
-#include "rcplog.h"
 #include "preset.h"
 #include "coder.h"
 
 int main()
 {
-	rcplog_init(LOG_MODE_STDERR, RCP_LOG_INFO, NULL);
+	tlog_init(TLOG_MODE_STDERR, TLOG_INFO, NULL);
 
-	rcp_connect("174.0.0.236");
+	rcp_connect("10.25.25.220");
 
 	rcp_session session;
 	memset(&session, 0, sizeof(rcp_session));
@@ -34,7 +34,7 @@ int main()
 
 	rcp_mpeg4_preset preset;
 	get_preset(&session, 1, &preset, 0);
-	log_preset(RCP_LOG_INFO, &preset, 1);
+	log_preset(TLOG_INFO, &preset, 1);
 
 	strcpy(preset.name, "myConfig");
 	preset.resolution = PRESET_RESOLUTION_4CIF;
@@ -46,7 +46,7 @@ int main()
 	set_preset(&session, 1, &preset, 1);
 
 	get_preset(&session, 1, &preset, 0);
-	log_preset(RCP_LOG_INFO, &preset, 1);
+	log_preset(TLOG_INFO, &preset, 1);
 
 	return 0;
 }

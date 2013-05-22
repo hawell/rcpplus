@@ -30,10 +30,10 @@
 #include <netdb.h>
 #include <errno.h>
 #include <unistd.h>
+#include <tlog/tlog.h>
 
 #include "rcpplus.h"
 #include "rcpdefs.h"
-#include "rcplog.h"
 #include "coder.h"
 
 rcp_connection con;
@@ -206,3 +206,27 @@ int initiate_tcp_stream(rcp_session* session, struct rcp_coder_tag* coder)
 	return 0;
 }
 
+const char* error_str(int error_code)
+{
+	switch (error_code)
+	{
+		case RCP_ERROR_INVALID_VERSION:return "invalid version";break;
+		case RCP_ERROR_NOT_REGISTERED:return "not registered";break;
+		case RCP_ERROR_INVALID_CLIENT_ID:return "invalid client id";break;
+		case RCP_ERROR_INVALID_METHOD:return "invalid method";break;
+		case RCP_ERROR_INVALID_CMD:return "invalid command";break;
+		case RCP_ERROR_INVALID_ACCESS_TYPE:return "invalid access";break;
+		case RCP_ERROR_INVALID_DATA_TYPE:return "invalid data type";break;
+		case RCP_ERROR_WRITE_ERROR:return "write error";break;
+		case RCP_ERROR_PACKET_SIZE:return "invalid packet size";break;
+		case RCP_ERROR_READ_NOT_SUPPORTED:return "read not supported";break;
+		case RCP_ERROR_INVALID_AUTH_LEVEL:return "invalid authentication level";break;
+		case RCP_ERROR_INVAILD_SESSION_ID:return "invalid session id";break;
+		case RCP_ERROR_TRY_LATER:return "try later";break;
+		case RCP_ERROR_COMMAND_SPECIFIC:return "command specific error";break;
+		case RCP_ERROR_UNKNOWN:
+		default:
+			return "unknown error";break;
+	}
+	return "";
+}

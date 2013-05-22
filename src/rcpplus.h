@@ -88,6 +88,7 @@ typedef struct {
 	unsigned short resolution;
 } rcp_media_descriptor;
 
+const char* error_str(int error_code);
 
 
 #endif /* RCPPLUS_H_ */

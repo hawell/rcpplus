@@ -22,9 +22,9 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <tlog/tlog.h>
 
 #include "preset.h"
-#include "rcplog.h"
 #include "rcpcommand.h"
 
 int get_preset(rcp_session* session, int preset_id, rcp_mpeg4_preset* preset, int basic)
@@ -288,7 +288,7 @@ error:
 void log_preset(int level, rcp_mpeg4_preset* preset, int basic)
 {
 	const char* val;
-	rcplog(level, "%-25s %s", "name", preset->name);
+	tlog(level, "%-25s %s", "name", preset->name);
 	switch (preset->resolution)
 	{
 		case PRESET_RESOLUTION_QCIF:val = "QCIF";break;
@@ -301,48 +301,48 @@ void log_preset(int level, rcp_mpeg4_preset* preset, int basic)
 		case PRESET_RESOLUTION_VGA:val = "VGA";break;
 		case PRESET_RESOLUTION_720P:val = "720P";break;
 	}
-	rcplog(level, "%-25s %s", "resolution", val);
-	rcplog(level, "%-25s %d kbps", "bandwidth", preset->bandwidth);
-	rcplog(level, "%-25s %d", "frameskip", preset->frameskip_ratio);
-	rcplog(level, "%-25s %d kbps", "bw soft", preset->bandwidth_soft_limit);
-	rcplog(level, "%-25s %d kbps", "bw hard", preset->bandwidth_hard_limit);
-	rcplog(level, "%-25s %d", "iframe dist", preset->iframe_distance);
+	tlog(level, "%-25s %s", "resolution", val);
+	tlog(level, "%-25s %d kbps", "bandwidth", preset->bandwidth);
+	tlog(level, "%-25s %d", "frameskip", preset->frameskip_ratio);
+	tlog(level, "%-25s %d kbps", "bw soft", preset->bandwidth_soft_limit);
+	tlog(level, "%-25s %d kbps", "bw hard", preset->bandwidth_hard_limit);
+	tlog(level, "%-25s %d", "iframe dist", preset->iframe_distance);
 	switch (preset->field_mode)
 	{
 		case PRESET_FIELD_MODE_PROGRESSIVE:val = "progressive";break;
 		case PRESET_FIELD_MODE_MERGED:val = "merged";break;
 		case PRESET_FIELD_MODE_SEPERATED:val = "seperated";break;
 	}
-	rcplog(level, "%-25s %s", "field mode", val);
+	tlog(level, "%-25s %s", "field mode", val);
 
 	if (!basic)
 	{
 		if (preset->iframe_quantizer)
-			rcplog(level, "%-25s %d", "iframe quant", preset->iframe_quantizer);
+			tlog(level, "%-25s %d", "iframe quant", preset->iframe_quantizer);
 		else
-			rcplog(level, "%-25s %s", "iframe quant", "auto");
+			tlog(level, "%-25s %s", "iframe quant", "auto");
 		if (preset->pframe_quantizer)
-			rcplog(level, "%-25s %d", "pframe quant", preset->pframe_quantizer);
+			tlog(level, "%-25s %d", "pframe quant", preset->pframe_quantizer);
 		else
-			rcplog(level, "%-25s %s", "pframe quant", "auto");
-		rcplog(level, "%-25s %d", "video quality", preset->video_quality);
+			tlog(level, "%-25s %s", "pframe quant", "auto");
+		tlog(level, "%-25s %d", "video quality", preset->video_quality);
 		if (preset->avc_iframe_qunatizer)
-			rcplog(level, "%-25s %d", "avc iframe quant", preset->avc_iframe_qunatizer);
+			tlog(level, "%-25s %d", "avc iframe quant", preset->avc_iframe_qunatizer);
 		else
-			rcplog(level, "%-25s %s", "avc iframe quant", "auto");
+			tlog(level, "%-25s %s", "avc iframe quant", "auto");
 		if (preset->avc_pframe_qunatizer)
-			rcplog(level, "%-25s %d", "avc pframe quant", preset->avc_pframe_qunatizer);
+			tlog(level, "%-25s %d", "avc pframe quant", preset->avc_pframe_qunatizer);
 		else
-			rcplog(level, "%-25s %s", "avc pframe quant", "auto");
+			tlog(level, "%-25s %s", "avc pframe quant", "auto");
 		if (preset->avc_pframe_qunatizer_min)
-			rcplog(level, "%-25s %d", "avc pframe quant min", preset->avc_pframe_qunatizer_min);
+			tlog(level, "%-25s %d", "avc pframe quant min", preset->avc_pframe_qunatizer_min);
 		else
-			rcplog(level, "%-25s %s", "avc pframe quant min", "auto");
-		rcplog(level, "%-25s %d", "avc i/p delta", preset->avc_delta_ipquantizer);
-		rcplog(level, "%-25s %d", "avc deblock enabled", preset->avc_deblocking_enabled);
-		rcplog(level, "%-25s %d", "avc deblock alpha", preset->avc_deblocking_alpha);
-		rcplog(level, "%-25s %d", "avc deblock beta", preset->avc_deblocking_beta);
-		rcplog(level, "%-25s %d", "avc chroma offset", preset->avc_chroma_quantisation_offset);
+			tlog(level, "%-25s %s", "avc pframe quant min", "auto");
+		tlog(level, "%-25s %d", "avc i/p delta", preset->avc_delta_ipquantizer);
+		tlog(level, "%-25s %d", "avc deblock enabled", preset->avc_deblocking_enabled);
+		tlog(level, "%-25s %d", "avc deblock alpha", preset->avc_deblocking_alpha);
+		tlog(level, "%-25s %d", "avc deblock beta", preset->avc_deblocking_beta);
+		tlog(level, "%-25s %d", "avc chroma offset", preset->avc_chroma_quantisation_offset);
 		switch (preset->avc_coding_mode)
 		{
 			case PRESET_CODING_MODE_FRAME:val="frame";break;
@@ -350,7 +350,7 @@ void log_preset(int level, rcp_mpeg4_preset* preset, int basic)
 			case PRESET_CODING_MODE_MACRO:val="macro";break;
 			case PRESET_CODING_MODE_PICTURE:val="picture";break;
 		}
-		rcplog(level, "%-25s %s", "avc coding mode", val);
+		tlog(level, "%-25s %s", "avc coding mode", val);
 		switch (preset->avc_gop_structure)
 		{
 			case PRESET_GOP_STRUCT_IP:val="IP";break;
@@ -358,11 +358,11 @@ void log_preset(int level, rcp_mpeg4_preset* preset, int basic)
 			case PRESET_GOP_STRUCT_IBBP:val="IBBP";break;
 			case PRESET_GOP_STRUCT_IBBRBP:val="IBBRBP";break;
 		}
-		rcplog(level, "%-25s %s", "avc gop struct", val);
+		tlog(level, "%-25s %s", "avc gop struct", val);
 		if (preset->avc_cabac == 0)
 			val = "off";
 		else
 			val = "on";
-		rcplog(level, "%-25s %s", "avc cabac", val);
+		tlog(level, "%-25s %s", "avc cabac", val);
 	}
 }

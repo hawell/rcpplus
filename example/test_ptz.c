@@ -8,16 +8,16 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <tlog/tlog.h>
 
 #include "rcpdefs.h"
 #include "rcpplus.h"
 #include "rcpcommand.h"
-#include "rcplog.h"
 #include "ptz.h"
 
 int main()
 {
-	rcplog_init(LOG_MODE_STDERR, RCP_LOG_DEBUG, NULL);
+	tlog_init(TLOG_MODE_STDERR, TLOG_DEBUG, NULL);
 
 	rcp_connect("174.0.0.236");
 

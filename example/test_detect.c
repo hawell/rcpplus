@@ -5,6 +5,8 @@
  *      Author: arash
  */
 
+#include <tlog/tlog.h>
+
 #include "device.c"
 
 int main()
@@ -12,14 +14,14 @@ int main()
 	rcp_device *devs;
 	int num;
 
-	rcplog_init(LOG_MODE_STDERR, RCP_LOG_DEBUG, NULL);
+	tlog_init(TLOG_MODE_STDERR, TLOG_DEBUG, NULL);
 
 	autodetect(&devs, &num);
 
 	INFO("%d device%s detected", num, num>1?"s":"");
 	for (int i=0; i<num; i++)
 	{
-		log_device(RCP_LOG_INFO, &devs[i]);
+		log_device(TLOG_INFO, &devs[i]);
 		INFO("------------------------");
 	}
 

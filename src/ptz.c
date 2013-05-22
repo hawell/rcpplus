@@ -22,10 +22,10 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <tlog/tlog.h>
 
 #include "ptz.h"
 #include "rcpdefs.h"
-#include "rcplog.h"
 #include "rcpcommand.h"
 
 typedef struct {

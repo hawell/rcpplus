@@ -14,17 +14,17 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <signal.h>
+#include <tlog/tlog.h>
 
 #include "rcpdefs.h"
 #include "rcpplus.h"
 #include "rcpcommand.h"
 #include "rtp.h"
-#include "rcplog.h"
 #include "coder.h"
 
 #include "libavcodec/avcodec.h"
 #include "libavformat/avformat.h"
-#include "libavfilter/avfilter.h"
+//#include "libavfilter/avfilter.h"
 #include "libavutil/avutil.h"
 #include "libswscale/swscale.h"
 
@@ -58,7 +58,7 @@ void save_frame(AVFrame *frame, int width, int height)
 
 int main(int argc, char* argv[])
 {
-	rcplog_init(LOG_MODE_STDERR, RCP_LOG_INFO, NULL);
+	tlog_init(TLOG_MODE_STDERR, TLOG_INFO, NULL);
 
 	if (argc < 2)
 	{

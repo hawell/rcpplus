@@ -9,17 +9,17 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <tlog/tlog.h>
 
 #include "rcpdefs.h"
 #include "rcpplus.h"
 #include "rcpcommand.h"
 #include "rtp.h"
-#include "rcplog.h"
 #include "coder.h"
 
 int main(int argc, char* argv[])
 {
-	rcplog_init(LOG_MODE_STDERR, RCP_LOG_INFO, NULL);
+	tlog_init(TLOG_MODE_STDERR, TLOG_INFO, NULL);
 
     if (argc < 2)
     {

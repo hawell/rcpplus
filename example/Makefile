@@ -3,7 +3,7 @@ SRCS = test_preset.c test_h264_udp.c test_h263_udp.c test_detect.c test_coder.c 
 OBJS = $(SRCS:.c=.o)
 INCS = -I../src/
 CFLAGS = -g -std=c99 -Wall -W
-LIB = ../$(LIBNAME)
+LIB = ../$(LIBNAME) -ltlog-1.0.0
 
 FFMPEG = /home/arash/Programs/ffmpeg
 FFMPEGLIB = \

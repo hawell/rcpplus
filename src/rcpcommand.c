@@ -25,12 +25,12 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <tlog/tlog.h>
 
 #include "rcpcommand.h"
 #include "rcpdefs.h"
 #include "rcpplus.h"
 #include "md5.h"
-#include "rcplog.h"
 
 #define MAX_PAYLOAD_LENGHT	1000
 #define MAX_PASSPHRASE_LEN	1000
@@ -136,7 +136,7 @@ static int rcp_send(rcp_packet* hdr)
 	memcpy(buffer + RCP_HEADER_LENGTH + TPKT_HEADER_LENGTH, hdr->payload, hdr->payload_length);
 
 	DEBUG("sending %d bytes...", len);
-	log_hex(RCP_LOG_DEBUG, "data", buffer, len);
+	log_hex(TLOG_DEBUG, "data", buffer, len);
 	int res = send(con.control_socket, buffer, len, 0);
 	DEBUG("%d sent", res);
 	if (res == -1)
@@ -170,7 +170,7 @@ static int rcp_recv(rcp_packet* hdr)
 		received += res;
 	}
 
-	log_hex(RCP_LOG_DEBUG, "received", buffer, received);
+	log_hex(TLOG_DEBUG, "received", buffer, received);
 
 	read_rcp_header(buffer, hdr);
 
@@ -245,7 +245,7 @@ int client_register(int type, int mode, rcp_session* session)
 	if (res == -1)
 		goto error;
 
-	log_hex(RCP_LOG_DEBUG, "passphrase", pphrase, plen);
+	log_hex(TLOG_DEBUG, "passphrase", pphrase, plen);
 
 	unsigned short tmp16;
 	reg_req.payload[0] = type;
@@ -268,7 +268,7 @@ int client_register(int type, int mode, rcp_session* session)
 	if (res == -1)
 		goto error;
 
-	log_hex(RCP_LOG_DEBUG, "client register response", reg_resp.payload, reg_resp.payload_length);
+	log_hex(TLOG_DEBUG, "client register response", reg_resp.payload, reg_resp.payload_length);
 	if (reg_resp.payload[0] == 0)
 		goto error;
 
@@ -363,7 +363,7 @@ int client_connect(rcp_session* session, int method, int media, int flags, rcp_m
 
 	session->session_id = con_resp.session_id;
 	DEBUG("session id = %d - %d", con_resp.session_id, session->session_id);
-	log_hex(RCP_LOG_INFO, "client connection resp", con_resp.payload, con_resp.payload_length);
+	log_hex(TLOG_INFO, "client connection resp", con_resp.payload, con_resp.payload_length);
 
 	return 0;
 
@@ -383,7 +383,7 @@ int get_capability_list(rcp_session* session)
 	if (res == -1)
 		goto error;
 
-	log_hex(RCP_LOG_INFO, "cap list response", caps_resp.payload, caps_resp.payload_length);
+	log_hex(TLOG_INFO, "cap list response", caps_resp.payload, caps_resp.payload_length);
 	return 0;
 
 error:

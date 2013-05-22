@@ -22,10 +22,10 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <tlog/tlog.h>
 
 #include "coder.h"
 #include "rcpdefs.h"
-#include "rcplog.h"
 #include "rcpcommand.h"
 
 int get_coder_preset(rcp_session* session, int coder)
@@ -239,14 +239,14 @@ void log_coder(int level, rcp_coder* coder)
 {
 	char tmp[200];
 
-	rcplog(level, "%-20s %d", "Coder Number", coder->number);
+	tlog(level, "%-20s %d", "Coder Number", coder->number);
 	switch (coder->direction)
 	{
 		case 0:strcpy(tmp, "Input");break;
 		case 1:strcpy(tmp, "Output");break;
 		default:strcpy(tmp, "Unknown");break;
 	}
-	rcplog(level, "%-20s %s", "Direction", tmp);
+	tlog(level, "%-20s %s", "Direction", tmp);
 	switch (coder->media_type)
 	{
 		case RCP_MEDIA_TYPE_AUDIO:strcpy(tmp, "Audio");break;
@@ -254,7 +254,7 @@ void log_coder(int level, rcp_coder* coder)
 		case RCP_MEDIA_TYPE_DATA:strcpy(tmp, "Data");break;
 		default:strcpy(tmp, "Unknown");break;
 	}
-	rcplog(level, "%-20s %s", "Media Type", tmp);
+	tlog(level, "%-20s %s", "Media Type", tmp);
 	tmp[0] = 0;
 	for (int i=1; i<=0x8000; i<<=1)
 		if ( (coder->caps & i) && strcmp(coder_cap_str(i, coder->media_type), "Unknown")!=0 )
@@ -262,7 +262,7 @@ void log_coder(int level, rcp_coder* coder)
 			strcat(tmp, coder_cap_str(i, coder->media_type));
 			strcat(tmp, ", ");
 		}
-	rcplog(level, "%-20s %s", "Encoding Caps", tmp);
+	tlog(level, "%-20s %s", "Encoding Caps", tmp);
 	tmp[0] = 0;
 	for (int i=1; i<=0x8000; i<<=1)
 		if ( (coder->current_cap & i) && strcmp(coder_cap_str(i, coder->media_type), "Unknown")!=0 )
@@ -270,7 +270,7 @@ void log_coder(int level, rcp_coder* coder)
 			strcat(tmp, coder_cap_str(i, coder->media_type));
 			strcat(tmp, ", ");
 		}
-	rcplog(level, "%-20s %s", "Current Cap", tmp);
+	tlog(level, "%-20s %s", "Current Cap", tmp);
 	tmp[0] = 0;
 	for (int i=1; i<=0x1000; i<<=1)
 		if ( (coder->param_caps & i) && strcmp(coder_codparam_str(i, coder->media_type), "Unknown")!=0 )
@@ -278,7 +278,7 @@ void log_coder(int level, rcp_coder* coder)
 			strcat(tmp, coder_codparam_str(i, coder->media_type));
 			strcat(tmp, ", ");
 		}
-	rcplog(level, "%-20s %s", "CodParam Caps", tmp);
+	tlog(level, "%-20s %s", "CodParam Caps", tmp);
 	tmp[0] = 0;
 	for (int i=1; i<=0x1000; i<<=1)
 		if ( (coder->current_param & i) && strcmp(coder_codparam_str(i, coder->media_type), "Unknown")!=0 )
@@ -286,5 +286,5 @@ void log_coder(int level, rcp_coder* coder)
 			strcat(tmp, coder_codparam_str(i, coder->media_type));
 			strcat(tmp, ", ");
 		}
-	rcplog(level, "%-20s %s", "Current CodParam", tmp);
+	tlog(level, "%-20s %s", "Current CodParam", tmp);
 }
