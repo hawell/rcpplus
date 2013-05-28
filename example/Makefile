@@ -1,25 +1,26 @@
 CC = gcc
-SRCS = test_preset.c test_h264_udp.c test_h263_udp.c test_detect.c test_coder.c test_ptz.c test_transcode.c
+SRCS = test_preset.c test_h264_udp.c test_h263_udp.c test_h263_tcp.c test_detect.c test_coder.c test_ptz.c test_transcode.c test_play.c
 OBJS = $(SRCS:.c=.o)
 INCS = -I../src/
 CFLAGS = -g -std=c99 -Wall -W
 LIB = ../$(LIBNAME) -ltlog-1.0.0
 
-FFMPEG = /home/arash/Programs/ffmpeg
+FFMPEG = /home/arash/Projects/ffmpeg-1.2.1
 FFMPEGLIB = \
 		$(FFMPEG)/libavdevice/libavdevice.a \
 		$(FFMPEG)/libavformat/libavformat.a \
 		$(FFMPEG)/libavfilter/libavfilter.a \
 		$(FFMPEG)/libavcodec/libavcodec.a \
+		$(FFMPEG)/libavresample/libavresample.a \
 		$(FFMPEG)/libswresample/libswresample.a \
 		$(FFMPEG)/libswscale/libswscale.a \
 		$(FFMPEG)/libavutil/libavutil.a \
 		$(FFMPEG)/libpostproc/libpostproc.a \
-		 -lz -lm -lpthread -lmp3lame -lfaac
+		 -lz -lm -lpthread -lmp3lame -lfaac -lx264 -lbz2
 		
 FFMPEGINC = -I$(FFMPEG)
 
-all: preset h264_udp h263_udp detect coder ptz transcode
+all: preset h264_udp h263_udp h263_tcp detect coder ptz transcode play
 
 preset: test_preset.o
 	$(CC) test_preset.o $(LIB) -o preset
@@ -29,6 +30,9 @@ h264_udp: test_h264_udp.o
 	
 h263_udp: test_h263_udp.o
 	$(CC) test_h263_udp.o $(LIB) -o h263_udp
+
+h263_tcp: test_h263_tcp.o
+	$(CC) test_h263_tcp.o $(LIB) -o h263_tcp
 
 detect: test_detect.o
 	$(CC) test_detect.o $(LIB) -o detect
@@ -42,8 +46,12 @@ ptz: test_ptz.o
 transcode: test_transcode.o
 	$(CC) test_transcode.o $(LIB) $(FFMPEGLIB) -o transcode
 	
+play: test_play.c
+	$(CC) -c $(CFLAGS) $(INCS) $(FFMPEGINC) test_play.c -o test_play.o
+	$(CC) test_play.o $(LIB) $(FFMPEGLIB) `sdl-config --cflags --libs` -o play
+	
 .c.o:
 	$(CC) $(CFLAGS) $(INCS) $(FFMPEGINC) -c $< -o $@ 
 	
 clean:
-	rm -f *.o  h264_udp h263_udp preset detect coder ptz transcode
+	rm -f *.o  h264_udp h263_udp h263_tcp preset detect coder ptz transcode play
