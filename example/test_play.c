@@ -127,12 +127,12 @@ int main(int argc, char* argv[])
 
 	if (video_mode == VIDEO_MODE_H263)
 	{
-		rtp_init(RTP_PAYLOAD_TYPE_H263, &mdesc);
+		rtp_init(RTP_PAYLOAD_TYPE_H263, 1, &mdesc);
 		codec_in = avcodec_find_decoder(CODEC_ID_H263);
 	}
 	else
 	{
-		rtp_init(RTP_PAYLOAD_TYPE_H264, &mdesc);
+		rtp_init(RTP_PAYLOAD_TYPE_H264, 1, &mdesc);
 		codec_in = avcodec_find_decoder(CODEC_ID_H264);
 	}
 
@@ -227,8 +227,8 @@ int main(int argc, char* argv[])
 
 	while (1)
 	{
-		rtp_recv(con.stream_socket, &mdesc);
-
+		if (rtp_recv(con.stream_socket, &mdesc) == 0)
+        {
 		if (rtp_pop_frame(&vframe, &mdesc) == 0)
 		{
 			int have_frame=0;
@@ -241,7 +241,7 @@ int main(int argc, char* argv[])
 				//INFO("d0 %d d1 %d d2 %d d3 %d", raw_frame->linesize[0], raw_frame->linesize[1], raw_frame->linesize[2], raw_frame->linesize[3]);
 				sws_scale(yuv2rgb, (const uint8_t * const*)raw_frame->data, raw_frame->linesize, 0, dec_ctx->height, rgb_frame->data, rgb_frame->linesize);
 
-				save_frame(rgb_frame, 704, 576);
+				//save_frame(rgb_frame, 704, 576);
 				{
 					SDL_LockYUVOverlay(bmp);
 
@@ -276,6 +276,7 @@ int main(int argc, char* argv[])
 				goto end;
 			}
 		}
+        }
 	}
 
 end:

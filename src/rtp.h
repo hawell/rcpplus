@@ -55,6 +55,7 @@ typedef struct rtp_merge_desc {
 	int frame_complete;
 	int frame_error;
 	int (*append)(unsigned char* fragment, int frag_len, struct rtp_merge_desc* mdesc);
+	int prepend_mpeg4_starter;
 
 } rtp_merge_desc;
 
@@ -64,7 +65,7 @@ typedef struct {
 	int timestamp;
 } video_frame;
 
-int rtp_init(int type, rtp_merge_desc* mdesc);
+int rtp_init(int type, int prepend_mpeg4_starter, rtp_merge_desc* mdesc);
 
 int rtp_recv(int socket, rtp_merge_desc* mdesc);
 

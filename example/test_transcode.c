@@ -290,7 +290,7 @@ int main(int argc, char* argv[])
 	}
 
 	rtp_merge_desc mdesc;
-	rtp_init(RTP_PAYLOAD_TYPE_H263, &mdesc);
+	rtp_init(RTP_PAYLOAD_TYPE_H263, 1, &mdesc);
 	video_frame vframe;
 
 	time_t end_time = time(NULL) + 10;

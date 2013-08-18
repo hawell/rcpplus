@@ -230,8 +230,11 @@ static int append_fu_a(unsigned char* data, int len, rtp_merge_desc* mdesc)
 		DEBUG("start");
 		if (mdesc->len == 0)
 		{
-			memcpy(mdesc->data+mdesc->len, NAL_START_FRAME, 3);
-			mdesc->len += 3;
+			if (mdesc->prepend_mpeg4_starter)
+			{
+				memcpy(mdesc->data + mdesc->len, NAL_START_FRAME, 3);
+				mdesc->len += 3;
+			}
 
 			nal_unit_header nh;
 			nh.f = fp->nh.f;
@@ -240,7 +243,7 @@ static int append_fu_a(unsigned char* data, int len, rtp_merge_desc* mdesc)
 
 			DEBUG("nal unit: f=%d nri=%d type=%d", nh.f, nh.nri, nh.type);
 
-			memcpy(mdesc->data+mdesc->len,&nh, 1);
+			memcpy(mdesc->data + mdesc->len,&nh, 1);
 			mdesc->len++;
 			memcpy(mdesc->data + mdesc->len, fp->payload, len);
 			mdesc->len += len;
@@ -261,7 +264,7 @@ static int append_fu_a(unsigned char* data, int len, rtp_merge_desc* mdesc)
 		}
 		else
 		{
-			memcpy(mdesc->data+mdesc->len, fp->payload, len);
+			memcpy(mdesc->data + mdesc->len, fp->payload, len);
 			mdesc->len += len;
 		}
 	}
@@ -270,7 +273,7 @@ static int append_fu_a(unsigned char* data, int len, rtp_merge_desc* mdesc)
 	{
 		DEBUG("end");
 		mdesc->frame_complete = 1;
-		return 1;
+		return 0;
 	}
 
 	return 0;
@@ -279,9 +282,12 @@ static int append_fu_a(unsigned char* data, int len, rtp_merge_desc* mdesc)
 static int append_single_nal(unsigned char* data, int data_len, rtp_merge_desc* mdesc)
 {
 	assert(mdesc->len == 0);
-	memcpy(mdesc->data + mdesc->len, NAL_START_FRAME, 3);
-	mdesc->len += 3;
-	memcpy(mdesc->data + 3, data, data_len);
+	if (mdesc->prepend_mpeg4_starter)
+	{
+		memcpy(mdesc->data + mdesc->len, NAL_START_FRAME, 3);
+		mdesc->len += 3;
+	}
+	memcpy(mdesc->data + mdesc->len, data, data_len);
 	mdesc->len += data_len;
 
 	mdesc->frame_complete = 1;
@@ -292,8 +298,11 @@ static int append_single_nal(unsigned char* data, int data_len, rtp_merge_desc* 
 static int append_stap_a(unsigned char* data, rtp_merge_desc* mdesc)
 {
 	assert(mdesc->len == 0);
-	memcpy(mdesc->data + mdesc->len, NAL_START_FRAME, 3);
-	mdesc->len += 3;
+	if (mdesc->prepend_mpeg4_starter)
+	{
+		memcpy(mdesc->data + mdesc->len, NAL_START_FRAME, 3);
+		mdesc->len += 3;
+	}
 	data++;
 	int size = ntohs(*(unsigned short*)(data));
 	mdesc->data[mdesc->len] = *(data+2);
@@ -301,8 +310,8 @@ static int append_stap_a(unsigned char* data, rtp_merge_desc* mdesc)
 	memcpy(mdesc->data + mdesc->len, data+3, size);
 	mdesc->len += size;
 
-	memcpy(mdesc->data + mdesc->len, NAL_START_FRAME, 3);
-	mdesc->len += 3;
+	//memcpy(mdesc->data + mdesc->len, NAL_START_FRAME, 3);
+	//mdesc->len += 3;
 	data += size + 2;
 	size = ntohs(*(unsigned short*)(data));
 	mdesc->data[mdesc->len] = *(data+2);
@@ -426,6 +435,7 @@ static int append_h264(unsigned char *fragment, int fragment_len, rtp_merge_desc
 
 			default:
 				ERROR("unsupported nal type: %d", nal_type);
+				return -1;
 				break;
 		}
 	}
@@ -433,12 +443,13 @@ static int append_h264(unsigned char *fragment, int fragment_len, rtp_merge_desc
 	return 0;
 }
 
-int rtp_init(int type, rtp_merge_desc* mdesc)
+int rtp_init(int type, int prepend_mpeg4_starter, rtp_merge_desc* mdesc)
 {
 	mdesc->len = 0;
 	mdesc->type = type;
 	mdesc->frame_complete = 0;
 	mdesc->frame_error = 0;
+	mdesc->prepend_mpeg4_starter = prepend_mpeg4_starter;
 	switch (type)
 	{
 		case RTP_PAYLOAD_TYPE_H263:
@@ -465,21 +476,33 @@ int rtp_recv(int socket, rtp_merge_desc* mdesc)
 {
 	int qp = queue_pop(mdesc);
 	if (qp == -1)
+	{
 		ERROR("cannot pop from queue");
+		goto error;
+	}
 
 	mdesc->fragment_size[qp] = recvfrom(socket, mdesc->fragment[qp], MTU_LENGTH, 0, NULL, NULL);
 
 	int res = heap_push(mdesc, qp);
 	if (res == -1)
+	{
 		ERROR("cannot push to heap");
+		goto error;
+	}
 
 	int hp = heap_pop(mdesc);
 	if (hp == -1)
+	{
 		ERROR("cannot pop from heap");
+		goto error;
+	}
 
 	res = queue_push(mdesc, hp);
 	if (res == -1)
+	{
 		ERROR("cannot push to queue");
+		goto error;
+	}
 
 	if (mdesc->frame_complete)
 	{
@@ -489,10 +512,14 @@ int rtp_recv(int socket, rtp_merge_desc* mdesc)
 	}
 
 	return mdesc->append(mdesc->fragment[hp], mdesc->fragment_size[hp], mdesc);
+
+error:
+	return -1;
 }
 
 int rtp_pop_frame(video_frame* frame, rtp_merge_desc* mdesc)
 {
+	//INFO("frame_complete = %d", mdesc->frame_complete);
 	if (mdesc->frame_complete)
 	{
 		frame->data = mdesc->data;

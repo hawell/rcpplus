@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
 	}
 
 	rtp_merge_desc mdesc;
-	rtp_init(RTP_PAYLOAD_TYPE_H264, &mdesc);
+	rtp_init(RTP_PAYLOAD_TYPE_H264, 1, &mdesc);
 	video_frame vframe;
 
 	while (1)
