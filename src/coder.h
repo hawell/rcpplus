@@ -74,13 +74,13 @@ typedef struct {
 	rcp_coder *coder;
 } rcp_coder_list;
 
-int get_coder_list(rcp_session* session, int coder_type, int media_type, rcp_coder_list* coder_list);
+int get_coder_list(int coder_type, int media_type, rcp_coder_list* coder_list);
 
-int get_coder_video_operation_mode(rcp_session* session, int coder, int *mode);
-int set_coder_video_operation_mode(rcp_session* session, int coder, int mode);
+int get_coder_video_operation_mode(int coder, int *mode);
+int set_coder_video_operation_mode(int coder, int mode);
 
-int get_coder_preset(rcp_session* session, int coder);
-int set_coder_preset(rcp_session* session, int coder, int preset);
+int get_coder_preset(int coder);
+int set_coder_preset(int coder, int preset);
 
 void log_coder(int level, rcp_coder* coder);
 

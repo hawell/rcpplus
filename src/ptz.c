@@ -46,12 +46,12 @@ static unsigned char checksum(unsigned char* data, int len)
 	return (sum & 0x7f);
 }
 
-static int send_osrd(rcp_session* session, int lease_time, int opcode, unsigned char* data, int data_len)
+static int send_osrd(int lease_time, int opcode, unsigned char* data, int data_len)
 {
 	rcp_packet osrd_req, osrd_resp;
 	int res;
 
-	init_rcp_header(&osrd_req, session, RCP_COMMAND_CONF_RCP_TRANSFER_TRANSPARENT_DATA, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_P_OCTET);
+	init_rcp_header(&osrd_req, 0, RCP_COMMAND_CONF_RCP_TRANSFER_TRANSPARENT_DATA, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_P_OCTET);
 	osrd_req.numeric_descriptor = 1;
 
 	unsigned short tmp16;
@@ -84,12 +84,12 @@ error:
 	return -1;
 }
 
-int ptz_available(rcp_session* session)
+int ptz_available()
 {
 	rcp_packet ptz_req, ptz_resp;
 	int res;
 
-	init_rcp_header(&ptz_req, session, RCP_COMMAND_CONF_PTZ_CONTROLLER_AVAILABLE, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_F_FLAG);
+	init_rcp_header(&ptz_req, 0, RCP_COMMAND_CONF_PTZ_CONTROLLER_AVAILABLE, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_F_FLAG);
 
 	res = rcp_command(&ptz_req, &ptz_resp);
 	if (res == -1)
@@ -102,106 +102,106 @@ error:
 	return -1;
 }
 
-int move_right(rcp_session* session, int speed)
+int move_right(int speed)
 {
 	VarSpeedPTZ ptz;
 	memset(&ptz, 0, sizeof(VarSpeedPTZ));
 	ptz.pan_right = 1;
 	ptz.pan_speed = speed;
 
-	return send_osrd(session, 1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
 }
 
-int move_left(rcp_session* session, int speed)
+int move_left(int speed)
 {
 	VarSpeedPTZ ptz;
 	memset(&ptz, 0, sizeof(VarSpeedPTZ));
 	ptz.pan_left = 1;
 	ptz.pan_speed = speed;
 
-	return send_osrd(session, 1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
 }
 
-int move_up(rcp_session* session, int speed)
+int move_up(int speed)
 {
 	VarSpeedPTZ ptz;
 	memset(&ptz, 0, sizeof(VarSpeedPTZ));
 	ptz.tilt_up = 1;
 	ptz.tilt_speed = speed;
 
-	return send_osrd(session, 1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
 }
 
-int move_down(rcp_session* session, int speed)
+int move_down(int speed)
 {
 	VarSpeedPTZ ptz;
 	memset(&ptz, 0, sizeof(VarSpeedPTZ));
 	ptz.tilt_down = 1;
 	ptz.tilt_speed = speed;
 
-	return send_osrd(session, 1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
 }
 
-int move_stop(rcp_session* session)
+int move_stop()
 {
 	VarSpeedPTZ ptz;
 	memset(&ptz, 0, sizeof(VarSpeedPTZ));
 
-	return send_osrd(session, 1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
 }
 
-int zoom_in(rcp_session* session, int speed)
+int zoom_in(int speed)
 {
 	VarSpeedPTZ ptz;
 	memset(&ptz, 0, sizeof(VarSpeedPTZ));
 	ptz.zoom_in = 1;
 	ptz.zoom_speed = speed;
 
-	return send_osrd(session, 1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
 }
 
-int zoom_out(rcp_session* session, int speed)
+int zoom_out(int speed)
 {
 	VarSpeedPTZ ptz;
 	memset(&ptz, 0, sizeof(VarSpeedPTZ));
 	ptz.zoom_out = 1;
 	ptz.zoom_speed = speed;
 
-	return send_osrd(session, 1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
 }
 
-int focus_far(rcp_session* session)
+int focus_far()
 {
 	VarSpeedPTZ ptz;
 	memset(&ptz, 0, sizeof(VarSpeedPTZ));
 	ptz.focus_far = 1;
 
-	return send_osrd(session, 1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
 }
 
-int focus_near(rcp_session* session)
+int focus_near()
 {
 	VarSpeedPTZ ptz;
 	memset(&ptz, 0, sizeof(VarSpeedPTZ));
 	ptz.focus_near = 1;
 
-	return send_osrd(session, 1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
 }
 
-int iris_darker(rcp_session* session)
+int iris_darker()
 {
 	VarSpeedPTZ ptz;
 	memset(&ptz, 0, sizeof(VarSpeedPTZ));
 	ptz.iris_darker = 1;
 
-	return send_osrd(session, 1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
 }
 
-int iris_brighter(rcp_session* session)
+int iris_brighter()
 {
 	VarSpeedPTZ ptz;
 	memset(&ptz, 0, sizeof(VarSpeedPTZ));
 	ptz.iris_brighter = 1;
 
-	return send_osrd(session, 1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
 }

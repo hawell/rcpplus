@@ -108,16 +108,16 @@ typedef struct {
 	int avc_cabac;                         // 0=off; 1=on
 } rcp_mpeg4_preset;
 
-int get_preset(rcp_session* session, int preset_id, rcp_mpeg4_preset* preset, int basic);
-int set_preset(rcp_session* session, int preset_id, rcp_mpeg4_preset* preset, int basic);
+int get_preset(int preset_id, rcp_mpeg4_preset* preset, int basic);
+int set_preset(int preset_id, rcp_mpeg4_preset* preset, int basic);
 
-int preset_set_default(rcp_session* session, int preset_id);
+int preset_set_default(int preset_id);
 
-int get_preset_name(rcp_session* session, int preset_id, char* name);
-int set_preset_name(rcp_session* session, int preset_id, char* name);
+int get_preset_name(int preset_id, char* name);
+int set_preset_name(int preset_id, char* name);
 
-int get_preset_param(rcp_session* session, int preset_id, int param, int *value);
-int set_preset_param(rcp_session* session, int preset_id, int param, int value);
+int get_preset_param(int preset_id, int param, int *value);
+int set_preset_param(int preset_id, int param, int value);
 
 void log_preset(int level, rcp_mpeg4_preset* preset, int basic);
 

@@ -29,11 +29,13 @@ int rcp_command(rcp_packet* req, rcp_packet* rsp);
 
 int get_md5_random(unsigned char* md5);
 
-int client_register(int type, int mode, rcp_session* session);
+int client_register(int user_level, const char* password, int type, int mode);
+int client_unregister();
 
 int client_connect(rcp_session* session, int method, int media, int flags, rcp_media_descriptor* desc);
+int client_disconnect(rcp_session* session);
 
-int get_capability_list(rcp_session* session);
+int get_capability_list();
 
 int keep_alive(rcp_session* session);
 

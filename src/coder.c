@@ -28,12 +28,12 @@
 #include "rcpdefs.h"
 #include "rcpcommand.h"
 
-int get_coder_preset(rcp_session* session, int coder)
+int get_coder_preset(int coder)
 {
 	rcp_packet mp4_req, mp4_resp;
 	int res;
 
-	init_rcp_header(&mp4_req, session, RCP_COMMAND_CONF_MPEG4_CURRENT_PARAMS, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_T_DWORD);
+	init_rcp_header(&mp4_req, 0, RCP_COMMAND_CONF_MPEG4_CURRENT_PARAMS, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_T_DWORD);
 	mp4_req.numeric_descriptor = coder;
 
 	res = rcp_command(&mp4_req, &mp4_resp);
@@ -48,12 +48,12 @@ error:
 	return -1;
 }
 
-int set_coder_preset(rcp_session* session, int coder, int preset)
+int set_coder_preset(int coder, int preset)
 {
 	rcp_packet preset_req, preset_resp;
 	int res;
 
-	init_rcp_header(&preset_req, session, RCP_COMMAND_CONF_MPEG4_CURRENT_PARAMS, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_T_DWORD);
+	init_rcp_header(&preset_req, 0, RCP_COMMAND_CONF_MPEG4_CURRENT_PARAMS, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_T_DWORD);
 	preset_req.numeric_descriptor = coder;
 
 	unsigned int tmp32 = htonl(preset);
@@ -71,12 +71,12 @@ error:
 	return -1;
 }
 
-int get_coder_video_operation_mode(rcp_session* session, int coder, int *mode)
+int get_coder_video_operation_mode(int coder, int *mode)
 {
 	rcp_packet mode_req, mode_resp;
 	int res;
 
-	init_rcp_header(&mode_req, session, RCP_COMMAND_CONF_CODER_VIDEO_OPERATION_MODE, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_T_DWORD);
+	init_rcp_header(&mode_req, 0, RCP_COMMAND_CONF_CODER_VIDEO_OPERATION_MODE, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_T_DWORD);
 	mode_req.numeric_descriptor = coder;
 
 	res = rcp_command(&mode_req, &mode_resp);
@@ -92,12 +92,12 @@ error:
 	return -1;
 }
 
-int set_coder_video_operation_mode(rcp_session* session, int coder, int mode)
+int set_coder_video_operation_mode(int coder, int mode)
 {
 	rcp_packet mode_req, mode_resp;
 	int res;
 
-	init_rcp_header(&mode_req, session, RCP_COMMAND_CONF_CODER_VIDEO_OPERATION_MODE, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_T_DWORD);
+	init_rcp_header(&mode_req, 0, RCP_COMMAND_CONF_CODER_VIDEO_OPERATION_MODE, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_T_DWORD);
 	mode_req.numeric_descriptor = coder;
 
 	unsigned int tmp32 = htonl(mode);
@@ -121,12 +121,12 @@ error:
 
 #define CODER_SIZE_IN_PAYLOAD	16
 
-int get_coder_list(rcp_session* session, int coder_type, int media_type, rcp_coder_list* coder_list)
+int get_coder_list(int coder_type, int media_type, rcp_coder_list* coder_list)
 {
 	rcp_packet coders_req, coders_resp;
 	int res;
 
-	init_rcp_header(&coders_req, session, RCP_COMMAND_CONF_RCP_CODER_LIST, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_OCTET);
+	init_rcp_header(&coders_req, 0, RCP_COMMAND_CONF_RCP_CODER_LIST, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_OCTET);
 	coders_req.numeric_descriptor = 1; // line number - where do we get this?!!
 
 	coders_req.payload[0] = RCP_MEDIA_TYPE_VIDEO;

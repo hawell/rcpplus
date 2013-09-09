@@ -47,32 +47,35 @@ typedef struct {
 } rcp_packet;
 
 typedef struct {
-	int user_level;
-	unsigned short client_id;
 	unsigned int session_id;
-	char password[MAX_PASSWORD_LENGTH];
+
+	struct sockaddr_in stream_addr;
+	int stream_socket;
+
+	struct sockaddr_in tcp_stream_addr;
 } rcp_session;
 
-int init_rcp_header(rcp_packet* hdr, rcp_session* session, int tag, int rw, int data_type);
+int init_rcp_header(rcp_packet* hdr, int session_id, int tag, int rw, int data_type);
 int write_rcp_header(unsigned char* packet, rcp_packet* hdr);
 int read_rcp_header(unsigned char* packet, rcp_packet* hdr);
 
 typedef struct {
-	struct sockaddr_in stream_addr;
-	int stream_socket;
+	int user_level;
+	char password[MAX_PASSWORD_LENGTH];
+
+	unsigned short client_id;
 
 	struct sockaddr_in ctrl_addr;
 	int control_socket;
 
-	struct sockaddr_in tcp_stream_addr;
 } rcp_connection;
 
 extern rcp_connection con;
 
 int rcp_connect(const char* ip);
 
-int stream_connect_udp();
-int stream_connect_tcp();
+int stream_connect_udp(rcp_session* session);
+int stream_connect_tcp(rcp_session* session);
 
 int initiate_tcp_stream(rcp_session* session, struct rcp_coder_tag* coder);
 

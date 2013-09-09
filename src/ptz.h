@@ -49,23 +49,23 @@ typedef struct {
 	unsigned char db3_res:1;
 } VarSpeedPTZ;
 
-int ptz_available(rcp_session* session);
+int ptz_available();
 
-int move_stop(rcp_session* session);
+int move_stop();
 
-int move_right(rcp_session* session, int speed);
-int move_left(rcp_session* session, int speed);
+int move_right(int speed);
+int move_left(int speed);
 
-int move_up(rcp_session* session, int speed);
-int move_down(rcp_session* session, int speed);
+int move_up(int speed);
+int move_down(int speed);
 
-int zoom_in(rcp_session* session, int speed);
-int zoom_out(rcp_session* session, int speed);
+int zoom_in(int speed);
+int zoom_out(int speed);
 
-int focus_far(rcp_session* session);
-int focus_near(rcp_session* session);
+int focus_far();
+int focus_near();
 
-int iris_darker(rcp_session* session);
-int iris_brighter(rcp_session* session);
+int iris_darker();
+int iris_brighter();
 
 #endif /* PTZ_H_ */

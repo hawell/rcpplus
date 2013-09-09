@@ -19,35 +19,31 @@ int main()
 {
 	tlog_init(TLOG_MODE_STDERR, TLOG_DEBUG, NULL);
 
-	rcp_connect("174.0.0.236");
+	rcp_connect("10.25.25.220");
 
-	rcp_session session;
-	memset(&session, 0, sizeof(rcp_session));
-	session.user_level = RCP_USER_LEVEL_LIVE;
+	client_register(RCP_USER_LEVEL_LIVE, "", RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_MD5);
 
-	client_register(RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_MD5, &session);
-
-	if (ptz_available(&session) == 0)
+	if (ptz_available() == 0)
 	{
 		INFO("ptz is not available for this camera");
 		return 0;
 	}
 
-	move_right(&session, 5);
+	move_right(5);
 	sleep(1);
-	move_left(&session, 5);
+	move_left(5);
 	sleep(1);
-	move_up(&session, 5);
+	move_up(5);
 	sleep(1);
-	move_down(&session, 5);
+	move_down(5);
 	sleep(1);
-	move_stop(&session);
+	move_stop();
 
-	zoom_in(&session, 5);
+	zoom_in(5);
 	sleep(1);
-	zoom_out(&session, 5);
+	zoom_out(5);
 	sleep(1);
-	move_stop(&session);
+	move_stop();
 
 	return 0;
 }

@@ -72,14 +72,11 @@ int main(int argc, char* argv[])
 
 	rcp_connect(argv[1]);
 
-	rcp_session session;
-	memset(&session, 0, sizeof(rcp_session));
-	session.user_level = RCP_USER_LEVEL_LIVE;
 
-	client_register(RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_MD5, &session);
+	client_register(RCP_USER_LEVEL_LIVE, "", RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_MD5);
 
 	rcp_coder_list encoders;
-	get_coder_list(&session, RCP_CODER_DECODER, RCP_MEDIA_TYPE_VIDEO, &encoders);
+	get_coder_list(RCP_CODER_DECODER, RCP_MEDIA_TYPE_VIDEO, &encoders);
 	int coder_id = 1;
 	int resolution = RCP_VIDEO_RESOLUTION_QCIF;
 	for (int i=0; i<encoders.count; i++)
@@ -101,12 +98,12 @@ int main(int argc, char* argv[])
 	else if (resolution && RCP_VIDEO_RESOLUTION_QCIF)
 		resolution = RCP_VIDEO_RESOLUTION_QCIF;
 
-	int preset_id = get_coder_preset(&session, coder_id);
+	int preset_id = get_coder_preset(coder_id);
 	rcp_mpeg4_preset preset;
-	get_preset(&session, preset_id, &preset, 1);
+	get_preset(preset_id, &preset, 1);
 
 	int video_mode;
-	get_coder_video_operation_mode(&session, coder_id, &video_mode);
+	get_coder_video_operation_mode(coder_id, &video_mode);
 
 	INFO("mode=%d res=%d id=%d", video_mode, resolution, coder_id);
 
@@ -200,7 +197,9 @@ int main(int argc, char* argv[])
 	SDL_Overlay *bmp;
 	bmp = SDL_CreateYUVOverlay(704, 576, SDL_YV12_OVERLAY, screen);
 
-	unsigned short udp_port = stream_connect_udp();
+	rcp_session session;
+	memset(&session, 0, sizeof(rcp_session));
+	unsigned short udp_port = stream_connect_udp(&session);
 	rcp_media_descriptor desc = {
 			RCP_MEP_UDP, 1, 1, 0, udp_port, coder_id, 1, coding, resolution
 	};
@@ -227,7 +226,7 @@ int main(int argc, char* argv[])
 
 	while (1)
 	{
-		if (rtp_recv(con.stream_socket, &mdesc) == 0)
+		if (rtp_recv(session.stream_socket, &mdesc) == 0)
         {
 		if (rtp_pop_frame(&vframe, &mdesc) == 0)
 		{

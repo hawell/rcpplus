@@ -245,27 +245,25 @@ int main(int argc, char* argv[])
 
 	rcp_connect(argv[1]);
 
-	rcp_session session;
-	memset(&session, 0, sizeof(rcp_session));
-	session.user_level = RCP_USER_LEVEL_LIVE;
+	client_register(RCP_USER_LEVEL_LIVE, "", RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_MD5);
 
-	client_register(RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_MD5, &session);
-
-	get_capability_list(&session);
+	get_capability_list();
 
 	rcp_coder_list encoders, decoders;
-	get_coder_list(&session, RCP_CODER_ENCODER, RCP_MEDIA_TYPE_VIDEO, &encoders);
+	get_coder_list(RCP_CODER_ENCODER, RCP_MEDIA_TYPE_VIDEO, &encoders);
 	DEBUG("***");
 	for (int i=0; i<encoders.count; i++)
 		DEBUG("%x %x %x %x %x", encoders.coder[i].number, encoders.coder[i].caps, encoders.coder[i].current_cap, encoders.coder[i].param_caps, encoders.coder[i].current_param);
 	DEBUG("***");
-	get_coder_list(&session, RCP_CODER_DECODER, RCP_MEDIA_TYPE_VIDEO, &decoders);
+	get_coder_list(RCP_CODER_DECODER, RCP_MEDIA_TYPE_VIDEO, &decoders);
 	DEBUG("***");
 	for (int i=0; i<decoders.count; i++)
 		DEBUG("%x %x %x %x %x", decoders.coder[i].number, decoders.coder[i].caps, decoders.coder[i].current_cap, decoders.coder[i].param_caps, decoders.coder[i].current_param);
 	DEBUG("***");
 
-	unsigned short udp_port = stream_connect_udp();
+	rcp_session session;
+	memset(&session, 0, sizeof(rcp_session));
+	unsigned short udp_port = stream_connect_udp(&session);
 
 	DEBUG("udp port = %d", udp_port);
 
@@ -301,7 +299,7 @@ int main(int argc, char* argv[])
 
 		rtp_push_frame(buffer, num, &mdesc);
 */
-		rtp_recv(con.stream_socket, &mdesc);
+		rtp_recv(session.stream_socket, &mdesc);
 
 		if (rtp_pop_frame(&vframe, &mdesc) == 0)
 		{

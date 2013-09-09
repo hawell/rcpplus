@@ -216,7 +216,7 @@ int get_md5_random(unsigned char* md5)
 	rcp_packet md5_req, md5_resp;
 	int res;
 
-	init_rcp_header(&md5_req, NULL, RCP_COMMAND_CONF_RCP_REG_MD5_RANDOM, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_STRING);
+	init_rcp_header(&md5_req, 0, RCP_COMMAND_CONF_RCP_REG_MD5_RANDOM, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_STRING);
 
 	res = rcp_command(&md5_req, &md5_resp);
 	if (res == -1)
@@ -232,16 +232,19 @@ error:
 	return -1;
 }
 
-int client_register(int type, int mode, rcp_session* session)
+int client_register(int user_level, const char* password, int type, int mode)
 {
+	con.user_level = user_level;
+	strcpy(con.password, password);
+
 	rcp_packet reg_req, reg_resp;
 	int res;
 
-	init_rcp_header(&reg_req, NULL, RCP_COMMAND_CONF_RCP_CLIENT_REGISTRATION, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_P_OCTET);
+	init_rcp_header(&reg_req, 0, RCP_COMMAND_CONF_RCP_CLIENT_REGISTRATION, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_P_OCTET);
 
 	char pphrase[MAX_PASSPHRASE_LEN];
 	int plen;
-	res = generate_passphrase(mode, session->user_level, session->password, pphrase, &plen);
+	res = generate_passphrase(mode, con.user_level, con.password, pphrase, &plen);
 	if (res == -1)
 		goto error;
 
@@ -272,13 +275,38 @@ int client_register(int type, int mode, rcp_session* session)
 	if (reg_resp.payload[0] == 0)
 		goto error;
 
-	session->user_level = reg_resp.payload[1];
-	session->client_id = ntohs(*(unsigned short*)(reg_resp.payload+2));
+	con.user_level = reg_resp.payload[1];
+	con.client_id = ntohs(*(unsigned short*)(reg_resp.payload+2));
 
 	return 0;
 
 error:
 	ERROR("client_register()");
+	return -1;
+}
+
+int client_unregister()
+{
+	rcp_packet unreg_req, unreg_resp;
+	int res;
+
+	init_rcp_header(&unreg_req, 0, RCP_COMMAND_CONF_RCP_CLIENT_UNREGISTER, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_T_WORD);
+
+	res = rcp_command(&unreg_req, &unreg_resp);
+	if (res == -1)
+		goto error;
+
+	int unregister_result = unreg_resp.payload[0];
+	if (unregister_result != 1)
+	{
+		ERROR("unregister not successfull");
+		return -1;
+	}
+	else
+		return 0;
+
+error:
+	ERROR("client_unregister()");
 	return -1;
 }
 
@@ -320,7 +348,7 @@ int client_connect(rcp_session* session, int method, int media, int flags, rcp_m
 	rcp_packet con_req, con_resp;
 	int res;
 
-	init_rcp_header(&con_req, session, RCP_COMMAND_CONF_CONNECT_PRIMITIVE, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_P_OCTET);
+	init_rcp_header(&con_req, 0, RCP_COMMAND_CONF_CONNECT_PRIMITIVE, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_P_OCTET);
 
 	int len = 0;
 	unsigned char* mdesc = con_req.payload;
@@ -372,12 +400,12 @@ error:
 	return -1;
 }
 
-int get_capability_list(rcp_session* session)
+int get_capability_list()
 {
 	rcp_packet caps_req, caps_resp;
 	int res;
 
-	init_rcp_header(&caps_req, session, RCP_COMMAND_CONF_CAPABILITY_LIST, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_OCTET);
+	init_rcp_header(&caps_req, 0, RCP_COMMAND_CONF_CAPABILITY_LIST, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_OCTET);
 
 	res = rcp_command(&caps_req, &caps_resp);
 	if (res == -1)
@@ -396,7 +424,7 @@ int keep_alive(rcp_session* session)
 	rcp_packet alive_req, alive_resp;
 	int res;
 
-	init_rcp_header(&alive_req, session, RCP_COMMAND_CONF_RCP_CONNECTIONS_ALIVE, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_F_FLAG);
+	init_rcp_header(&alive_req, session->session_id, RCP_COMMAND_CONF_RCP_CONNECTIONS_ALIVE, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_F_FLAG);
 
 	res = rcp_command(&alive_req, &alive_resp);
 	if (res == -1)
