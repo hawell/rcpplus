@@ -59,4 +59,4 @@ record: test_record.o
 	$(CC) $(CFLAGS) $(INCS) $(FFMPEGINC) -c $< -o $@ 
 	
 clean:
-	rm -f *.o  h264_udp h263_udp h263_tcp preset detect coder ptz transcode playrecord
+	rm -f *.o  h264_udp h263_udp h263_tcp preset detect coder ptz transcode play record
