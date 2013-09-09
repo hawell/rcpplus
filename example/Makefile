@@ -1,5 +1,5 @@
 CC = gcc
-SRCS = test_preset.c test_h264_udp.c test_h263_udp.c test_h263_tcp.c test_detect.c test_coder.c test_ptz.c test_transcode.c test_play.c test_mjpeg.c test_record.c
+SRCS = test_preset.c test_h264_udp.c test_h263_udp.c test_h263_tcp.c test_detect.c test_coder.c test_ptz.c test_transcode.c test_play.c test_record.c
 OBJS = $(SRCS:.c=.o)
 INCS = -I../src/
 CFLAGS = -g -std=c99 -Wall -W
@@ -20,7 +20,7 @@ FFMPEGLIB = \
 		
 FFMPEGINC = -I$(FFMPEG)
 
-all: preset h264_udp h263_udp h263_tcp detect coder ptz transcode play mjpeg record
+all: preset h264_udp h263_udp h263_tcp detect coder ptz transcode play record
 
 preset: test_preset.o
 	$(CC) test_preset.o $(LIB) -o preset
@@ -50,9 +50,6 @@ play: test_play.o
 	$(CC) -c $(CFLAGS) $(INCS) $(FFMPEGINC) test_play.c -o test_play.o
 	$(CC) test_play.o $(LIB) $(FFMPEGLIB) `sdl-config --cflags --libs` -o play
 	
-mjpeg: test_mjpeg.o
-	$(CC) test_mjpeg.o $(LIB) -o mjpeg
-	
 record: test_record.o
 	$(CC) -c $(CFLAGS) $(INCS) $(FFMPEGINC) test_record.c -o test_record.o
 	$(CC) test_record.o $(LIB) $(FFMPEGLIB) -o record
@@ -62,4 +59,4 @@ record: test_record.o
 	$(CC) $(CFLAGS) $(INCS) $(FFMPEGINC) -c $< -o $@ 
 	
 clean:
-	rm -f *.o  h264_udp h263_udp h263_tcp preset detect coder ptz transcode play mjpeg record
+	rm -f *.o  h264_udp h263_udp h263_tcp preset detect coder ptz transcode playrecord
