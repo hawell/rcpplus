@@ -391,12 +391,39 @@ int client_connect(rcp_session* session, int method, int media, int flags, rcp_m
 
 	session->session_id = con_resp.session_id;
 	DEBUG("session id = %d - %d", con_resp.session_id, session->session_id);
-	log_hex(TLOG_INFO, "client connection resp", con_resp.payload, con_resp.payload_length);
+	log_hex(TLOG_DEBUG, "client connection resp", con_resp.payload, con_resp.payload_length);
 
 	return 0;
 
 error:
 	ERROR("client_connect()");
+	return -1;
+}
+
+int client_disconnect(rcp_session* session)
+{
+	rcp_packet discon_req, discon_resp;
+	int res;
+
+	init_rcp_header(&discon_req, session->session_id, RCP_COMMAND_CONF_DISCONNECT_PRIMITIVE, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_P_OCTET);
+
+	discon_req.payload_length = 8;
+
+	discon_req.payload[0] = 0x01; // connection disconnected
+	discon_req.payload[1] = 0x01; // normal termination
+
+	memcpy(discon_req.payload + 4, &con.ctrl_addr.sin_addr.s_addr, 4);
+
+	res = rcp_command(&discon_req, &discon_resp);
+	if (res == -1)
+		goto error;
+
+	log_hex(TLOG_DEBUG, "client disconnect response", discon_resp.payload, discon_resp.payload_length);
+
+	return 0;
+
+error:
+	ERROR("client_disconnect()");
 	return -1;
 }
 
