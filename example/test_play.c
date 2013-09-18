@@ -86,17 +86,36 @@ int main(int argc, char* argv[])
 			log_coder(TLOG_INFO, &encoders.coder[i]);
 			coder_id = encoders.coder[i].number;
 			resolution = encoders.coder[i].current_param;
-			break;
+			if (coder_id == 3)
+				break;
 		}
 	}
-	if (resolution && RCP_VIDEO_RESOLUTION_4CIF)
+	INFO("resolution = %d", resolution);
+	int width, height;
+	if (resolution & RCP_VIDEO_RESOLUTION_4CIF)
+	{
 		resolution = RCP_VIDEO_RESOLUTION_4CIF;
-	else if (resolution && RCP_VIDEO_RESOLUTION_2CIF)
+		width = 704;
+		height = 576;
+	}
+	else if (resolution & RCP_VIDEO_RESOLUTION_2CIF)
+	{
 		resolution = RCP_VIDEO_RESOLUTION_2CIF;
-	else if (resolution && RCP_VIDEO_RESOLUTION_CIF)
+		width = 704;
+		height = 288;
+	}
+	else if (resolution & RCP_VIDEO_RESOLUTION_CIF)
+	{
 		resolution = RCP_VIDEO_RESOLUTION_CIF;
-	else if (resolution && RCP_VIDEO_RESOLUTION_QCIF)
+		width = 352;
+		height = 288;
+	}
+	else if (resolution & RCP_VIDEO_RESOLUTION_QCIF)
+	{
 		resolution = RCP_VIDEO_RESOLUTION_QCIF;
+		width = 176;
+		height = 144;
+	}
 
 	int preset_id = get_coder_preset(coder_id);
 	rcp_mpeg4_preset preset;
@@ -152,8 +171,8 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-	dec_ctx->width = 704;
-	dec_ctx->height = 576;
+	dec_ctx->width = width;
+	dec_ctx->height = height;
 	dec_ctx->pix_fmt = PIX_FMT_YUV420P;
 
 	AVFrame* raw_frame = avcodec_alloc_frame();
@@ -187,7 +206,7 @@ int main(int argc, char* argv[])
 	}
 	SDL_Surface *screen;
 
-	screen = SDL_SetVideoMode(704, 576, 0, 0);
+	screen = SDL_SetVideoMode(width, height, 0, 0);
 	if (!screen)
 	{
 		ERROR("could not initialize video mode");
@@ -195,7 +214,7 @@ int main(int argc, char* argv[])
 	}
 
 	SDL_Overlay *bmp;
-	bmp = SDL_CreateYUVOverlay(704, 576, SDL_YV12_OVERLAY, screen);
+	bmp = SDL_CreateYUVOverlay(width, height, SDL_YV12_OVERLAY, screen);
 
 	rcp_session session;
 	memset(&session, 0, sizeof(rcp_session));
@@ -280,6 +299,8 @@ int main(int argc, char* argv[])
 
 end:
 	kill(res, SIGKILL);
+	client_disconnect(&session);
+	client_unregister();
 
 	return 0;
 }
