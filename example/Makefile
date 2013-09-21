@@ -1,5 +1,5 @@
 CC = gcc
-SRCS = test_preset.c test_h264_udp.c test_h263_udp.c test_h263_tcp.c test_detect.c test_coder.c test_ptz.c test_transcode.c test_play.c test_record.c
+SRCS = test_preset.c test_h264_udp.c test_h263_udp.c test_h263_tcp.c test_detect.c test_coder.c test_ptz.c test_transcode.c test_play.c test_record.c test_jpeg.c
 OBJS = $(SRCS:.c=.o)
 INCS = -I../src/
 CFLAGS = -g -std=c99 -Wall -W
@@ -20,7 +20,7 @@ FFMPEGLIB = \
 		
 FFMPEGINC = -I$(FFMPEG)
 
-all: preset h264_udp h263_udp h263_tcp detect coder ptz transcode play record
+all: preset h264_udp h263_udp h263_tcp detect coder ptz transcode play record jpeg
 
 preset: test_preset.o
 	$(CC) test_preset.o $(LIB) -o preset
@@ -54,9 +54,11 @@ record: test_record.o
 	$(CC) -c $(CFLAGS) $(INCS) $(FFMPEGINC) test_record.c -o test_record.o
 	$(CC) test_record.o $(LIB) $(FFMPEGLIB) -o record
 
+jpeg: test_jpeg.o
+	$(CC) test_jpeg.o $(LIB) $(FFMPEGLIB) -o jpeg
 	
 .c.o:
 	$(CC) $(CFLAGS) $(INCS) $(FFMPEGINC) -c $< -o $@ 
 	
 clean:
-	rm -f *.o  h264_udp h263_udp h263_tcp preset detect coder ptz transcode play record
+	rm -f *.o  h264_udp h263_udp h263_tcp preset detect coder ptz transcode play record jpeg

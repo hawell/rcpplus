@@ -29,6 +29,7 @@ struct rcp_coder_tag;
 
 #define MAX_PAYLOAD_LENGTH		1000
 #define MAX_PASSWORD_LENGTH		255
+#define MAX_IP_LENGTH	20
 
 typedef struct {
 	unsigned short tag;					/* Each tag is represented by two octets. It identifies the command which should be processed by the VideoJet. */
@@ -60,6 +61,7 @@ int write_rcp_header(unsigned char* packet, rcp_packet* hdr);
 int read_rcp_header(unsigned char* packet, rcp_packet* hdr);
 
 typedef struct {
+	char address[MAX_IP_LENGTH];
 	int user_level;
 	char password[MAX_PASSWORD_LENGTH];
 
@@ -93,5 +95,6 @@ typedef struct {
 
 const char* error_str(int error_code);
 
+int get_jpeg_snapshot(char* ip, char* data, int* len);
 
 #endif /* RCPPLUS_H_ */

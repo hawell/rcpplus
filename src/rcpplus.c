@@ -112,6 +112,7 @@ int rcp_connect(const char* ip)
 		return -1;
 	}
 
+	strcpy(con.address, ip);
 	struct hostent *hp;
 	hp = gethostbyname(ip);
 
@@ -222,4 +223,55 @@ const char* error_str(int error_code)
 			return "unknown error";break;
 	}
 	return "";
+}
+
+int get_jpeg_snapshot(char* ip, char* data, int* len)
+{
+	int sockfd;
+	struct hostent *server;
+	struct sockaddr_in serveraddr;
+
+	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	if (sockfd < 0)
+	{
+		ERROR("error opening socket : %d - %s", errno, strerror(errno));
+		return -1;
+	}
+	server = gethostbyname(ip);
+	if (server == NULL)
+	{
+		ERROR("no such host as %s", ip);
+		return -1;
+	}
+	memset((char *) &serveraddr, 0, sizeof(serveraddr));
+	serveraddr.sin_family = AF_INET;
+	memcpy((char *)&serveraddr.sin_addr.s_addr, (char *)server->h_addr_list[0], server->h_length);
+	serveraddr.sin_port = htons(80);
+	if (connect(sockfd, (const struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0)
+	{
+	      ERROR("error connecting : %d - %s", errno, strerror(errno));
+	      return -1;
+	}
+	const char request_template[] = "GET /snap.jpg HTTP/1.1\r\nHost: %s\r\nUser-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:20.0) Gecko/20100101 Firefox/20.0\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\nAccept-Language: en-US,en;q=0.5\r\nAccept-Encoding: gzip, deflate\r\nCookie: VideoInput=1; VidType=MPEG4; Instance=1; gui=1; IsVideo1=1; IsVideo2=1; HcsoB=3f7154f44e371053; leasetimeid=1011325756\r\nConnection: keep-alive\r\n\r\n";
+	char request[500];
+	sprintf(request, request_template, ip);
+
+	send(sockfd, request, strlen(request), 0);
+	int read_len;
+	int pos = 0;
+	read_len = recv(sockfd, data+pos, 2048, 0);
+	int jpeg_size;
+	char* _pos = strstr(data, "Content-Length");
+	sscanf(_pos + strlen("Content-Length: "), "%d", &jpeg_size);
+	_pos = strstr(data, "\r\n\r\n");
+	int to_read = jpeg_size - (read_len - ((_pos-data)+4));
+	while (to_read)
+	{
+		read_len = recv(sockfd, data+pos, 4096, 0);
+		pos += read_len;
+		to_read -= read_len;
+	}
+	*len = pos;
+
+	return 0;
 }
