@@ -463,3 +463,15 @@ error:
 	ERROR("keep_alive()");
 	return -1;
 }
+
+int request_intraframe(rcp_session* session)
+{
+	rcp_packet req, resp;
+	int res;
+
+	init_rcp_header(&req, session->session_id, RCP_COMMAND_CONF_MPEG4_INTRA_FRAME_REQUEST, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_P_OCTET);
+
+	res = rcp_command(&req, &resp);
+
+	return 0;
+}

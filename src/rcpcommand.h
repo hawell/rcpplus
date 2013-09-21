@@ -39,4 +39,6 @@ int get_capability_list();
 
 int keep_alive(rcp_session* session);
 
+int request_intraframe(rcp_session* session);
+
 #endif /* RCPCOMMAND_H_ */
