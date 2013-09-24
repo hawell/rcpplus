@@ -140,7 +140,7 @@ static int rcp_send(rcp_packet* hdr)
 	int res = send(con.control_socket, buffer, len, 0);
 	DEBUG("%d sent", res);
 	if (res == -1)
-		ERROR("unable to send packet: %d - %s\n", errno, strerror(errno));
+		ERROR("unable to send packet: %d - %s", errno, strerror(errno));
 
 	return res;
 }
@@ -469,9 +469,17 @@ int request_intraframe(rcp_session* session)
 	rcp_packet req, resp;
 	int res;
 
-	init_rcp_header(&req, session->session_id, RCP_COMMAND_CONF_MPEG4_INTRA_FRAME_REQUEST, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_P_OCTET);
+	init_rcp_header(&req, session->session_id, RCP_COMMAND_CONF_MPEG4_INTRA_FRAME_REQUEST, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_T_DWORD);
+
+	memcpy(req.payload, (char*)&session->session_id, 4);
 
 	res = rcp_command(&req, &resp);
+	if (res == -1)
+		goto error;
 
 	return 0;
+
+error:
+	ERROR("request_intraframe()");
+	return -1;
 }
