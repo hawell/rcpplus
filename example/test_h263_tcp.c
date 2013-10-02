@@ -29,6 +29,8 @@ int main()
 
 	rcp_connect("10.25.25.220");
 
+	start_event_handler();
+
 	client_register(RCP_USER_LEVEL_LIVE, "", RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_MD5);
 
 	get_capability_list();
@@ -89,6 +91,8 @@ int main()
 		if (rtp_pop_frame(&vframe, &mdesc) == 0)
 			fwrite(vframe.data, vframe.len, 1, stdout);
 	}
+
+	stop_event_handler();
 
 
 	return 0;

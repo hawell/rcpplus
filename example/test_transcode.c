@@ -15,6 +15,7 @@
 #include <assert.h>
 #include <signal.h>
 #include <tlog/tlog.h>
+#include <pthread.h>
 
 #include "rcpdefs.h"
 #include "rcpplus.h"
@@ -54,6 +55,22 @@ void save_frame(AVFrame *frame, int width, int height)
 
 	// Close file
 	fclose(f);
+}
+
+pthread_t thread;
+void* keep_alive_thread(void* params)
+{
+	rcp_session* session = (rcp_session*)params;
+	while (1)
+	{
+		int n = keep_alive(session);
+		INFO("active connections = %d", n);
+		if (n < 0)
+			break;
+
+		sleep(2);
+	}
+	return NULL;
 }
 
 int main(int argc, char* argv[])
@@ -245,6 +262,8 @@ int main(int argc, char* argv[])
 
 	rcp_connect(argv[1]);
 
+	start_event_handler();
+
 	client_register(RCP_USER_LEVEL_LIVE, "", RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_MD5);
 
 	get_capability_list();
@@ -273,19 +292,8 @@ int main(int argc, char* argv[])
 
 	client_connect(&session, RCP_CONNECTION_METHOD_GET, RCP_MEDIA_TYPE_VIDEO, 0, &desc);
 
-	int res = fork();
-	if (res == 0)
-	{
-		while (1)
-		{
-			int n = keep_alive(&session);
-			INFO("active connections = %d", n);
-			if (n < 0)
-				break;
 
-			sleep(2);
-		}
-	}
+	pthread_create(&thread, NULL, keep_alive_thread, &session);
 
 	rtp_merge_desc mdesc;
 	rtp_init(RTP_PAYLOAD_TYPE_H263, 1, &mdesc);
@@ -335,7 +343,14 @@ int main(int argc, char* argv[])
 	}
 
 	av_write_trailer(ofc);
-	kill(res, SIGTERM);
+
+	pthread_cancel(thread);
+
+	client_disconnect(&session);
+
+	client_unregister();
+
+	stop_event_handler();
 
 	return 0;
 }

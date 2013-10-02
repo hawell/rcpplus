@@ -48,8 +48,7 @@ static unsigned char checksum(unsigned char* data, int len)
 
 static int send_osrd(int lease_time, int opcode, unsigned char* data, int data_len)
 {
-	rcp_packet osrd_req, osrd_resp;
-	int res;
+	rcp_packet osrd_req;
 
 	init_rcp_header(&osrd_req, 0, RCP_COMMAND_CONF_RCP_TRANSFER_TRANSPARENT_DATA, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_P_OCTET);
 	osrd_req.numeric_descriptor = 1;
@@ -73,8 +72,8 @@ static int send_osrd(int lease_time, int opcode, unsigned char* data, int data_l
 
 	osrd_req.payload_length = 8 + data_len + 1;
 
-	res = rcp_command(&osrd_req, &osrd_resp);
-	if (res == -1)
+	rcp_packet* osrd_resp = rcp_command(&osrd_req);
+	if (osrd_resp == NULL)
 		goto error;
 
 	return 0;
@@ -86,19 +85,18 @@ error:
 
 int ptz_available()
 {
-	rcp_packet ptz_req, ptz_resp;
-	int res;
+	rcp_packet ptz_req;
 
 	init_rcp_header(&ptz_req, 0, RCP_COMMAND_CONF_PTZ_CONTROLLER_AVAILABLE, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_F_FLAG);
 
-	res = rcp_command(&ptz_req, &ptz_resp);
-	if (res == -1)
+	rcp_packet* ptz_resp = rcp_command(&ptz_req);
+	if (ptz_resp == NULL)
 		goto error;
 
-	return ptz_resp.payload[0];
+	return ptz_resp->payload[0];
 
 error:
-	ERROR("send_osrd()");
+	ERROR("ptz_available()");
 	return -1;
 }
 

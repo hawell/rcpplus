@@ -30,18 +30,17 @@
 
 int get_coder_preset(int coder)
 {
-	rcp_packet mp4_req, mp4_resp;
-	int res;
+	rcp_packet mp4_req;
 
 	init_rcp_header(&mp4_req, 0, RCP_COMMAND_CONF_MPEG4_CURRENT_PARAMS, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_T_DWORD);
 	mp4_req.numeric_descriptor = coder;
 
-	res = rcp_command(&mp4_req, &mp4_resp);
-	if (res == -1)
+	rcp_packet* mp4_resp = rcp_command(&mp4_req);
+	if (mp4_resp == NULL)
 		goto error;
 
 	//log_hex(LOG_DEBUG, "mp4 conf", mp4_resp.payload, mp4_resp.payload_length);
-	return ntohl(*(unsigned int*)mp4_resp.payload);
+	return ntohl(*(unsigned int*)mp4_resp->payload);
 
 error:
 	ERROR("get_mp4_current_config()");
@@ -50,8 +49,7 @@ error:
 
 int set_coder_preset(int coder, int preset)
 {
-	rcp_packet preset_req, preset_resp;
-	int res;
+	rcp_packet preset_req;
 
 	init_rcp_header(&preset_req, 0, RCP_COMMAND_CONF_MPEG4_CURRENT_PARAMS, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_T_DWORD);
 	preset_req.numeric_descriptor = coder;
@@ -60,8 +58,8 @@ int set_coder_preset(int coder, int preset)
 	memcpy(preset_req.payload, &tmp32, 4);
 	preset_req.payload_length = 4;
 
-	res = rcp_command(&preset_req, &preset_resp);
-	if (res == -1)
+	rcp_packet* preset_resp = rcp_command(&preset_req);
+	if (preset_resp == NULL)
 		goto error;
 
 	return 0;
@@ -73,17 +71,16 @@ error:
 
 int get_coder_video_operation_mode(int coder, int *mode)
 {
-	rcp_packet mode_req, mode_resp;
-	int res;
+	rcp_packet mode_req;
 
 	init_rcp_header(&mode_req, 0, RCP_COMMAND_CONF_CODER_VIDEO_OPERATION_MODE, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_T_DWORD);
 	mode_req.numeric_descriptor = coder;
 
-	res = rcp_command(&mode_req, &mode_resp);
-	if (res == -1)
+	rcp_packet* mode_resp = rcp_command(&mode_req);
+	if (mode_resp == NULL)
 		goto error;
 
-	*mode = ntohl(*(unsigned int*)mode_resp.payload);
+	*mode = ntohl(*(unsigned int*)mode_resp->payload);
 
 	return 0;
 
@@ -94,8 +91,7 @@ error:
 
 int set_coder_video_operation_mode(int coder, int mode)
 {
-	rcp_packet mode_req, mode_resp;
-	int res;
+	rcp_packet mode_req;
 
 	init_rcp_header(&mode_req, 0, RCP_COMMAND_CONF_CODER_VIDEO_OPERATION_MODE, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_T_DWORD);
 	mode_req.numeric_descriptor = coder;
@@ -104,11 +100,11 @@ int set_coder_video_operation_mode(int coder, int mode)
 	memcpy(mode_req.payload, &tmp32, 4);
 	mode_req.payload_length = 4;
 
-	res = rcp_command(&mode_req, &mode_resp);
-	if (res == -1)
+	rcp_packet* mode_resp = rcp_command(&mode_req);
+	if (mode_resp == NULL)
 		goto error;
 
-	res = ntohl(*(unsigned int*)mode_resp.payload);
+	int res = ntohl(*(unsigned int*)mode_resp->payload);
 	if (res != mode)
 		goto error;
 
@@ -123,8 +119,7 @@ error:
 
 int get_coder_list(int coder_type, int media_type, rcp_coder_list* coder_list)
 {
-	rcp_packet coders_req, coders_resp;
-	int res;
+	rcp_packet coders_req;
 
 	init_rcp_header(&coders_req, 0, RCP_COMMAND_CONF_RCP_CODER_LIST, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_OCTET);
 	coders_req.numeric_descriptor = 1; // line number - where do we get this?!!
@@ -134,14 +129,14 @@ int get_coder_list(int coder_type, int media_type, rcp_coder_list* coder_list)
 	coders_req.payload[2] = 1;
 	coders_req.payload_length = 3;
 
-	res = rcp_command(&coders_req, &coders_resp);
-	if (res == -1)
+	rcp_packet* coders_resp = rcp_command(&coders_req);
+	if (coders_resp == NULL)
 		goto error;
 
-	coder_list->count = coders_resp.payload_length / CODER_SIZE_IN_PAYLOAD;
+	coder_list->count = coders_resp->payload_length / CODER_SIZE_IN_PAYLOAD;
 	coder_list->coder = (rcp_coder*)malloc(sizeof(rcp_coder) * coder_list->count);
 
-	unsigned char* pos = coders_resp.payload;
+	unsigned char* pos = coders_resp->payload;
 	for (int i=0; i<coder_list->count; i++)
 	{
 		rcp_coder* c = coder_list->coder + i;

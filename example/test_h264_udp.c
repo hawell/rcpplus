@@ -10,12 +10,29 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <tlog/tlog.h>
+#include <pthread.h>
 
 #include "rcpdefs.h"
 #include "rcpplus.h"
 #include "rcpcommand.h"
 #include "rtp.h"
 #include "coder.h"
+
+pthread_t thread;
+void* keep_alive_thread(void* params)
+{
+	rcp_session* session = (rcp_session*)params;
+	while (1)
+	{
+		int n = keep_alive(session);
+		INFO("active connections = %d", n);
+		if (n < 0)
+			break;
+
+		sleep(2);
+	}
+	return NULL;
+}
 
 int main(int argc, char* argv[])
 {
@@ -28,6 +45,8 @@ int main(int argc, char* argv[])
     }
 
 	rcp_connect(argv[1]);
+
+	start_event_handler();
 
 	client_register(RCP_USER_LEVEL_LIVE, "", RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_MD5);
 
@@ -57,19 +76,7 @@ int main(int argc, char* argv[])
 
 	client_connect(&session, RCP_CONNECTION_METHOD_GET, RCP_MEDIA_TYPE_VIDEO, 0, &desc);
 
-	int res = fork();
-	if (res == 0)
-	{
-		while (1)
-		{
-			int n = keep_alive(&session);
-			//DEBUG("active connections = %d", n);
-			if (n < 0)
-				break;
-
-			sleep(2);
-		}
-	}
+	pthread_create(&thread, NULL, keep_alive_thread, &session);
 
 	rtp_merge_desc mdesc;
 	rtp_init(RTP_PAYLOAD_TYPE_H264, 1, &mdesc);
@@ -92,6 +99,9 @@ int main(int argc, char* argv[])
 		//return 0;
 	}
 
+	pthread_cancel(thread);
+
+	stop_event_handler();
 
 	return 0;
 }

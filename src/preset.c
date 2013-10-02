@@ -93,16 +93,15 @@ int set_preset(int preset_id, rcp_mpeg4_preset* preset, int basic)
 
 int preset_set_default(int preset_id)
 {
-	rcp_packet def_req, def_resp;
-	int res;
+	rcp_packet def_req;
 
 	init_rcp_header(&def_req, 0, RCP_COMMAND_CONF_MPEG4_DEFAULTS, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_F_FLAG);
 	def_req.numeric_descriptor = preset_id;
 	def_req.payload[0] = 0;
 	def_req.payload_length = 1;
 
-	res = rcp_command(&def_req, &def_resp);
-	if (res == -1)
+	rcp_packet* def_resp = rcp_command(&def_req);
+	if (def_resp == NULL)
 		goto error;
 
 	return 0;
@@ -114,18 +113,17 @@ error:
 
 int get_preset_name(int preset_id, char* name)
 {
-	rcp_packet pn_req, pn_resp;
-	int res;
+	rcp_packet pn_req;
 
 	init_rcp_header(&pn_req, 0, RCP_COMMAND_CONF_MPEG4_NAME, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_STRING);
 	pn_req.numeric_descriptor = preset_id;
 
-	res = rcp_command(&pn_req, &pn_resp);
-	if (res == -1)
+	rcp_packet* pn_resp = rcp_command(&pn_req);
+	if (pn_resp == NULL)
 		goto error;
 
-	memcpy(name, pn_resp.payload, pn_resp.payload_length);
-	name[pn_resp.payload_length] = 0;
+	memcpy(name, pn_resp->payload, pn_resp->payload_length);
+	name[pn_resp->payload_length] = 0;
 
 	return 0;
 
@@ -136,8 +134,7 @@ error:
 
 int set_preset_name(int preset_id, char* name)
 {
-	rcp_packet pn_req, pn_resp;
-	int res;
+	rcp_packet pn_req;
 
 	init_rcp_header(&pn_req, 0, RCP_COMMAND_CONF_MPEG4_NAME, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_P_STRING);
 	pn_req.numeric_descriptor = preset_id;
@@ -145,11 +142,11 @@ int set_preset_name(int preset_id, char* name)
 	pn_req.payload_length = strlen(name) + 1;
 	memcpy(pn_req.payload, name, pn_req.payload_length);
 
-	res = rcp_command(&pn_req, &pn_resp);
-	if (res == -1)
+	rcp_packet* pn_resp = rcp_command(&pn_req);
+	if (pn_resp == NULL)
 		goto error;
 
-	DEBUG("preset name set to '%s'", pn_resp.payload);
+	DEBUG("preset name set to '%s'", pn_resp->payload);
 	return 0;
 
 error:
@@ -199,8 +196,7 @@ int get_param_type(int param)
 
 int get_preset_param(int preset_id, int param, int* value)
 {
-	rcp_packet p_req, p_resp;
-	int res;
+	rcp_packet p_req;
 
 	int data_type = get_param_type(param);
 	if (data_type == -1)
@@ -209,24 +205,24 @@ int get_preset_param(int preset_id, int param, int* value)
 	init_rcp_header(&p_req, 0, param, RCP_COMMAND_MODE_READ, data_type);
 	p_req.numeric_descriptor = preset_id;
 
-	res = rcp_command(&p_req, &p_resp);
-	if (res == -1)
+	rcp_packet* p_resp = rcp_command(&p_req);
+	if (p_resp == NULL)
 		goto error;
 
 	switch (data_type)
 	{
 		case RCP_DATA_TYPE_F_FLAG:
 		case RCP_DATA_TYPE_T_OCTET:
-			*value = p_resp.payload[0];
+			*value = p_resp->payload[0];
 		break;
 
 		case RCP_DATA_TYPE_T_WORD:
-			*value = ntohs(*(unsigned short*)p_resp.payload);
+			*value = ntohs(*(unsigned short*)p_resp->payload);
 		break;
 
 		case RCP_DATA_TYPE_T_INT:
 		case RCP_DATA_TYPE_T_DWORD:
-			*value = ntohl(*(unsigned int*)p_resp.payload);
+			*value = ntohl(*(unsigned int*)p_resp->payload);
 		break;
 	}
 	return 0;
@@ -238,8 +234,7 @@ error:
 
 int set_preset_param(int preset_id, int param, int value)
 {
-	rcp_packet p_req, p_resp;
-	int res;
+	rcp_packet p_req;
 
 	int data_type = get_param_type(param);
 	if (data_type == -1)
@@ -274,8 +269,8 @@ int set_preset_param(int preset_id, int param, int value)
 		break;
 	}
 
-	res = rcp_command(&p_req, &p_resp);
-	if (res == -1)
+	rcp_packet* p_resp = rcp_command(&p_req);
+	if (p_resp == NULL)
 		goto error;
 
 	return 0;

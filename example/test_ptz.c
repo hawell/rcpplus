@@ -21,6 +21,8 @@ int main()
 
 	rcp_connect("10.25.25.220");
 
+	start_event_handler();
+
 	client_register(RCP_USER_LEVEL_LIVE, "", RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_MD5);
 
 	if (ptz_available() == 0)
@@ -44,6 +46,8 @@ int main()
 	zoom_out(5);
 	sleep(1);
 	move_stop();
+
+	stop_event_handler();
 
 	return 0;
 }

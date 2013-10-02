@@ -14,6 +14,7 @@
 #include <signal.h>
 #include <time.h>
 #include <tlog/tlog.h>
+#include <pthread.h>
 
 #include "rcpdefs.h"
 #include "rcpplus.h"
@@ -21,11 +22,29 @@
 #include "rtp.h"
 #include "coder.h"
 
+pthread_t thread;
+void* keep_alive_thread(void* params)
+{
+	rcp_session* session = (rcp_session*)params;
+	while (1)
+	{
+		int n = keep_alive(session);
+		INFO("active connections = %d", n);
+		if (n < 0)
+			break;
+
+		sleep(2);
+	}
+	return NULL;
+}
+
 int main()
 {
 	tlog_init(TLOG_MODE_STDERR, TLOG_INFO, NULL);
 
 	rcp_connect("10.25.25.220");
+
+	start_event_handler();
 
 	client_register(RCP_USER_LEVEL_LIVE, "", RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_MD5);
 
@@ -55,19 +74,7 @@ int main()
 
 	client_connect(&session, RCP_CONNECTION_METHOD_GET, RCP_MEDIA_TYPE_VIDEO, 0, &desc);
 
-	int res = fork();
-	if (res == 0)
-	{
-		while (1)
-		{
-			int n = keep_alive(&session);
-			INFO("active connections = %d", n);
-			if (n < 0)
-				break;
-
-			sleep(2);
-		}
-	}
+	pthread_create(&thread, NULL, keep_alive_thread, &session);
 
 	rtp_merge_desc mdesc;
 	rtp_init(RTP_PAYLOAD_TYPE_H263, 1, &mdesc);
@@ -87,6 +94,9 @@ int main()
 			fwrite(vframe.data, vframe.len, 1, stdout);
 	}
 
+	pthread_cancel(thread);
+
+	stop_event_handler();
 
 	return 0;
 }

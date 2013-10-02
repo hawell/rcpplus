@@ -27,7 +27,7 @@
 
 struct rcp_coder_tag;
 
-#define MAX_PAYLOAD_LENGTH		1000
+#define MAX_PAYLOAD_LENGTH		3000
 #define MAX_PASSWORD_LENGTH		255
 #define MAX_IP_LENGTH	20
 
@@ -55,10 +55,6 @@ typedef struct {
 
 	struct sockaddr_in tcp_stream_addr;
 } rcp_session;
-
-int init_rcp_header(rcp_packet* hdr, int session_id, int tag, int rw, int data_type);
-int write_rcp_header(unsigned char* packet, rcp_packet* hdr);
-int read_rcp_header(unsigned char* packet, rcp_packet* hdr);
 
 typedef struct {
 	char address[MAX_IP_LENGTH];
@@ -94,7 +90,5 @@ typedef struct {
 } rcp_media_descriptor;
 
 const char* error_str(int error_code);
-
-int get_jpeg_snapshot(char* ip, char* data, int* len);
 
 #endif /* RCPPLUS_H_ */

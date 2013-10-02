@@ -16,11 +16,19 @@
 #include "coder.h"
 
 
-int main()
+int main(int argc, char* argv[])
 {
 	tlog_init(TLOG_MODE_STDERR, TLOG_INFO, NULL);
 
-	rcp_connect("10.25.25.220");
+	if (argc < 2)
+	{
+		INFO("%s ip\n", argv[0]);
+		return 0;
+	}
+
+	rcp_connect(argv[1]);
+
+	start_event_handler();
 
 	client_register(RCP_USER_LEVEL_LIVE, "", RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_MD5);
 
@@ -39,6 +47,8 @@ int main()
 		INFO("video mode is %d", mode);
 		INFO("-----------------------");
 	}
+
+	stop_event_handler();
 
 	return 0;
 }

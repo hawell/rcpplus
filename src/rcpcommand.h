@@ -25,12 +25,22 @@
 
 #include "rcpplus.h"
 
-int rcp_command(rcp_packet* req, rcp_packet* rsp);
+int init_rcp_header(rcp_packet* hdr, int session_id, int tag, int rw, int data_type);
+int write_rcp_header(unsigned char* packet, rcp_packet* hdr);
+int read_rcp_header(unsigned char* packet, rcp_packet* hdr);
+
+rcp_packet* rcp_command(rcp_packet* req);
+
+int start_event_handler();
+int stop_event_handler();
+
 
 int get_md5_random(unsigned char* md5);
 
 int client_register(int user_level, const char* password, int type, int mode);
 int client_unregister();
+
+int read_client_registration();
 
 int client_connect(rcp_session* session, int method, int media, int flags, rcp_media_descriptor* desc);
 int client_disconnect(rcp_session* session);
@@ -39,6 +49,10 @@ int get_capability_list();
 
 int keep_alive(rcp_session* session);
 
+int get_jpeg_snapshot(char* ip, char* data, int* len);
+
 int request_intraframe(rcp_session* session);
+
+int request_sps_pps(rcp_session* session, int coder, unsigned char* data, int *len);
 
 #endif /* RCPCOMMAND_H_ */
