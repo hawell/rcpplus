@@ -105,6 +105,8 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
+	// TODO: change stream profile to 4CIF or adjust codec parameters
+
 	codec_ctx_in->width = 704;
 	codec_ctx_in->height = 576;
 	codec_ctx_in->pix_fmt = PIX_FMT_YUV420P;

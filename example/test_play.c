@@ -109,7 +109,31 @@ int main(int argc, char* argv[])
 	}
 	INFO("resolution = %d", resolution);
 	int width, height;
-	if (resolution & RCP_VIDEO_RESOLUTION_4CIF)
+	if (resolution & RCP_VIDEO_RESOLUTION_HD1080)
+	{
+		resolution = RCP_VIDEO_RESOLUTION_HD1080;
+		width = 1920;
+		height = 1080;
+	}
+	else if (resolution & RCP_VIDEO_RESOLUTION_HD720)
+	{
+		resolution = RCP_VIDEO_RESOLUTION_HD720;
+		width = 1280;
+		height = 720;
+	}
+	else if (resolution & RCP_VIDEO_RESOLUTION_VGA)
+	{
+		resolution = RCP_VIDEO_RESOLUTION_VGA;
+		width = 640;
+		height = 480;
+	}
+	else if (resolution & RCP_VIDEO_RESOLUTION_QVGA)
+	{
+		resolution = RCP_VIDEO_RESOLUTION_QVGA;
+		width = 320;
+		height = 240;
+	}
+	else if (resolution & RCP_VIDEO_RESOLUTION_4CIF)
 	{
 		resolution = RCP_VIDEO_RESOLUTION_4CIF;
 		width = 704;
