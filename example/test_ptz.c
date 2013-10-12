@@ -15,11 +15,16 @@
 #include "rcpcommand.h"
 #include "ptz.h"
 
-int main()
+int main(int argc, char* argv[])
 {
-	tlog_init(TLOG_MODE_STDERR, TLOG_DEBUG, NULL);
+	if (argc < 2)
+	{
+		fprintf(stderr, "%s <ip>", argv[0]);
+		return 0;
+	}
+	tlog_init(TLOG_MODE_STDERR, TLOG_INFO, NULL);
 
-	rcp_connect("10.25.25.220");
+	rcp_connect(argv[1]);
 
 	start_event_handler();
 
