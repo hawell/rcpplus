@@ -11,12 +11,20 @@
 #include <stdlib.h>
 #include <tlog/tlog.h>
 #include <pthread.h>
+#include <signal.h>
 
 #include "rcpdefs.h"
 #include "rcpplus.h"
 #include "rcpcommand.h"
 #include "rtp.h"
 #include "coder.h"
+
+int end = 0;
+
+void *term_handler(int x)
+{
+	end = 1;
+}
 
 pthread_t thread;
 void* keep_alive_thread(void* params)
@@ -38,9 +46,9 @@ int main(int argc, char* argv[])
 {
 	tlog_init(TLOG_MODE_STDERR, TLOG_INFO, NULL);
 
-    if (argc < 2)
+    if (argc < 3)
     {
-        INFO("%s ip", argv[0]);
+        INFO("%s <ip> <output>", argv[0]);
         return 0;
     }
 
@@ -82,22 +90,31 @@ int main(int argc, char* argv[])
 	rtp_init(RTP_PAYLOAD_TYPE_H264, 1, &mdesc);
 	video_frame vframe;
 
-	while (1)
+	signal(SIGTERM, term_handler);
+
+	FILE * out = fopen(argv[2], "wb");
+
+	while (!end)
 	{
 /*
 		int num = recvfrom(con.stream_socket, buffer, 1500, 0, (struct sockaddr*)&si_remote, &slen);
 
 		rtp_push_frame(buffer, num, &mdesc);
 */
-		rtp_recv(session.stream_socket, &mdesc);
-
-		if (rtp_pop_frame(&vframe, &mdesc) == 0)
-			fwrite(vframe.data, vframe.len, 1, stdout);
+		if (rtp_recv(session.stream_socket, &mdesc) == 0)
+        {
+			if (rtp_pop_frame(&vframe, &mdesc) == 0)
+			{
+				fwrite(vframe.data, vframe.len, 1, out);
+			}
+        }
 		//char cmd[100];
 		//sprintf(cmd, "kill %d", res);
 		//system(cmd);
 		//return 0;
 	}
+
+	fclose(out);
 
 	pthread_cancel(thread);
 
