@@ -227,7 +227,7 @@ static int append_fu_a(unsigned char* data, int len, rtp_merge_desc* mdesc)
 	fu_a_packet *fp = (fu_a_packet*)data;
 	if (fp->fuh.s == 1)
 	{
-		DEBUG("start");
+		TL_DEBUG("start");
 		if (mdesc->len == 0)
 		{
 			if (mdesc->prepend_mpeg4_starter)
@@ -241,7 +241,7 @@ static int append_fu_a(unsigned char* data, int len, rtp_merge_desc* mdesc)
 			nh.nri = fp->nh.nri;
 			nh.type = fp->fuh.type;
 
-			DEBUG("nal unit: f=%d nri=%d type=%d", nh.f, nh.nri, nh.type);
+			TL_DEBUG("nal unit: f=%d nri=%d type=%d", nh.f, nh.nri, nh.type);
 
 			memcpy(mdesc->data + mdesc->len,&nh, 1);
 			mdesc->len++;
@@ -251,7 +251,7 @@ static int append_fu_a(unsigned char* data, int len, rtp_merge_desc* mdesc)
 		}
 		else
 		{
-			ERROR("fragment unit is not the first unit");
+			TL_ERROR("fragment unit is not the first unit");
 			return -1;
 		}
 	}
@@ -259,7 +259,7 @@ static int append_fu_a(unsigned char* data, int len, rtp_merge_desc* mdesc)
 	{
 		if (mdesc->len == 0)
 		{
-			ERROR("missing first fragment unit");
+			TL_ERROR("missing first fragment unit");
 			return -1;
 		}
 		else
@@ -271,7 +271,7 @@ static int append_fu_a(unsigned char* data, int len, rtp_merge_desc* mdesc)
 
 	if (fp->fuh.e == 1)
 	{
-		DEBUG("end");
+		TL_DEBUG("end");
 		mdesc->frame_complete = 1;
 		return 0;
 	}
@@ -330,11 +330,11 @@ static int append_h263(unsigned char *fragment, int fragment_len, rtp_merge_desc
 
 	rtp_header *rtp_hdr = (rtp_header*)fragment;
 	int rtp_header_len = RTP_HEADER_LENGTH_MANDATORY + rtp_hdr->cc*4;
-	DEBUG("m=%d pt=%d hlen=%d len=%d seq=%d ts=%u", rtp_hdr->m, rtp_hdr->pt, rtp_header_len, fragment_len, ntohs(rtp_hdr->seq), ntohl(rtp_hdr->timestamp));
+	TL_DEBUG("m=%d pt=%d hlen=%d len=%d seq=%d ts=%u", rtp_hdr->m, rtp_hdr->pt, rtp_header_len, fragment_len, ntohs(rtp_hdr->seq), ntohl(rtp_hdr->timestamp));
 
 	if (mdesc->frame_error)
 	{
-		WARNING("frame skipped");
+		TL_WARNING("frame skipped");
 		mdesc->len = 0;
 		if (rtp_hdr->m)
 		{
@@ -345,7 +345,7 @@ static int append_h263(unsigned char *fragment, int fragment_len, rtp_merge_desc
 	}
 
 	h263_header *h263_hdr = (h263_header*)(fragment+rtp_header_len);
-	DEBUG("sbit=%d ebit=%d", h263_hdr->sbit, h263_hdr->ebit);
+	TL_DEBUG("sbit=%d ebit=%d", h263_hdr->sbit, h263_hdr->ebit);
 	unsigned char* pos = fragment+rtp_header_len;
 	int len = fragment_len - rtp_header_len;
 	if (h263_hdr->f == 0)	// type A
@@ -365,12 +365,12 @@ static int append_h263(unsigned char *fragment, int fragment_len, rtp_merge_desc
 	}
 	//fwrite(pos, len, 1, stdout);
 
-	DEBUG("%d %d", ebit, h263_hdr->sbit);
+	TL_DEBUG("%d %d", ebit, h263_hdr->sbit);
 	//assert((mdesc->ebit + h263_hdr->sbit) % 8 == 0);
 	if (((ebit + h263_hdr->sbit) % 8 != 0))
 	{
 		mdesc->frame_error = 1;
-		ERROR("malformed frame received sbit=%d ebit=%d", h263_hdr->sbit, ebit);
+		TL_ERROR("malformed frame received sbit=%d ebit=%d", h263_hdr->sbit, ebit);
 		return 0;
 	}
 	if (h263_hdr->sbit)
@@ -399,15 +399,15 @@ static int append_h264(unsigned char *fragment, int fragment_len, rtp_merge_desc
 	rtp_header *rtp = (rtp_header*)fragment;
 	int rtp_header_len = RTP_HEADER_LENGTH_MANDATORY + rtp->cc*4;
 
-	//DEBUG("v  - %d\np  - %d\nx  - %d\ncc - %d\nm  - %d\npt - %d\nsq - %d\n", rtp->version, rtp->p, rtp->x, rtp->cc, rtp->m, rtp->pt, rtp->seq);
+	//TL_DEBUG("v  - %d\np  - %d\nx  - %d\ncc - %d\nm  - %d\npt - %d\nsq - %d\n", rtp->version, rtp->p, rtp->x, rtp->cc, rtp->m, rtp->pt, rtp->seq);
 	unsigned char nal_unit_header = *((unsigned char*)fragment + rtp_header_len);
-	DEBUG("nal = %hhx", nal_unit_header);
+	TL_DEBUG("nal = %hhx", nal_unit_header);
 
 	unsigned char nal_type = nal_unit_header & 0x1F;
 	if (nal_type < 24)
 	{
 		// Single NAL Unit
-		DEBUG("Single NAL Unit %d", nal_type);
+		TL_DEBUG("Single NAL Unit %d", nal_type);
 		return append_single_nal(fragment+rtp_header_len,  fragment_len-rtp_header_len, mdesc);
 	}
 	else
@@ -416,25 +416,25 @@ static int append_h264(unsigned char *fragment, int fragment_len, rtp_merge_desc
 		{
 			case 24: // STAP-A
 			{
-				DEBUG("STAP-A");
-				log_hex(TLOG_DEBUG, "STAP-A", fragment + rtp_header_len, fragment_len-rtp_header_len);
+				TL_DEBUG("STAP-A");
+				tlog_hex(TLOG_DEBUG, "STAP-A", fragment + rtp_header_len, fragment_len-rtp_header_len);
 				return append_stap_a(fragment+rtp_header_len, mdesc);
-				//DEBUG("sps: %x %d", *(unsigned char*)&np[0].nh, np[0].size);
-				//log_hex(LOG_DEBUG, "payload", np[0].payload, np[0].size);
-				//DEBUG("pps: %x %d", *(unsigned char*)&np[1].nh, np[1].size);
-				//log_hex(LOG_DEBUG, "payload", np[1].payload, np[1].size);
+				//TL_DEBUG("sps: %x %d", *(unsigned char*)&np[0].nh, np[0].size);
+				//tlog_hex(LOG_DEBUG, "payload", np[0].payload, np[0].size);
+				//TL_DEBUG("pps: %x %d", *(unsigned char*)&np[1].nh, np[1].size);
+				//tlog_hex(LOG_DEBUG, "payload", np[1].payload, np[1].size);
 			}
 			break;
 
 			case 28: // FU-A
 			{
-				DEBUG("FU-A");
+				TL_DEBUG("FU-A");
 				return append_fu_a(fragment+rtp_header_len, fragment_len - (rtp_header_len+FU_A_HEADER_LENGTH), mdesc);
 			}
 			break;
 
 			default:
-				ERROR("unsupported nal type: %d", nal_type);
+				TL_ERROR("unsupported nal type: %d", nal_type);
 				return -1;
 				break;
 		}
@@ -461,7 +461,7 @@ int rtp_init(int type, int prepend_mpeg4_starter, rtp_merge_desc* mdesc)
 		break;
 
 		default:
-			ERROR("unknown payload format");
+			TL_ERROR("unknown payload format");
 			return -1;
 		break;
 	}
@@ -477,7 +477,7 @@ int rtp_recv(int socket, rtp_merge_desc* mdesc)
 	int qp = queue_pop(mdesc);
 	if (qp == -1)
 	{
-		ERROR("cannot pop from queue");
+		TL_ERROR("cannot pop from queue");
 		goto error;
 	}
 
@@ -486,27 +486,27 @@ int rtp_recv(int socket, rtp_merge_desc* mdesc)
 	int res = heap_push(mdesc, qp);
 	if (res == -1)
 	{
-		ERROR("cannot push to heap");
+		TL_ERROR("cannot push to heap");
 		goto error;
 	}
 
 	int hp = heap_pop(mdesc);
 	if (hp == -1)
 	{
-		ERROR("cannot pop from heap");
+		TL_ERROR("cannot pop from heap");
 		goto error;
 	}
 
 	res = queue_push(mdesc, hp);
 	if (res == -1)
 	{
-		ERROR("cannot push to queue");
+		TL_ERROR("cannot push to queue");
 		goto error;
 	}
 
 	if (mdesc->frame_complete)
 	{
-		WARNING("overwriting existing frame");
+		TL_WARNING("overwriting existing frame");
 		mdesc->len = 0;
 		mdesc->frame_complete = 0;
 	}
@@ -519,7 +519,7 @@ error:
 
 int rtp_pop_frame(video_frame* frame, rtp_merge_desc* mdesc)
 {
-	//INFO("frame_complete = %d", mdesc->frame_complete);
+	//TL_INFO("frame_complete = %d", mdesc->frame_complete);
 	if (mdesc->frame_complete)
 	{
 		frame->data = mdesc->data;

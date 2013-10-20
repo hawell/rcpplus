@@ -79,7 +79,7 @@ static int send_osrd(int lease_time, int opcode, unsigned char* data, int data_l
 	return 0;
 
 error:
-	ERROR("send_osrd()");
+	TL_ERROR("send_osrd()");
 	return -1;
 }
 
@@ -96,7 +96,7 @@ int ptz_available()
 	return ptz_resp->payload[0];
 
 error:
-	ERROR("ptz_available()");
+	TL_ERROR("ptz_available()");
 	return -1;
 }
 

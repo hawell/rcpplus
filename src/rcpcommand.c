@@ -69,12 +69,12 @@ static int rcp_send(rcp_packet* hdr)
 
 	memcpy(buffer + RCP_HEADER_LENGTH + TPKT_HEADER_LENGTH, hdr->payload, hdr->payload_length);
 
-	DEBUG("sending %d bytes...", len);
-	log_hex(TLOG_DEBUG, "data", buffer, len);
+	TL_DEBUG("sending %d bytes...", len);
+	tlog_hex(TLOG_DEBUG, "data", buffer, len);
 	int res = send(con.control_socket, buffer, len, 0);
-	DEBUG("%d sent", res);
+	TL_DEBUG("%d sent", res);
 	if (res == -1)
-		ERROR("unable to send packet: %d - %s", errno, strerror(errno));
+		TL_ERROR("unable to send packet: %d - %s", errno, strerror(errno));
 
 	return res;
 }
@@ -105,11 +105,11 @@ static int rcp_recv()
 		res = recv(con.control_socket, buffer+received, len-received, 0);
 		if (res == -1)
 			goto error;
-		DEBUG("%d bytes received", res);
+		TL_DEBUG("%d bytes received", res);
 		received += res;
 	}
 
-	log_hex(TLOG_DEBUG, "received", buffer, received);
+	tlog_hex(TLOG_DEBUG, "received", buffer, received);
 
 	int request_id = get_request_id(buffer);
 
@@ -121,14 +121,14 @@ static int rcp_recv()
 
 	if (hdr->action == RCP_PACKET_ACTION_ERROR)
 	{
-		ERROR(error_str(hdr->payload[0]));
+		TL_ERROR(error_str(hdr->payload[0]));
 		goto error;
 	}
 
 	return request_id;
 
 error:
-	ERROR("rcp_recv: %d - %s\n", errno, strerror(errno));
+	TL_ERROR("rcp_recv: %d - %s\n", errno, strerror(errno));
 	return -1;
 }
 
@@ -208,7 +208,7 @@ rcp_packet* rcp_command(rcp_packet* req)
 	return &resp[req->request_id];
 
 error:
-	ERROR("rcp_command()");
+	TL_ERROR("rcp_command()");
 	return NULL;
 }
 
@@ -219,7 +219,7 @@ static void* event_handler(void* params)
 		int request_id = rcp_recv();
 		if (request_id != -1)
 		{
-			INFO("packet received: %d", resp[request_id].tag);
+			TL_INFO("packet received: %d", resp[request_id].tag);
 			sem_post(&resp_available[request_id]);
 		}
 	}
@@ -281,7 +281,7 @@ static int generate_passphrase(int mode, int user_level, char* password, char* p
 
 			instr[0] = '+';
 			get_md5_random((unsigned char*)&instr[1]);
-			//log_hex("md5 random str", &instr[1], 16);
+			//tlog_hex("md5 random str", &instr[1], 16);
 
 /*
 			sprintf(&instr[17], "+++%s:%s+", uname, password);
@@ -317,7 +317,7 @@ static int generate_passphrase(int mode, int user_level, char* password, char* p
 		break;
 
 		default:
-			ERROR("generate_passphrase() - invalid encryption mode %d", mode);
+			TL_ERROR("generate_passphrase() - invalid encryption mode %d", mode);
 			return -1;
 		break;
 	}
@@ -335,13 +335,13 @@ int get_md5_random(unsigned char* md5)
 	if (md5_resp == NULL)
 		goto error;
 
-	DEBUG("payload len = %d", md5_resp->payload_length);
+	TL_DEBUG("payload len = %d", md5_resp->payload_length);
 	memcpy(md5, md5_resp->payload, md5_resp->payload_length);
 
 	return 0;
 
 error:
-	ERROR("get_md5_random()");
+	TL_ERROR("get_md5_random()");
 	return -1;
 }
 
@@ -360,7 +360,7 @@ int client_register(int user_level, const char* password, int type, int mode)
 	if (res == -1)
 		goto error;
 
-	log_hex(TLOG_DEBUG, "passphrase", pphrase, plen);
+	tlog_hex(TLOG_DEBUG, "passphrase", pphrase, plen);
 
 	unsigned short tmp16;
 	reg_req.payload[0] = type;
@@ -377,13 +377,13 @@ int client_register(int user_level, const char* password, int type, int mode)
 	//cl_reg.payload[plen+10] = 0;
 	reg_req.payload_length = plen + 10;
 
-	//log_hex("client register payload", cl_reg.payload, cl_reg.payload_length);
+	//tlog_hex("client register payload", cl_reg.payload, cl_reg.payload_length);
 
 	rcp_packet* reg_resp = rcp_command(&reg_req);
 	if (reg_resp == NULL)
 		goto error;
 
-	log_hex(TLOG_DEBUG, "client register response", reg_resp->payload, reg_resp->payload_length);
+	tlog_hex(TLOG_DEBUG, "client register response", reg_resp->payload, reg_resp->payload_length);
 	if (reg_resp->payload[0] == 0)
 		goto error;
 
@@ -393,7 +393,7 @@ int client_register(int user_level, const char* password, int type, int mode)
 	return 0;
 
 error:
-	ERROR("client_register()");
+	TL_ERROR("client_register()");
 	return -1;
 }
 
@@ -410,14 +410,14 @@ int client_unregister()
 	int unregister_result = unreg_resp->payload[0];
 	if (unregister_result != 1)
 	{
-		ERROR("unregister not successful");
+		TL_ERROR("unregister not successful");
 		return -1;
 	}
 	else
 		return 0;
 
 error:
-	ERROR("client_unregister()");
+	TL_ERROR("client_unregister()");
 	return -1;
 }
 
@@ -434,7 +434,7 @@ int read_client_registration()
 	return 0;
 
 error:
-	ERROR("read_client_registration()");
+	TL_ERROR("read_client_registration()");
 	return -1;
 }
 
@@ -512,18 +512,18 @@ int client_connect(rcp_session* session, int method, int media, int flags, rcp_m
 	if (con_resp == NULL)
 		goto error;
 
-	INFO("%s", connect_stat_str(con_resp->payload[2]));
+	TL_INFO("%s", connect_stat_str(con_resp->payload[2]));
 	if (con_resp->payload[2] != 1)
 		goto error;
 
 	session->session_id = con_resp->session_id;
-	DEBUG("session id = %d - %d", con_resp->session_id, session->session_id);
-	log_hex(TLOG_DEBUG, "client connection resp", con_resp->payload, con_resp->payload_length);
+	TL_DEBUG("session id = %d - %d", con_resp->session_id, session->session_id);
+	tlog_hex(TLOG_DEBUG, "client connection resp", con_resp->payload, con_resp->payload_length);
 
 	return 0;
 
 error:
-	ERROR("client_connect()");
+	TL_ERROR("client_connect()");
 	return -1;
 }
 
@@ -544,12 +544,12 @@ int client_disconnect(rcp_session* session)
 	if (discon_resp == NULL)
 		goto error;
 
-	log_hex(TLOG_DEBUG, "client disconnect response", discon_resp->payload, discon_resp->payload_length);
+	tlog_hex(TLOG_DEBUG, "client disconnect response", discon_resp->payload, discon_resp->payload_length);
 
 	return 0;
 
 error:
-	ERROR("client_disconnect()");
+	TL_ERROR("client_disconnect()");
 	return -1;
 }
 
@@ -563,11 +563,11 @@ int get_capability_list()
 	if (caps_resp == NULL)
 		goto error;
 
-	log_hex(TLOG_INFO, "cap list response", caps_resp->payload, caps_resp->payload_length);
+	tlog_hex(TLOG_INFO, "cap list response", caps_resp->payload, caps_resp->payload_length);
 	return 0;
 
 error:
-	ERROR("capability_list()");
+	TL_ERROR("capability_list()");
 	return -1;
 }
 
@@ -584,7 +584,7 @@ int keep_alive(rcp_session* session)
 	return ntohl(*(unsigned int*)alive_resp->payload);
 
 error:
-	ERROR("keep_alive()");
+	TL_ERROR("keep_alive()");
 	return -1;
 }
 
@@ -597,13 +597,13 @@ int get_jpeg_snapshot(char* ip, char* data, int* len)
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd < 0)
 	{
-		ERROR("error opening socket : %d - %s", errno, strerror(errno));
+		TL_ERROR("error opening socket : %d - %s", errno, strerror(errno));
 		return -1;
 	}
 	server = gethostbyname(ip);
 	if (server == NULL)
 	{
-		ERROR("no such host as %s", ip);
+		TL_ERROR("no such host as %s", ip);
 		return -1;
 	}
 	memset((char *) &serveraddr, 0, sizeof(serveraddr));
@@ -612,7 +612,7 @@ int get_jpeg_snapshot(char* ip, char* data, int* len)
 	serveraddr.sin_port = htons(80);
 	if (connect(sockfd, (const struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0)
 	{
-	      ERROR("error connecting : %d - %s", errno, strerror(errno));
+	      TL_ERROR("error connecting : %d - %s", errno, strerror(errno));
 	      return -1;
 	}
 	const char request_template[] = "GET /snap.jpg HTTP/1.1\r\nHost: %s\r\nUser-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:20.0) Gecko/20100101 Firefox/20.0\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\nAccept-Language: en-US,en;q=0.5\r\nAccept-Encoding: gzip, deflate\r\nCookie: VideoInput=1; VidType=MPEG4; Instance=1; gui=1; IsVideo1=1; IsVideo2=1; HcsoB=3f7154f44e371053; leasetimeid=1011325756\r\nConnection: keep-alive\r\n\r\n";
@@ -654,7 +654,7 @@ int request_intraframe(rcp_session* session)
 	return 0;
 
 error:
-	ERROR("request_intraframe()");
+	TL_ERROR("request_intraframe()");
 	return -1;
 }
 
@@ -671,8 +671,8 @@ int request_sps_pps(rcp_session* session, int coder, unsigned char* data, int *l
 	if (resp == NULL)
 		goto error;
 
-	INFO("resp action : %d", resp->action);
-	log_hex(TLOG_DEBUG, "sps_pps_resp", resp->payload, resp->payload_length);
+	TL_INFO("resp action : %d", resp->action);
+	tlog_hex(TLOG_DEBUG, "sps_pps_resp", resp->payload, resp->payload_length);
 
 	memcpy(data, resp->payload, resp->payload_length);
 	*len = resp->payload_length;
@@ -680,6 +680,6 @@ int request_sps_pps(rcp_session* session, int coder, unsigned char* data, int *l
 	return 0;
 
 error:
-	ERROR("request_sps_pps()");
+	TL_ERROR("request_sps_pps()");
 	return -1;
 }

@@ -107,7 +107,7 @@ int preset_set_default(int preset_id)
 	return 0;
 
 error:
-	ERROR("preset_set_default()");
+	TL_ERROR("preset_set_default()");
 	return -1;
 }
 
@@ -128,7 +128,7 @@ int get_preset_name(int preset_id, char* name)
 	return 0;
 
 error:
-	ERROR("get_preset_name()");
+	TL_ERROR("get_preset_name()");
 	return -1;
 }
 
@@ -146,11 +146,11 @@ int set_preset_name(int preset_id, char* name)
 	if (pn_resp == NULL)
 		goto error;
 
-	DEBUG("preset name set to '%s'", pn_resp->payload);
+	TL_DEBUG("preset name set to '%s'", pn_resp->payload);
 	return 0;
 
 error:
-	ERROR("set_preset_name()");
+	TL_ERROR("set_preset_name()");
 	return -1;
 }
 
@@ -189,7 +189,7 @@ int get_param_type(int param)
 			return RCP_DATA_TYPE_F_FLAG;
 
 		default:
-			ERROR("invalid parameter %d", param);
+			TL_ERROR("invalid parameter %d", param);
 			return -1;
 	}
 }
@@ -228,7 +228,7 @@ int get_preset_param(int preset_id, int param, int* value)
 	return 0;
 
 error:
-	ERROR("get_preset_param()");
+	TL_ERROR("get_preset_param()");
 	return -1;
 }
 
@@ -276,7 +276,7 @@ int set_preset_param(int preset_id, int param, int value)
 	return 0;
 
 error:
-	ERROR("set_preset_param()");
+	TL_ERROR("set_preset_param()");
 	return -1;
 }
 

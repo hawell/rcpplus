@@ -38,7 +38,7 @@ int terminate = 0;
 
 void handler(int n)
 {
-	INFO("SIGINT received");
+	TL_INFO("SIGINT received");
 	signal(SIGINT, SIG_IGN);
 	terminate = 1;
 }
@@ -86,7 +86,7 @@ void* keep_alive_thread(void* params)
 	while (1)
 	{
 		int n = keep_alive(session);
-		INFO("active connections = %d", n);
+		TL_INFO("active connections = %d", n);
 		if (n < 0)
 			break;
 
@@ -101,7 +101,7 @@ int main(int argc, char* argv[])
 
 	if (argc < 2)
 	{
-		INFO("%s ip\n", argv[0]);
+		TL_INFO("%s ip\n", argv[0]);
 		return 0;
 	}
 
@@ -141,7 +141,7 @@ int main(int argc, char* argv[])
 	int video_mode;
 	get_coder_video_operation_mode(coder_id, &video_mode);
 
-	INFO("mode=%d res=%d id=%d", video_mode, resolution, coder_id);
+	TL_INFO("mode=%d res=%d id=%d", video_mode, resolution, coder_id);
 
 	int coding;
 	if (video_mode == VIDEO_MODE_H263)
@@ -236,7 +236,7 @@ int main(int argc, char* argv[])
 	}
 
 	//fclose(f);
-	INFO("writing trailer");
+	TL_INFO("writing trailer");
 	av_write_trailer(fc);
 	if (fc->oformat && !( fc->oformat->flags & AVFMT_NOFILE ) && fc->pb)
 		avio_close( fc->pb );

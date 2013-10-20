@@ -37,21 +37,21 @@ int main()
 
 	rcp_coder_list encoders, decoders;
 	get_coder_list(RCP_CODER_ENCODER, RCP_MEDIA_TYPE_VIDEO, &encoders);
-	DEBUG("***");
+	TL_DEBUG("***");
 	for (int i=0; i<encoders.count; i++)
-		DEBUG("%x %x %x %x %x", encoders.coder[i].number, encoders.coder[i].caps, encoders.coder[i].current_cap, encoders.coder[i].param_caps, encoders.coder[i].current_param);
-	DEBUG("***");
+		TL_DEBUG("%x %x %x %x %x", encoders.coder[i].number, encoders.coder[i].caps, encoders.coder[i].current_cap, encoders.coder[i].param_caps, encoders.coder[i].current_param);
+	TL_DEBUG("***");
 	get_coder_list(RCP_CODER_DECODER, RCP_MEDIA_TYPE_VIDEO, &decoders);
-	DEBUG("***");
+	TL_DEBUG("***");
 	for (int i=0; i<decoders.count; i++)
-		DEBUG("%x %x %x %x %x", decoders.coder[i].number, decoders.coder[i].caps, decoders.coder[i].current_cap, decoders.coder[i].param_caps, decoders.coder[i].current_param);
-	DEBUG("***");
+		TL_DEBUG("%x %x %x %x %x", decoders.coder[i].number, decoders.coder[i].caps, decoders.coder[i].current_cap, decoders.coder[i].param_caps, decoders.coder[i].current_param);
+	TL_DEBUG("***");
 
 	rcp_session session;
 	memset(&session, 0, sizeof(rcp_session));
 	unsigned short udp_port = stream_connect_tcp(&session);
 
-	ERROR("port = %d", udp_port);
+	TL_ERROR("port = %d", udp_port);
 
 	rcp_media_descriptor desc = {
 			RCP_MEP_TCP, 1, 1, 0, udp_port, 1, 1, RCP_VIDEO_CODING_MPEG4, RCP_VIDEO_RESOLUTION_4CIF
@@ -68,7 +68,7 @@ int main()
 		{
 			sleep(2);
 			int n = keep_alive(&session);
-			//DEBUG("active connections = %d", n);
+			//TL_DEBUG("active connections = %d", n);
 			if (n < 0)
 				break;
 		}

@@ -43,7 +43,7 @@ int get_coder_preset(int coder)
 	return ntohl(*(unsigned int*)mp4_resp->payload);
 
 error:
-	ERROR("get_mp4_current_config()");
+	TL_ERROR("get_mp4_current_config()");
 	return -1;
 }
 
@@ -65,7 +65,7 @@ int set_coder_preset(int coder, int preset)
 	return 0;
 
 error:
-	ERROR("set_coder_preset()");
+	TL_ERROR("set_coder_preset()");
 	return -1;
 }
 
@@ -85,7 +85,7 @@ int get_coder_video_operation_mode(int coder, int *mode)
 	return 0;
 
 error:
-	ERROR("get_coder_video_operation_mode()");
+	TL_ERROR("get_coder_video_operation_mode()");
 	return -1;
 }
 
@@ -111,7 +111,7 @@ int set_coder_video_operation_mode(int coder, int mode)
 	return res;
 
 error:
-	ERROR("set_coder_video_operation_mode()");
+	TL_ERROR("set_coder_video_operation_mode()");
 	return -1;
 }
 
@@ -153,7 +153,7 @@ int get_coder_list(int coder_type, int media_type, rcp_coder_list* coder_list)
 	return 0;
 
 error:
-	ERROR("coder_list()");
+	TL_ERROR("coder_list()");
 	return -1;
 }
 

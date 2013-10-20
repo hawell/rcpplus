@@ -18,11 +18,11 @@ int main()
 
 	autodetect(&devs, &num);
 
-	INFO("%d device%s detected", num, num>1?"s":"");
+	TL_INFO("%d device%s detected", num, num>1?"s":"");
 	for (int i=0; i<num; i++)
 	{
 		log_device(TLOG_INFO, &devs[i]);
-		INFO("------------------------");
+		TL_INFO("------------------------");
 	}
 
 	free(devs);

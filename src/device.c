@@ -72,7 +72,7 @@ error_send:
 	close(fd);
 
 error_socket:
-	ERROR("broadcast() : %d - %s", errno, strerror(errno));
+	TL_ERROR("broadcast() : %d - %s", errno, strerror(errno));
 	return -1;
 }
 
@@ -101,7 +101,7 @@ int autodetect(rcp_device** devs, int* num)
 	res = bind(fd, (struct sockaddr*)&addr, sizeof(addr));
 	if (res == -1)
 	{
-		ERROR("cannot bind %d - %s\n", errno, strerror(errno));
+		TL_ERROR("cannot bind %d - %s\n", errno, strerror(errno));
 		return -1;
 	}
 
@@ -139,7 +139,7 @@ int autodetect(rcp_device** devs, int* num)
 		res = select(fd+1, &rfds, NULL, NULL, &tv);
 		if (res == -1)
 		{
-			ERROR("select : %d - %s", errno, strerror(errno));
+			TL_ERROR("select : %d - %s", errno, strerror(errno));
 			break;
 		}
 		else if (res == 0)
@@ -154,7 +154,7 @@ int autodetect(rcp_device** devs, int* num)
 		// ignore 2nd response packet
 		if (memcmp(buffer, resp1_header_magic, 4) == 0)
 		{
-			log_hex(TLOG_DEBUG, "device", buffer, size);
+			tlog_hex(TLOG_DEBUG, "device", buffer, size);
 
 			dev_list = (rcp_device*)realloc(dev_list, sizeof(rcp_device) * (dev_count+1));
 			rcp_device* dev = &dev_list[dev_count++];

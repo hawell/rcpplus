@@ -64,7 +64,7 @@ void* keep_alive_thread(void* params)
 	while (1)
 	{
 		int n = keep_alive(session);
-		INFO("active connections = %d", n);
+		TL_INFO("active connections = %d", n);
 		if (n < 0)
 			break;
 
@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
 
 	if (argc < 2)
 	{
-		INFO("transcode ip");
+		TL_INFO("transcode ip");
 		return -1;
 	}
 
@@ -88,20 +88,20 @@ int main(int argc, char* argv[])
 	AVCodec* codec_in = avcodec_find_decoder(CODEC_ID_H263);
 	if (codec_in == NULL)
 	{
-		ERROR("cannot find decoder");
+		TL_ERROR("cannot find decoder");
 		return -1;
 	}
 
 	AVCodecContext* codec_ctx_in = avcodec_alloc_context3(codec_in);
 	if (codec_ctx_in == NULL)
 	{
-		ERROR("cannot allocate codec context");
+		TL_ERROR("cannot allocate codec context");
 		return -1;
 	}
 
 	if (avcodec_open2(codec_ctx_in, codec_in, NULL) < 0)
 	{
-		ERROR("cannot open codec");
+		TL_ERROR("cannot open codec");
 		return -1;
 	}
 
@@ -114,7 +114,7 @@ int main(int argc, char* argv[])
 	AVFrame* raw_frame = avcodec_alloc_frame();
 	if (raw_frame == NULL)
 	{
-		ERROR("cannot allocate frame");
+		TL_ERROR("cannot allocate frame");
 		return -1;
 	}
 
@@ -145,7 +145,7 @@ int main(int argc, char* argv[])
 	of = av_guess_format( "avi", fname, NULL);
 	if ( !of )
 	{
-		ERROR("Could not find suitable output format");
+		TL_ERROR("Could not find suitable output format");
 		return -1;
 	}
 
@@ -154,7 +154,7 @@ int main(int argc, char* argv[])
 	ofc = (AVFormatContext *)av_mallocz(sizeof(AVFormatContext));
 	if ( !ofc )
 	{
-		ERROR("Memory error");
+		TL_ERROR("Memory error");
 		return -1;
 	}
 	ofc->oformat = of;
@@ -163,7 +163,7 @@ int main(int argc, char* argv[])
 	ost_v = avformat_new_stream(ofc, NULL);
 	if (!ost_v)
 	{
-		ERROR("Could not alloc stream");
+		TL_ERROR("Could not alloc stream");
 		return -1;
 	}
 	AVCodecContext *c = ost_v->codec;
@@ -188,7 +188,7 @@ int main(int argc, char* argv[])
 
 	if (c->codec_id == CODEC_ID_H264)
 	{
-		INFO("h264");
+		TL_INFO("h264");
 		c->me_range = 16;
 		c->max_qdiff = 4;
 		c->qmin = 10;
@@ -199,12 +199,12 @@ int main(int argc, char* argv[])
 	AVCodec *codec = avcodec_find_encoder(c->codec_id);
 	if ( !codec )
 	{
-		ERROR("codec not found");
+		TL_ERROR("codec not found");
 		return -1;
 	}
 	if ( avcodec_open2(c, codec, NULL) < 0 )
 	{
-		ERROR("Could not open codec");
+		TL_ERROR("Could not open codec");
 		return -1;
 	}
 
@@ -212,7 +212,7 @@ int main(int argc, char* argv[])
 	opicture = avcodec_alloc_frame();
 	if ( !opicture )
 	{
-		ERROR("Could not allocate opicture");
+		TL_ERROR("Could not allocate opicture");
 		return -1;
 	}
 	int size = avpicture_get_size( c->pix_fmt, c->width, c->height);
@@ -220,7 +220,7 @@ int main(int argc, char* argv[])
 	if ( !opicture_buf )
 	{
 		av_free(opicture);
-		ERROR("Could not allocate opicture");
+		TL_ERROR("Could not allocate opicture");
 		return -1;
 	}
 	avpicture_fill( (AVPicture *)opicture, opicture_buf, c->pix_fmt, c->width, c->height );
@@ -229,7 +229,7 @@ int main(int argc, char* argv[])
 	tmp_opicture = avcodec_alloc_frame();
 	if ( !tmp_opicture )
 	{
-		ERROR("Could not allocate temporary opicture");
+		TL_ERROR("Could not allocate temporary opicture");
 		return -1;
 	}
 	size = avpicture_get_size( PIX_FMT_YUV420P, c->width, c->height);
@@ -237,14 +237,14 @@ int main(int argc, char* argv[])
 	if (!tmp_opicture_buf)
 	{
 		av_free( tmp_opicture );
-		ERROR("Could not allocate temporary opicture");
+		TL_ERROR("Could not allocate temporary opicture");
 		return -1;
 	}
 	avpicture_fill( (AVPicture *)tmp_opicture, tmp_opicture_buf, PIX_FMT_YUV420P, c->width, c->height );
 
 	if ( avio_open(&ofc->pb, fname, AVIO_FLAG_WRITE) < 0 )
 	{
-		ERROR("Could not open '%s'", fname);
+		TL_ERROR("Could not open '%s'", fname);
 		return -1;
 	}
 	video_outbuf = NULL;
@@ -272,21 +272,21 @@ int main(int argc, char* argv[])
 
 	rcp_coder_list encoders, decoders;
 	get_coder_list(RCP_CODER_ENCODER, RCP_MEDIA_TYPE_VIDEO, &encoders);
-	DEBUG("***");
+	TL_DEBUG("***");
 	for (int i=0; i<encoders.count; i++)
-		DEBUG("%x %x %x %x %x", encoders.coder[i].number, encoders.coder[i].caps, encoders.coder[i].current_cap, encoders.coder[i].param_caps, encoders.coder[i].current_param);
-	DEBUG("***");
+		TL_DEBUG("%x %x %x %x %x", encoders.coder[i].number, encoders.coder[i].caps, encoders.coder[i].current_cap, encoders.coder[i].param_caps, encoders.coder[i].current_param);
+	TL_DEBUG("***");
 	get_coder_list(RCP_CODER_DECODER, RCP_MEDIA_TYPE_VIDEO, &decoders);
-	DEBUG("***");
+	TL_DEBUG("***");
 	for (int i=0; i<decoders.count; i++)
-		DEBUG("%x %x %x %x %x", decoders.coder[i].number, decoders.coder[i].caps, decoders.coder[i].current_cap, decoders.coder[i].param_caps, decoders.coder[i].current_param);
-	DEBUG("***");
+		TL_DEBUG("%x %x %x %x %x", decoders.coder[i].number, decoders.coder[i].caps, decoders.coder[i].current_cap, decoders.coder[i].param_caps, decoders.coder[i].current_param);
+	TL_DEBUG("***");
 
 	rcp_session session;
 	memset(&session, 0, sizeof(rcp_session));
 	unsigned short udp_port = stream_connect_udp(&session);
 
-	DEBUG("udp port = %d", udp_port);
+	TL_DEBUG("udp port = %d", udp_port);
 
 	rcp_media_descriptor desc = {
 			RCP_MEP_UDP, 1, 1, 0, udp_port, 1, 1, RCP_VIDEO_CODING_MPEG4, RCP_VIDEO_RESOLUTION_4CIF
@@ -316,7 +316,7 @@ int main(int argc, char* argv[])
 			int have_frame=0;
 			in_pkt.data = vframe.data;
 			in_pkt.size = vframe.len;
-			//ERROR("1");
+			//TL_ERROR("1");
 			int ret = avcodec_decode_video2(codec_ctx_in, raw_frame, &have_frame, &in_pkt);
 			if (ret && have_frame)
 			{

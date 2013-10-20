@@ -43,7 +43,7 @@ int rcp_connect(const char* ip)
 	con.control_socket = socket(PF_INET, SOCK_STREAM, 0);
 	if (con.control_socket == -1)
 	{
-		ERROR("cannot open socket : %d - %s", errno, strerror(errno));
+		TL_ERROR("cannot open socket : %d - %s", errno, strerror(errno));
 		return -1;
 	}
 
@@ -60,7 +60,7 @@ int rcp_connect(const char* ip)
 	int res = connect(con.control_socket, (struct sockaddr *)&con.ctrl_addr, sizeof (con.ctrl_addr));
 	if (res == -1)
 	{
-		ERROR("connection failed : %d - %s\n", errno, strerror(errno));
+		TL_ERROR("connection failed : %d - %s\n", errno, strerror(errno));
 	}
 
 	return 0;
@@ -77,7 +77,7 @@ int stream_connect_udp(rcp_session* session)
 	int res = bind(session->stream_socket, (struct sockaddr*)&session->stream_addr, sizeof(session->stream_addr));
 	if (res == -1)
 	{
-		ERROR("cannot bind %d - %s", errno, strerror(errno));
+		TL_ERROR("cannot bind %d - %s", errno, strerror(errno));
 		return -1;
 	}
 
@@ -101,14 +101,14 @@ int stream_connect_tcp(rcp_session* session)
 	int res = bind(session->stream_socket, (struct sockaddr*)&session->stream_addr, sizeof(session->stream_addr));
 	if (res == -1)
 	{
-		ERROR("cannot bind %d - %s", errno, strerror(errno));
+		TL_ERROR("cannot bind %d - %s", errno, strerror(errno));
 		return -1;
 	}
 
 	res = connect(session->stream_socket, (struct sockaddr*)&session->tcp_stream_addr, sizeof(session->tcp_stream_addr));
 	if (res == -1)
 	{
-		ERROR("cannot connect: %d - %s", errno, strerror(errno));
+		TL_ERROR("cannot connect: %d - %s", errno, strerror(errno));
 		return -1;
 	}
 
@@ -128,7 +128,7 @@ int initiate_tcp_stream(rcp_session* session, struct rcp_coder_tag* coder)
 	int res = send(session->stream_socket, buffer, size, 0);
 	if (res == -1)
 	{
-		ERROR("cannot sent initiative sequence: %d - %s", errno, strerror(errno));
+		TL_ERROR("cannot sent initiative sequence: %d - %s", errno, strerror(errno));
 		return -1;
 	}
 

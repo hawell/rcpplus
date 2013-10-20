@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
 
 	if (ptz_available() == 0)
 	{
-		INFO("ptz is not available for this camera");
+		TL_INFO("ptz is not available for this camera");
 		return 0;
 	}
 

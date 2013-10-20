@@ -68,7 +68,7 @@ void* keep_alive_thread(void* params)
 	while (1)
 	{
 		int n = keep_alive(session);
-		INFO("active connections = %d", n);
+		TL_INFO("active connections = %d", n);
 		if (n < 0)
 			break;
 
@@ -83,7 +83,7 @@ int main(int argc, char* argv[])
 
 	if (argc < 2)
 	{
-		INFO("%s ip\n", argv[0]);
+		TL_INFO("%s ip\n", argv[0]);
 		return 0;
 	}
 
@@ -107,7 +107,7 @@ int main(int argc, char* argv[])
 			break;
 		}
 	}
-	INFO("resolution = %d", resolution);
+	TL_INFO("resolution = %d", resolution);
 	int width, height;
 	if (resolution & RCP_VIDEO_RESOLUTION_HD1080)
 	{
@@ -165,7 +165,7 @@ int main(int argc, char* argv[])
 	int video_mode;
 	get_coder_video_operation_mode(coder_id, &video_mode);
 
-	INFO("mode=%d res=%d id=%d", video_mode, resolution, coder_id);
+	TL_INFO("mode=%d res=%d id=%d", video_mode, resolution, coder_id);
 
 	int coding;
 	if (video_mode == VIDEO_MODE_H263)
@@ -195,20 +195,20 @@ int main(int argc, char* argv[])
 
 	if (codec_in == NULL)
 	{
-		ERROR("cannot find decoder");
+		TL_ERROR("cannot find decoder");
 		return -1;
 	}
 
 	AVCodecContext *dec_ctx = avcodec_alloc_context3(codec_in);
 	if (dec_ctx == NULL)
 	{
-		ERROR("cannot allocate codec context");
+		TL_ERROR("cannot allocate codec context");
 		return -1;
 	}
 
 	if (avcodec_open2(dec_ctx, codec_in, NULL) < 0)
 	{
-		ERROR("cannot open codec");
+		TL_ERROR("cannot open codec");
 		return -1;
 	}
 
@@ -219,7 +219,7 @@ int main(int argc, char* argv[])
 	AVFrame* raw_frame = avcodec_alloc_frame();
 	if (raw_frame == NULL)
 	{
-		ERROR("cannot allocate frame");
+		TL_ERROR("cannot allocate frame");
 		return -1;
 	}
 
@@ -242,7 +242,7 @@ int main(int argc, char* argv[])
 
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER))
 	{
-		ERROR("could not initialize SDL - %s\n", SDL_GetError());
+		TL_ERROR("could not initialize SDL - %s\n", SDL_GetError());
 		return -1;
 	}
 	SDL_Surface *screen;
@@ -250,7 +250,7 @@ int main(int argc, char* argv[])
 	screen = SDL_SetVideoMode(width, height, 0, 0);
 	if (!screen)
 	{
-		ERROR("could not initialize video mode");
+		TL_ERROR("could not initialize video mode");
 		return -1;
 	}
 
@@ -273,6 +273,14 @@ int main(int argc, char* argv[])
 	socklen_t slen = sizeof(si_remote);
 	unsigned char buffer[1500];
 
+	unsigned char sps_pps[5000];
+	int sps_pps_len;
+	request_sps_pps(&session, coder_id, sps_pps, &sps_pps_len);
+	tlog_hex(TLOG_INFO, "sps-pps", sps_pps, sps_pps_len);
+
+	dec_ctx->extradata = sps_pps;
+	dec_ctx->extradata_size = sps_pps_len;
+
 	while (1)
 	{
 		if (rtp_recv(session.stream_socket, &mdesc) == 0)
@@ -282,11 +290,11 @@ int main(int argc, char* argv[])
 			int have_frame = 0;
 			in_pkt.data = vframe.data;
 			in_pkt.size = vframe.len;
-			//ERROR("1");
+			//TL_ERROR("1");
 			int ret = avcodec_decode_video2(dec_ctx, raw_frame, &have_frame, &in_pkt);
 			if (ret && have_frame)
 			{
-				//INFO("d0 %d d1 %d d2 %d d3 %d", raw_frame->linesize[0], raw_frame->linesize[1], raw_frame->linesize[2], raw_frame->linesize[3]);
+				//TL_INFO("d0 %d d1 %d d2 %d d3 %d", raw_frame->linesize[0], raw_frame->linesize[1], raw_frame->linesize[2], raw_frame->linesize[3]);
 				sws_scale(yuv2rgb, (const uint8_t * const*)raw_frame->data, raw_frame->linesize, 0, dec_ctx->height, rgb_frame->data, rgb_frame->linesize);
 
 				//save_frame(rgb_frame, 704, 576);
