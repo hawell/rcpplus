@@ -48,6 +48,15 @@ int main(int argc, char* argv[])
 		TL_INFO("-----------------------");
 	}
 
+
+	get_coder_list(RCP_CODER_DECODER, RCP_MEDIA_TYPE_AUDIO, &encoders);
+	for (int i=0; i<encoders.count; i++)
+	{
+		TL_INFO("%x %x %x %x %x", encoders.coder[i].number, encoders.coder[i].caps, encoders.coder[i].current_cap, encoders.coder[i].param_caps, encoders.coder[i].current_param);
+		log_coder(TLOG_INFO, &encoders.coder[i]);
+		TL_INFO("-----------------------");
+	}
+
 	stop_event_handler();
 
 	return 0;

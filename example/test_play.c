@@ -285,53 +285,53 @@ int main(int argc, char* argv[])
 	{
 		if (rtp_recv(session.stream_socket, &mdesc) == 0)
         {
-		if (rtp_pop_frame(&vframe, &mdesc) == 0)
-		{
-			int have_frame = 0;
-			in_pkt.data = vframe.data;
-			in_pkt.size = vframe.len;
-			//TL_ERROR("1");
-			int ret = avcodec_decode_video2(dec_ctx, raw_frame, &have_frame, &in_pkt);
-			if (ret && have_frame)
+			if (rtp_pop_frame(&vframe, &mdesc) == 0)
 			{
-				//TL_INFO("d0 %d d1 %d d2 %d d3 %d", raw_frame->linesize[0], raw_frame->linesize[1], raw_frame->linesize[2], raw_frame->linesize[3]);
-				sws_scale(yuv2rgb, (const uint8_t * const*)raw_frame->data, raw_frame->linesize, 0, dec_ctx->height, rgb_frame->data, rgb_frame->linesize);
-
-				//save_frame(rgb_frame, 704, 576);
+				int have_frame = 0;
+				in_pkt.data = vframe.data;
+				in_pkt.size = vframe.len;
+				//TL_ERROR("1");
+				int ret = avcodec_decode_video2(dec_ctx, raw_frame, &have_frame, &in_pkt);
+				if (ret && have_frame)
 				{
-					SDL_LockYUVOverlay(bmp);
+					//TL_INFO("d0 %d d1 %d d2 %d d3 %d", raw_frame->linesize[0], raw_frame->linesize[1], raw_frame->linesize[2], raw_frame->linesize[3]);
+					sws_scale(yuv2rgb, (const uint8_t * const*)raw_frame->data, raw_frame->linesize, 0, dec_ctx->height, rgb_frame->data, rgb_frame->linesize);
 
-					AVPicture pict;
-					pict.data[0] = bmp->pixels[0];
-					pict.data[1] = bmp->pixels[2];
-					pict.data[2] = bmp->pixels[1];
+					//save_frame(rgb_frame, 704, 576);
+					{
+						SDL_LockYUVOverlay(bmp);
 
-					pict.linesize[0] = bmp->pitches[0];
-					pict.linesize[1] = bmp->pitches[2];
-					pict.linesize[2] = bmp->pitches[1];
+						AVPicture pict;
+						pict.data[0] = bmp->pixels[0];
+						pict.data[1] = bmp->pixels[2];
+						pict.data[2] = bmp->pixels[1];
 
-					sws_scale(rgb2yuv, (const uint8_t * const*)rgb_frame->data, rgb_frame->linesize, 0, dec_ctx->height, pict.data, pict.linesize);
+						pict.linesize[0] = bmp->pitches[0];
+						pict.linesize[1] = bmp->pitches[2];
+						pict.linesize[2] = bmp->pitches[1];
 
-					 SDL_UnlockYUVOverlay(bmp);
+						sws_scale(rgb2yuv, (const uint8_t * const*)rgb_frame->data, rgb_frame->linesize, 0, dec_ctx->height, pict.data, pict.linesize);
 
-					 SDL_Rect rect;
-					 rect.x = 0;
-					 rect.y = 0;
-					 rect.w = dec_ctx->width;
-					 rect.h = dec_ctx->height;
-					 SDL_DisplayYUVOverlay(bmp, &rect);
+						 SDL_UnlockYUVOverlay(bmp);
+
+						 SDL_Rect rect;
+						 rect.x = 0;
+						 rect.y = 0;
+						 rect.w = dec_ctx->width;
+						 rect.h = dec_ctx->height;
+						 SDL_DisplayYUVOverlay(bmp, &rect);
+					}
+
+
 				}
-
-
+				SDL_Event event;
+				SDL_PollEvent(&event);
+				if (event.type == SDL_QUIT)
+				{
+					SDL_Quit();
+					goto end;
+				}
 			}
-			SDL_Event event;
-			SDL_PollEvent(&event);
-			if (event.type == SDL_QUIT)
-			{
-				SDL_Quit();
-				goto end;
-			}
-		}
         }
 	}
 
