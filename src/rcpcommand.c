@@ -219,7 +219,7 @@ static void* event_handler(void* params)
 		int request_id = rcp_recv();
 		if (request_id != -1)
 		{
-			TL_INFO("packet received: %d", resp[request_id].tag);
+			TL_DEBUG("packet received: %d", resp[request_id].tag);
 			sem_post(&resp_available[request_id]);
 		}
 	}

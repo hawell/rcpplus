@@ -58,7 +58,7 @@ jpeg: test_jpeg.o
 	$(CC) test_jpeg.o $(LIB) $(FFMPEGLIB) -o jpeg
 
 audio: test_audio.o
-	$(CC) test_audio.o $(LIB) $(FFMPEGLIB) -o audio
+	$(CC) test_audio.o $(LIB) $(FFMPEGLIB) `sdl-config --cflags --libs` -o audio
 	
 .c.o:
 	$(CC) $(CFLAGS) $(INCS) $(FFMPEGINC) -c $< -o $@ 
