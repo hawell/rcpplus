@@ -20,6 +20,7 @@
 #include "rcpplus.h"
 #include "rcpcommand.h"
 #include "coder.h"
+#include "audio.h"
 
 #include <SDL/SDL.h>
 #include <SDL/SDL_thread.h>
@@ -83,9 +84,9 @@ int main(int argc, char* argv[])
 {
 	tlog_init(TLOG_MODE_STDERR, TLOG_INFO, NULL);
 
-	if (argc < 3)
+	if (argc < 2)
 	{
-		TL_INFO("%s <ip> <output>\n", argv[0]);
+		TL_INFO("%s <ip>\n", argv[0]);
 		return 0;
 	}
 
@@ -94,6 +95,14 @@ int main(int argc, char* argv[])
 	start_event_handler();
 
 	client_register(RCP_USER_LEVEL_LIVE, "", RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_MD5);
+
+	int max_in = get_max_audio_input_level(1);
+	set_audio_input_level(1, max_in);
+
+	if (get_audio_input(1) != RCP_AUDIO_INPUT_MIC)
+		set_audio_input(1, RCP_AUDIO_INPUT_MIC);
+	int max_mic = get_max_mic_level(1);
+	set_mic_level(1, max_mic);
 
 	rcp_coder_list encoders;
 	get_coder_list(RCP_CODER_DECODER, RCP_MEDIA_TYPE_AUDIO, &encoders);

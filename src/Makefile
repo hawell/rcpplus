@@ -1,6 +1,6 @@
 CC = gcc
-SRCS = rcpplus.c rcpcommand.c md5.c rtp.c preset.c device.c coder.c ptz.c
-HDRS = rcpplus.h rcpcommand.h md5.h rtp.h preset.h device.h coder.h ptz.h rcpdefs.h
+SRCS = rcpplus.c rcpcommand.c md5.c rtp.c preset.c device.c coder.c ptz.c audio.c
+HDRS = rcpplus.h rcpcommand.h md5.h rtp.h preset.h device.h coder.h ptz.h rcpdefs.h audio.h
 OBJS = $(SRCS:.c=.o)
 CFLAGS = -g -std=c99 -Wall -W
 
