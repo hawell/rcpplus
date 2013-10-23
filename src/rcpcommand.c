@@ -122,7 +122,6 @@ static int rcp_recv()
 	if (hdr->action == RCP_PACKET_ACTION_ERROR)
 	{
 		TL_ERROR(error_str(hdr->payload[0]));
-		goto error;
 	}
 
 	return request_id;
