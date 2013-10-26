@@ -280,7 +280,7 @@ static int generate_passphrase(int mode, int user_level, char* password, char* p
 
 			instr[0] = '+';
 			get_md5_random((unsigned char*)&instr[1]);
-			//tlog_hex("md5 random str", &instr[1], 16);
+			//tlog_hex(TLOG_INFO, "md5 random str", &instr[1], 16);
 
 /*
 			sprintf(&instr[17], "+++%s:%s+", uname, password);
@@ -518,6 +518,11 @@ int client_connect(rcp_session* session, int method, int media, int flags, rcp_m
 	session->session_id = con_resp->session_id;
 	TL_DEBUG("session id = %d - %d", con_resp->session_id, session->session_id);
 	tlog_hex(TLOG_DEBUG, "client connection resp", con_resp->payload, con_resp->payload_length);
+
+	desc->coder = con_resp->payload[16];
+	desc->line = con_resp->payload[17];
+	desc->coding = ntohs(*(unsigned short*)&con_resp->payload[24]);
+	desc->resolution = ntohs(*(unsigned short*)&con_resp->payload[26]);
 
 	return 0;
 
