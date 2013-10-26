@@ -77,6 +77,18 @@ void* keep_alive_thread(void* params)
 	return NULL;
 }
 
+unsigned int highest_bit(unsigned int a)
+{
+	if (!a)
+		return 0;
+
+	unsigned int r = 1;
+	while (a>>=1)
+		r <<= 1;
+
+	return r;
+}
+
 int main(int argc, char* argv[])
 {
 	tlog_init(TLOG_MODE_STDERR, TLOG_INFO, NULL);
@@ -91,87 +103,85 @@ int main(int argc, char* argv[])
 
 	start_event_handler();
 
-	client_register(RCP_USER_LEVEL_LIVE, "", RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_MD5);
+	client_register(RCP_USER_LEVEL_SERVICE, "", RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_PLAIN);
+
+	rcp_session session;
+	memset(&session, 0, sizeof(rcp_session));
+	unsigned short udp_port = stream_connect_udp(&session);
 
 	rcp_coder_list encoders;
 	get_coder_list(RCP_CODER_DECODER, RCP_MEDIA_TYPE_VIDEO, &encoders);
-	int coder_id = 1;
-	int resolution = RCP_VIDEO_RESOLUTION_QCIF;
-	for (int i=0; i<encoders.count; i++)
-	{
-		if ((encoders.coder[i].current_cap & RCP_VIDEO_CODING_H264) || (encoders.coder[i].current_cap & RCP_VIDEO_CODING_H263))
-		{
-			log_coder(TLOG_INFO, &encoders.coder[i]);
-			coder_id = encoders.coder[i].number;
-			resolution = encoders.coder[i].current_param;
-			break;
-		}
-	}
-	TL_INFO("resolution = %d", resolution);
-	int width, height;
-	if (resolution & RCP_VIDEO_RESOLUTION_HD1080)
-	{
-		resolution = RCP_VIDEO_RESOLUTION_HD1080;
-		width = 1920;
-		height = 1080;
-	}
-	else if (resolution & RCP_VIDEO_RESOLUTION_HD720)
-	{
-		resolution = RCP_VIDEO_RESOLUTION_HD720;
-		width = 1280;
-		height = 720;
-	}
-	else if (resolution & RCP_VIDEO_RESOLUTION_VGA)
-	{
-		resolution = RCP_VIDEO_RESOLUTION_VGA;
-		width = 640;
-		height = 480;
-	}
-	else if (resolution & RCP_VIDEO_RESOLUTION_QVGA)
-	{
-		resolution = RCP_VIDEO_RESOLUTION_QVGA;
-		width = 320;
-		height = 240;
-	}
-	else if (resolution & RCP_VIDEO_RESOLUTION_4CIF)
-	{
-		resolution = RCP_VIDEO_RESOLUTION_4CIF;
-		width = 704;
-		height = 576;
-	}
-	else if (resolution & RCP_VIDEO_RESOLUTION_2CIF)
-	{
-		resolution = RCP_VIDEO_RESOLUTION_2CIF;
-		width = 704;
-		height = 288;
-	}
-	else if (resolution & RCP_VIDEO_RESOLUTION_CIF)
-	{
-		resolution = RCP_VIDEO_RESOLUTION_CIF;
-		width = 352;
-		height = 288;
-	}
-	else if (resolution & RCP_VIDEO_RESOLUTION_QCIF)
-	{
-		resolution = RCP_VIDEO_RESOLUTION_QCIF;
-		width = 176;
-		height = 144;
-	}
 
-	int preset_id = get_coder_preset(coder_id);
-	rcp_mpeg4_preset preset;
-	get_preset(preset_id, &preset, 1);
+	int coder, coding, resolution;
+
+	coder = encoders.coder[0].number;
+	resolution = encoders.coder[0].current_param;
 
 	int video_mode;
-	get_coder_video_operation_mode(coder_id, &video_mode);
+	get_coder_video_operation_mode(coder, &video_mode);
 
-	TL_INFO("mode=%d res=%d id=%d", video_mode, resolution, coder_id);
-
-	int coding;
 	if (video_mode == VIDEO_MODE_H263)
-		coding = RCP_VIDEO_CODING_MPEG4;
+		coding = RCP_VIDEO_CODING_H263;
 	else
 		coding = RCP_VIDEO_CODING_H264;
+
+	rcp_media_descriptor desc = {
+			RCP_MEP_UDP, 1, 1, 0, udp_port, 0, 1, coding, resolution
+	};
+
+	if (client_connect(&session, RCP_CONNECTION_METHOD_GET, RCP_MEDIA_TYPE_VIDEO, 0, &desc) != 0)
+		return -1;
+
+	coder = desc.coder;
+	coding = desc.coding;
+	resolution = highest_bit(desc.resolution);
+
+	TL_INFO("mode=%d res=%d id=%d", video_mode, resolution, coder);
+
+	int width, height;
+	switch (resolution)
+	{
+		case RCP_VIDEO_RESOLUTION_HD1080:
+			width = 1920;
+			height = 1080;
+		break;
+
+		case RCP_VIDEO_RESOLUTION_HD720:
+			width = 1280;
+			height = 720;
+		break;
+
+		case RCP_VIDEO_RESOLUTION_VGA:
+			width = 640;
+			height = 480;
+		break;
+
+		case RCP_VIDEO_RESOLUTION_QVGA:
+			width = 320;
+			height = 240;
+		break;
+
+		case RCP_VIDEO_RESOLUTION_4CIF:
+			width = 704;
+			height = 576;
+		break;
+
+		case RCP_VIDEO_RESOLUTION_2CIF:
+			width = 704;
+			height = 288;
+		break;
+
+		case RCP_VIDEO_RESOLUTION_CIF:
+			width = 352;
+			height = 288;
+		break;
+
+		case RCP_VIDEO_RESOLUTION_QCIF:
+			width = 176;
+			height = 144;
+		break;
+
+	}
 
 	avcodec_register_all();
 	av_register_all();
@@ -257,25 +267,11 @@ int main(int argc, char* argv[])
 	SDL_Overlay *bmp;
 	bmp = SDL_CreateYUVOverlay(width, height, SDL_YV12_OVERLAY, screen);
 
-	rcp_session session;
-	memset(&session, 0, sizeof(rcp_session));
-	unsigned short udp_port = stream_connect_udp(&session);
-	rcp_media_descriptor desc = {
-			RCP_MEP_UDP, 1, 1, 0, udp_port, coder_id, 1, coding, resolution
-	};
-
-	client_connect(&session, RCP_CONNECTION_METHOD_GET, RCP_MEDIA_TYPE_VIDEO, 0, &desc);
-
-
 	pthread_create(&thread, NULL, keep_alive_thread, &session);
-
-	struct sockaddr_in si_remote;
-	socklen_t slen = sizeof(si_remote);
-	unsigned char buffer[1500];
 
 	unsigned char sps_pps[5000];
 	int sps_pps_len;
-	request_sps_pps(&session, coder_id, sps_pps, &sps_pps_len);
+	request_sps_pps(&session, coder, sps_pps, &sps_pps_len);
 	tlog_hex(TLOG_INFO, "sps-pps", sps_pps, sps_pps_len);
 
 	dec_ctx->extradata = sps_pps;
