@@ -119,11 +119,6 @@ static int rcp_recv()
 
 	memcpy(hdr->payload, buffer+RCP_HEADER_LENGTH, hdr->payload_length);
 
-	if (hdr->action == RCP_PACKET_ACTION_ERROR)
-	{
-		TL_ERROR(error_str(hdr->payload[0]));
-	}
-
 	return request_id;
 
 error:
@@ -186,7 +181,7 @@ int read_rcp_header(unsigned char* packet, rcp_packet* hdr)
 	hdr->version = packet[3] >> 4;
 	hdr->rw = packet[3] & 0xF0;
 	hdr->continuation = packet[4] >> 7;
-	hdr->action = packet[4] & 0x80;
+	hdr->action = packet[4] & 0x7F;
 	hdr->request_id = packet[5];
 	hdr->client_id = ntohs(*(unsigned short*)(packet+6));
 	hdr->session_id = ntohl(*(unsigned int*)(packet+8));
@@ -203,6 +198,12 @@ rcp_packet* rcp_command(rcp_packet* req)
 		goto error;
 
 	sem_wait(&resp_available[req->request_id]);
+
+	if (resp[req->request_id].action == RCP_PACKET_ACTION_ERROR)
+	{
+		TL_ERROR("%s", error_str(resp[req->request_id].payload[0]));
+		return NULL;
+	}
 
 	return &resp[req->request_id];
 
