@@ -236,17 +236,6 @@ int main(int argc, char* argv[])
 	AVPacket in_pkt;
 	av_init_packet(&in_pkt);
 
-	AVFrame* rgb_frame = avcodec_alloc_frame();
-	int num_bytes = avpicture_get_size(PIX_FMT_RGB24, dec_ctx->width, dec_ctx->height);
-	uint8_t* rgb_buffer = (uint8_t *)av_malloc(num_bytes*sizeof(uint8_t));
-	avpicture_fill((AVPicture *)rgb_frame, rgb_buffer, PIX_FMT_RGB24, dec_ctx->width, dec_ctx->height);
-
-	struct SwsContext *yuv2rgb, *rgb2yuv;
-	yuv2rgb = sws_getContext(dec_ctx->width, dec_ctx->height, PIX_FMT_YUV420P,
-			dec_ctx->width, dec_ctx->height, PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL);
-	rgb2yuv = sws_getContext(dec_ctx->width, dec_ctx->height, PIX_FMT_RGB24,
-			dec_ctx->width, dec_ctx->height, PIX_FMT_YUV420P, SWS_BICUBIC, NULL, NULL, NULL);
-	assert(rgb2yuv != NULL);
 
 	//***********************************************
 
@@ -277,6 +266,21 @@ int main(int argc, char* argv[])
 	dec_ctx->extradata = sps_pps;
 	dec_ctx->extradata_size = sps_pps_len;
 
+	SDL_Rect rect;
+	rect.x = 0;
+	rect.y = 0;
+	rect.w = dec_ctx->width;
+	rect.h = dec_ctx->height;
+
+	AVPicture pict;
+	pict.data[0] = bmp->pixels[0];
+	pict.data[1] = bmp->pixels[2];
+	pict.data[2] = bmp->pixels[1];
+
+	pict.linesize[0] = bmp->pitches[0];
+	pict.linesize[1] = bmp->pitches[2];
+	pict.linesize[2] = bmp->pitches[1];
+
 	while (1)
 	{
 		if (rtp_recv(session.stream_socket, &mdesc) == 0)
@@ -286,36 +290,19 @@ int main(int argc, char* argv[])
 				int have_frame = 0;
 				in_pkt.data = vframe.data;
 				in_pkt.size = vframe.len;
-				//TL_ERROR("1");
 				int ret = avcodec_decode_video2(dec_ctx, raw_frame, &have_frame, &in_pkt);
 				if (ret && have_frame)
 				{
 					//TL_INFO("d0 %d d1 %d d2 %d d3 %d", raw_frame->linesize[0], raw_frame->linesize[1], raw_frame->linesize[2], raw_frame->linesize[3]);
-					sws_scale(yuv2rgb, (const uint8_t * const*)raw_frame->data, raw_frame->linesize, 0, dec_ctx->height, rgb_frame->data, rgb_frame->linesize);
 
-					//save_frame(rgb_frame, 704, 576);
 					{
 						SDL_LockYUVOverlay(bmp);
 
-						AVPicture pict;
-						pict.data[0] = bmp->pixels[0];
-						pict.data[1] = bmp->pixels[2];
-						pict.data[2] = bmp->pixels[1];
+						av_picture_copy(&pict, (AVPicture*)raw_frame, PIX_FMT_YUV420P, raw_frame->width, raw_frame->height);
 
-						pict.linesize[0] = bmp->pitches[0];
-						pict.linesize[1] = bmp->pitches[2];
-						pict.linesize[2] = bmp->pitches[1];
+						SDL_UnlockYUVOverlay(bmp);
 
-						sws_scale(rgb2yuv, (const uint8_t * const*)rgb_frame->data, rgb_frame->linesize, 0, dec_ctx->height, pict.data, pict.linesize);
-
-						 SDL_UnlockYUVOverlay(bmp);
-
-						 SDL_Rect rect;
-						 rect.x = 0;
-						 rect.y = 0;
-						 rect.w = dec_ctx->width;
-						 rect.h = dec_ctx->height;
-						 SDL_DisplayYUVOverlay(bmp, &rect);
+						SDL_DisplayYUVOverlay(bmp, &rect);
 					}
 
 
