@@ -2,7 +2,7 @@ CC = gcc
 SRCS = test_preset.c test_h264_udp.c test_h263_udp.c test_h263_tcp.c test_detect.c test_coder.c test_ptz.c test_transcode.c test_play.c test_record.c test_jpeg.c test_audio.c
 OBJS = $(SRCS:.c=.o)
 INCS = -I../src/
-CFLAGS = -g -std=c99 -Wall -W
+CFLAGS = -g -std=c99 -Wall -W -Wno-deprecated -Wno-deprecated-declarations
 LIB = ../$(LIBNAME) -ltlog-1.0.0 -lpthread -lrt
 
 FFMPEG = /home/arash/Projects/ffmpeg-1.2.1

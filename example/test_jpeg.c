@@ -6,6 +6,7 @@
  */
 
 #include "rcpplus.h"
+#include "rcpcommand.h"
 #include <stdio.h>
 #include <sys/time.h>
 
@@ -19,7 +20,7 @@ int main()
 
 	struct timeval st,end;
 	gettimeofday(&st, NULL);
-	get_jpeg_snapshot("10.25.25.223", data, &len);
+	get_jpeg_snapshot("10.25.25.237", data, &len);
 	gettimeofday(&end, NULL);
 
 	printf("%ld\n", (end.tv_usec - st.tv_usec) / 1000);

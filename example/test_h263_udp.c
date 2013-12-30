@@ -48,8 +48,6 @@ int main()
 
 	client_register(RCP_USER_LEVEL_LIVE, "", RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_MD5);
 
-	get_capability_list();
-
 	rcp_coder_list encoders, decoders;
 	get_coder_list(RCP_CODER_ENCODER, RCP_MEDIA_TYPE_VIDEO, &encoders);
 	TL_DEBUG("***");
@@ -69,7 +67,7 @@ int main()
 	TL_DEBUG("udp port = %d", udp_port);
 
 	rcp_media_descriptor desc = {
-			RCP_MEP_UDP, 1, 1, 0, udp_port, 1, 1, RCP_VIDEO_CODING_MPEG4, RCP_VIDEO_RESOLUTION_4CIF
+			RCP_MEP_UDP, 1, 1, 0, udp_port, 0, 1, RCP_VIDEO_CODING_MPEG4, RCP_VIDEO_RESOLUTION_4CIF
 	};
 
 	client_connect(&session, RCP_CONNECTION_METHOD_GET, RCP_MEDIA_TYPE_VIDEO, 0, &desc);

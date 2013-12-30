@@ -112,13 +112,12 @@ int main(int argc, char* argv[])
 		log_coder(TLOG_INFO, &encoders.coder[i]);
 		TL_INFO("-----------------------");
 	}
-	int coder_id = encoders.coder[4].number;
+	//int coder_id = encoders.coder[4].number;
 
 	rcp_session session;
 
 	avcodec_register_all();
 	av_register_all();
-	avfilter_register_all();
 
 	codec_in = avcodec_find_decoder(AV_CODEC_ID_PCM_MULAW);
 

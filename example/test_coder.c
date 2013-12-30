@@ -48,6 +48,21 @@ int main(int argc, char* argv[])
 		TL_INFO("-----------------------");
 	}
 
+	get_coder_list(RCP_CODER_ENCODER, RCP_MEDIA_TYPE_VIDEO, &encoders);
+	for (int i=0; i<encoders.count; i++)
+	{
+		int mode;
+		get_coder_video_operation_mode(encoders.coder[i].number, &mode);
+		TL_INFO("video mode is %d", mode);
+		TL_INFO("%x %x %x %x %x", encoders.coder[i].number, encoders.coder[i].caps, encoders.coder[i].current_cap, encoders.coder[i].param_caps, encoders.coder[i].current_param);
+		log_coder(TLOG_INFO, &encoders.coder[i]);
+
+		mode = (mode==1)?2:1;
+		mode = set_coder_video_operation_mode(encoders.coder[i].number, mode);
+		TL_INFO("video mode is %d", mode);
+		TL_INFO("-----------------------");
+	}
+
 
 	get_coder_list(RCP_CODER_DECODER, RCP_MEDIA_TYPE_AUDIO, &encoders);
 	for (int i=0; i<encoders.count; i++)

@@ -38,6 +38,8 @@ int terminate = 0;
 
 void handler(int n)
 {
+	UNUSED(n);
+
 	TL_INFO("SIGINT received");
 	signal(SIGINT, SIG_IGN);
 	terminate = 1;
@@ -177,8 +179,6 @@ int main(int argc, char* argv[])
 	client_connect(&session, RCP_CONNECTION_METHOD_GET, RCP_MEDIA_TYPE_VIDEO, 0, &desc);
 
 	pthread_create(&thread, NULL, keep_alive_thread, &session);
-
-	struct sockaddr_in si_remote;
 
 	AVFormatContext* fc = NULL;
 

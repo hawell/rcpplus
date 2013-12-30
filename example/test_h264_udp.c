@@ -58,8 +58,6 @@ int main(int argc, char* argv[])
 
 	client_register(RCP_USER_LEVEL_LIVE, "", RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_MD5);
 
-	get_capability_list();
-
 	rcp_coder_list encoders, decoders;
 	get_coder_list(RCP_CODER_ENCODER, RCP_MEDIA_TYPE_VIDEO, &encoders);
 	TL_DEBUG("***");

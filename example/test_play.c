@@ -24,6 +24,7 @@
 #include "rtp.h"
 #include "coder.h"
 #include "preset.h"
+#include "caps.h"
 
 #include "libavcodec/avcodec.h"
 #include "libavformat/avformat.h"
@@ -108,6 +109,10 @@ int main(int argc, char* argv[])
 	rcp_session session;
 	memset(&session, 0, sizeof(rcp_session));
 	unsigned short udp_port = stream_connect_udp(&session);
+
+	cap_list caps;
+	get_capability_list(&caps);
+	log_capabilities(TLOG_INFO, &caps);
 
 	rcp_coder_list encoders;
 	get_coder_list(RCP_CODER_DECODER, RCP_MEDIA_TYPE_VIDEO, &encoders);

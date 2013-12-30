@@ -132,7 +132,6 @@ int main(int argc, char* argv[])
 
 	//***********************************************
 
-	enum PixelFormat pf;
 	AVOutputFormat *of;
 	AVFormatContext *ofc;
 	AVStream *ost_v;
@@ -159,7 +158,6 @@ int main(int argc, char* argv[])
 	}
 	ofc->oformat = of;
 
-	pf = PIX_FMT_RGB24;
 	ost_v = avformat_new_stream(ofc, NULL);
 	if (!ost_v)
 	{
@@ -267,8 +265,6 @@ int main(int argc, char* argv[])
 	start_event_handler();
 
 	client_register(RCP_USER_LEVEL_LIVE, "", RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_MD5);
-
-	get_capability_list();
 
 	rcp_coder_list encoders, decoders;
 	get_coder_list(RCP_CODER_ENCODER, RCP_MEDIA_TYPE_VIDEO, &encoders);

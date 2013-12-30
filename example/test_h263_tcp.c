@@ -27,13 +27,11 @@ int main()
 {
 	tlog_init(TLOG_MODE_STDERR, TLOG_INFO, NULL);
 
-	rcp_connect("10.25.25.220");
+	rcp_connect("10.25.25.223");
 
 	start_event_handler();
 
 	client_register(RCP_USER_LEVEL_LIVE, "", RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_MD5);
-
-	get_capability_list();
 
 	rcp_coder_list encoders, decoders;
 	get_coder_list(RCP_CODER_ENCODER, RCP_MEDIA_TYPE_VIDEO, &encoders);
@@ -49,12 +47,10 @@ int main()
 
 	rcp_session session;
 	memset(&session, 0, sizeof(rcp_session));
-	unsigned short udp_port = stream_connect_tcp(&session);
-
-	TL_ERROR("port = %d", udp_port);
+	unsigned short tcp_port = stream_connect_tcp(&session);
 
 	rcp_media_descriptor desc = {
-			RCP_MEP_TCP, 1, 1, 0, udp_port, 1, 1, RCP_VIDEO_CODING_MPEG4, RCP_VIDEO_RESOLUTION_4CIF
+			RCP_MEP_TCP, 1, 1, 0, tcp_port, 0, 1, RCP_VIDEO_CODING_H263P, RCP_VIDEO_RESOLUTION_4CIF
 	};
 
 	client_connect(&session, RCP_CONNECTION_METHOD_GET, RCP_MEDIA_TYPE_VIDEO, 0, &desc);
@@ -74,9 +70,9 @@ int main()
 		}
 	}
 
+
 	rtp_merge_desc mdesc;
 	rtp_init(RTP_PAYLOAD_TYPE_H263, 1, &mdesc);
-	video_frame vframe;
 
 	time_t end_time = time(NULL) + 10;
 	while (time(NULL) < end_time)
@@ -86,10 +82,16 @@ int main()
 
 		rtp_push_frame(buffer, num, &mdesc);
 */
+		char buff[2000];
+		int size = recv(session.stream_socket, buff, 1000, 0);
+		fwrite(buff, size, 1, stdout);
+/*
 		rtp_recv(session.stream_socket, &mdesc);
 
+		TL_INFO("1");
 		if (rtp_pop_frame(&vframe, &mdesc) == 0)
 			fwrite(vframe.data, vframe.len, 1, stdout);
+*/
 	}
 
 	stop_event_handler();
