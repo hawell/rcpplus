@@ -23,6 +23,8 @@
 #ifndef _RCP_DEFS_H_
 #define _RCP_DEFS_H_
 
+#define UNUSED(x)	(void)(x)
+
 #define RCP_VERSION					3
 
 #define RCP_CONTROL_PORT			1756

@@ -45,8 +45,6 @@ int read_client_registration();
 int client_connect(rcp_session* session, int method, int media, int flags, rcp_media_descriptor* desc);
 int client_disconnect(rcp_session* session);
 
-int get_capability_list();
-
 int keep_alive(rcp_session* session);
 
 int get_jpeg_snapshot(char* ip, char* data, int* len);

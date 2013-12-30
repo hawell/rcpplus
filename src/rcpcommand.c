@@ -214,6 +214,8 @@ error:
 
 static void* event_handler(void* params)
 {
+	UNUSED(params);
+
 	while (1)
 	{
 		int request_id = rcp_recv();
@@ -555,24 +557,6 @@ int client_disconnect(rcp_session* session)
 
 error:
 	TL_ERROR("client_disconnect()");
-	return -1;
-}
-
-int get_capability_list()
-{
-	rcp_packet caps_req;
-
-	init_rcp_header(&caps_req, 0, RCP_COMMAND_CONF_CAPABILITY_LIST, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_OCTET);
-
-	rcp_packet* caps_resp = rcp_command(&caps_req);
-	if (caps_resp == NULL)
-		goto error;
-
-	tlog_hex(TLOG_INFO, "cap list response", caps_resp->payload, caps_resp->payload_length);
-	return 0;
-
-error:
-	TL_ERROR("capability_list()");
 	return -1;
 }
 

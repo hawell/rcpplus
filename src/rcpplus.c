@@ -95,17 +95,13 @@ int stream_connect_tcp(rcp_session* session)
 	session->stream_socket = socket(AF_INET, SOCK_STREAM, 0);
 
 	session->stream_addr.sin_family = AF_INET;
-	session->stream_addr.sin_port = htons(0);
-	session->stream_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	session->stream_addr.sin_port = htons(80);
 
-	int res = bind(session->stream_socket, (struct sockaddr*)&session->stream_addr, sizeof(session->stream_addr));
-	if (res == -1)
-	{
-		TL_ERROR("cannot bind %d - %s", errno, strerror(errno));
-		return -1;
-	}
+	struct hostent* hp;
+	hp = gethostbyname(con.address);
+	memcpy((char *)&session->stream_addr.sin_addr, hp->h_addr_list[0],  hp->h_length);
 
-	res = connect(session->stream_socket, (struct sockaddr*)&session->tcp_stream_addr, sizeof(session->tcp_stream_addr));
+	int res = connect(session->stream_socket, (struct sockaddr*)&session->stream_addr, sizeof(session->stream_addr));
 	if (res == -1)
 	{
 		TL_ERROR("cannot connect: %d - %s", errno, strerror(errno));
@@ -116,7 +112,6 @@ int stream_connect_tcp(rcp_session* session)
 	socklen_t len = sizeof(addr);
 	getsockname(session->stream_socket, (struct sockaddr*)&addr, &len);
 
-
 	return ntohs(addr.sin_port);
 }
 
@@ -124,7 +119,7 @@ int initiate_tcp_stream(rcp_session* session, struct rcp_coder_tag* coder)
 {
 	unsigned char buffer[RCP_MAX_PACKET_LEN];
 
-	int size = sprintf((char*)buffer, "GET /media_tunnel/%08u/%d/%d/%d/%d HTTP 1.0\r\n\r\n", session->session_id, coder->media_type, coder->direction, 1, coder->number);
+	int size = sprintf((char*)buffer, "GET /media_tunnel/%08u/%d/%d/%d/%d HTTP 1.0\r\n\r\n", ntohl(session->session_id), coder->media_type, coder->direction, 1, coder->number);
 	int res = send(session->stream_socket, buffer, size, 0);
 	if (res == -1)
 	{
