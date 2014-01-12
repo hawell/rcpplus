@@ -26,6 +26,8 @@
 #include <limits.h>
 #include <arpa/inet.h>
 #include <tlog/tlog.h>
+#include <errno.h>
+#include <signal.h>
 
 #include "rtp.h"
 
@@ -103,7 +105,7 @@ typedef struct {
 } h263_b;
 
 #define NAL_START_FRAME_LENGTH	3
-static unsigned char NAL_START_FRAME[] = {0x00, 0x00, 0x01};
+static unsigned char NAL_START_FRAME[] = {0x00, 0x00, 0x00, 0x01};
 
 static unsigned char sbit_mask[] = {0xFF, 0x7F, 0x3F, 0x1F, 0x0F, 0x07, 0x03, 0x01, 0x00};
 static unsigned char ebit_mask[] = {0xFF, 0xFE, 0xFC, 0xF8, 0xF0, 0xE0, 0xC0, 0x80, 0x00};
@@ -232,8 +234,8 @@ static int append_fu_a(unsigned char* data, int len, rtp_merge_desc* mdesc)
 		{
 			if (mdesc->prepend_mpeg4_starter)
 			{
-				memcpy(mdesc->data + mdesc->len, NAL_START_FRAME, 3);
-				mdesc->len += 3;
+				memcpy(mdesc->data + mdesc->len, NAL_START_FRAME, 4);
+				mdesc->len += 4;
 			}
 
 			nal_unit_header nh;
@@ -284,8 +286,8 @@ static int append_single_nal(unsigned char* data, int data_len, rtp_merge_desc* 
 	assert(mdesc->len == 0);
 	if (mdesc->prepend_mpeg4_starter)
 	{
-		memcpy(mdesc->data + mdesc->len, NAL_START_FRAME, 3);
-		mdesc->len += 3;
+		memcpy(mdesc->data + mdesc->len, NAL_START_FRAME, 4);
+		mdesc->len += 4;
 	}
 	memcpy(mdesc->data + mdesc->len, data, data_len);
 	mdesc->len += data_len;
@@ -300,8 +302,8 @@ static int append_stap_a(unsigned char* data, rtp_merge_desc* mdesc)
 	assert(mdesc->len == 0);
 	if (mdesc->prepend_mpeg4_starter)
 	{
-		memcpy(mdesc->data + mdesc->len, NAL_START_FRAME, 3);
-		mdesc->len += 3;
+		memcpy(mdesc->data + mdesc->len, NAL_START_FRAME, 4);
+		mdesc->len += 4;
 	}
 	data++;
 	int size = ntohs(*(unsigned short*)(data));
@@ -482,6 +484,11 @@ int rtp_recv(int socket, rtp_merge_desc* mdesc)
 	}
 
 	mdesc->fragment_size[qp] = recvfrom(socket, mdesc->fragment[qp], MTU_LENGTH, 0, NULL, NULL);
+	if (mdesc->fragment_size[qp] <= 0)
+	{
+		TL_ERROR("cannot read from socket");
+		goto error;
+	}
 
 	int res = heap_push(mdesc, qp);
 	if (res == -1)
