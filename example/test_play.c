@@ -6,6 +6,7 @@
  */
 
 #define _XOPEN_SOURCE	600
+#define _GNU_SOURCE
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -121,6 +122,7 @@ int main(int argc, char* argv[])
 
 	coder = encoders.coder[0].number;
 	resolution = encoders.coder[0].current_param;
+	resolution &= 0x1EF;
 
 	int video_mode;
 	get_coder_video_operation_mode(coder, &video_mode);
@@ -200,12 +202,12 @@ int main(int argc, char* argv[])
 	if (video_mode == VIDEO_MODE_H263)
 	{
 		rtp_init(RTP_PAYLOAD_TYPE_H263, 1, &mdesc);
-		codec_in = avcodec_find_decoder(CODEC_ID_H263);
+		codec_in = avcodec_find_decoder(AV_CODEC_ID_H263);
 	}
 	else
 	{
 		rtp_init(RTP_PAYLOAD_TYPE_H264, 1, &mdesc);
-		codec_in = avcodec_find_decoder(CODEC_ID_H264);
+		codec_in = avcodec_find_decoder(AV_CODEC_ID_H264);
 	}
 
 	if (codec_in == NULL)
@@ -229,7 +231,7 @@ int main(int argc, char* argv[])
 
 	dec_ctx->width = width;
 	dec_ctx->height = height;
-	dec_ctx->pix_fmt = PIX_FMT_YUV420P;
+	dec_ctx->pix_fmt = AV_PIX_FMT_YUV420P;
 
 	AVFrame* raw_frame = avcodec_alloc_frame();
 	if (raw_frame == NULL)
@@ -266,7 +268,31 @@ int main(int argc, char* argv[])
 	unsigned char sps_pps[5000];
 	int sps_pps_len;
 	request_sps_pps(&session, coder, sps_pps, &sps_pps_len);
-	tlog_hex(TLOG_INFO, "sps-pps", sps_pps, sps_pps_len);
+	if (sps_pps_len)
+	{
+		unsigned char tmp[100];
+		tmp[0] = 0;
+		tmp[1] = 0;
+		tmp[2] = 0;
+		tmp[3] = 1;
+
+		unsigned char sps[] = {0x67};
+		unsigned char* pos = memmem(sps_pps, sps_pps_len, sps, 1);
+		tlog_hex(TLOG_INFO, "sps", pos, 16);
+		memcpy(tmp+4, pos, 16);
+		in_pkt.data = tmp;
+		in_pkt.size = 20;
+		int have_frame = 0;
+		avcodec_decode_video2(dec_ctx, raw_frame, &have_frame, &in_pkt);
+
+		unsigned char pps[] = {0x68};
+		pos = memmem(sps_pps, sps_pps_len, pps, 1);
+		tlog_hex(TLOG_INFO, "pps", pos, 4);
+		memcpy(tmp+4, pos, 4);
+		in_pkt.data = tmp;
+		in_pkt.size = 8;
+		avcodec_decode_video2(dec_ctx, raw_frame, &have_frame, &in_pkt);
+	}
 
 	dec_ctx->extradata = sps_pps;
 	dec_ctx->extradata_size = sps_pps_len;
@@ -303,7 +329,7 @@ int main(int argc, char* argv[])
 					{
 						SDL_LockYUVOverlay(bmp);
 
-						av_picture_copy(&pict, (AVPicture*)raw_frame, PIX_FMT_YUV420P, raw_frame->width, raw_frame->height);
+						av_picture_copy(&pict, (AVPicture*)raw_frame, AV_PIX_FMT_YUV420P, raw_frame->width, raw_frame->height);
 
 						SDL_UnlockYUVOverlay(bmp);
 
