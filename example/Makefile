@@ -5,13 +5,12 @@ INCS = -I../src/
 CFLAGS = -g -std=c99 -Wall -W -Wno-deprecated -Wno-deprecated-declarations
 LIB = ../$(LIBNAME) -ltlog-1.0.0 -lpthread -lrt
 
-FFMPEG = /home/arash/Projects/ffmpeg-1.2.1
+FFMPEG = /home/arash/Projects/ffmpeg-2.0
 FFMPEGLIB = \
 		$(FFMPEG)/libavdevice/libavdevice.a \
 		$(FFMPEG)/libavformat/libavformat.a \
 		$(FFMPEG)/libavfilter/libavfilter.a \
 		$(FFMPEG)/libavcodec/libavcodec.a \
-		$(FFMPEG)/libavresample/libavresample.a \
 		$(FFMPEG)/libswresample/libswresample.a \
 		$(FFMPEG)/libswscale/libswscale.a \
 		$(FFMPEG)/libavutil/libavutil.a \
