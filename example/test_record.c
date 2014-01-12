@@ -29,6 +29,7 @@
 #include "libavformat/avformat.h"
 #include "libavformat/avio.h"
 #include "libavutil/avutil.h"
+#include "libavutil/imgutils.h"
 #include "libswscale/swscale.h"
 
 #define VIDEO_MODE_H263	1
@@ -97,6 +98,18 @@ void* keep_alive_thread(void* params)
 	return NULL;
 }
 
+unsigned int highest_bit(unsigned int a)
+{
+	if (!a)
+		return 0;
+
+	unsigned int r = 1;
+	while (a>>=1)
+		r <<= 1;
+
+	return r;
+}
+
 int main(int argc, char* argv[])
 {
 	tlog_init(TLOG_MODE_STDERR, TLOG_INFO, NULL);
@@ -124,17 +137,57 @@ int main(int argc, char* argv[])
 			log_coder(TLOG_INFO, &encoders.coder[i]);
 			coder_id = encoders.coder[i].number;
 			resolution = encoders.coder[i].current_param;
+			resolution &= 0x1EF;
 			break;
 		}
 	}
-	if (resolution && RCP_VIDEO_RESOLUTION_4CIF)
-		resolution = RCP_VIDEO_RESOLUTION_4CIF;
-	else if (resolution && RCP_VIDEO_RESOLUTION_2CIF)
-		resolution = RCP_VIDEO_RESOLUTION_2CIF;
-	else if (resolution && RCP_VIDEO_RESOLUTION_CIF)
-		resolution = RCP_VIDEO_RESOLUTION_CIF;
-	else if (resolution && RCP_VIDEO_RESOLUTION_QCIF)
-		resolution = RCP_VIDEO_RESOLUTION_QCIF;
+
+	resolution = highest_bit(resolution);
+
+	int width, height;
+	switch (resolution)
+	{
+		case RCP_VIDEO_RESOLUTION_HD1080:
+			width = 1920;
+			height = 1080;
+		break;
+
+		case RCP_VIDEO_RESOLUTION_HD720:
+			width = 1280;
+			height = 720;
+		break;
+
+		case RCP_VIDEO_RESOLUTION_VGA:
+			width = 640;
+			height = 480;
+		break;
+
+		case RCP_VIDEO_RESOLUTION_QVGA:
+			width = 320;
+			height = 240;
+		break;
+
+		case RCP_VIDEO_RESOLUTION_4CIF:
+			width = 704;
+			height = 576;
+		break;
+
+		case RCP_VIDEO_RESOLUTION_2CIF:
+			width = 704;
+			height = 288;
+		break;
+
+		case RCP_VIDEO_RESOLUTION_CIF:
+			width = 352;
+			height = 288;
+		break;
+
+		case RCP_VIDEO_RESOLUTION_QCIF:
+			width = 176;
+			height = 144;
+		break;
+
+	}
 
 	int preset_id = get_coder_preset(coder_id);
 	rcp_mpeg4_preset preset;
@@ -181,29 +234,36 @@ int main(int argc, char* argv[])
 	pthread_create(&thread, NULL, keep_alive_thread, &session);
 
 	AVFormatContext* fc = NULL;
-
+	AVCodec* codec;
+	codec = avcodec_find_encoder(AV_CODEC_ID_H264);
 	char filename[] = "dump.mp4";
-	enum CodecID codec_id = CODEC_ID_H264;
+	enum AVCodecID codec_id = AV_CODEC_ID_H264;
 	int br = 1000000;
-	int w = 704;
-	int h = 576;
-	int fps = 25;
 	AVOutputFormat *of = av_guess_format(0, filename, 0);
 	fc = avformat_alloc_context();
 	fc->oformat = of;
 	strcpy(fc->filename, filename);
-	AVStream *pst = av_new_stream(fc, 0);
+	AVStream *pst = avformat_new_stream(fc, codec);
+	pst->index = 0;
 	AVCodecContext *pcc = pst->codec;
-	avcodec_get_context_defaults2(pcc, AVMEDIA_TYPE_VIDEO);
+	avcodec_get_context_defaults3(pcc, codec);
 	pcc->codec_type = AVMEDIA_TYPE_VIDEO;
 	pcc->codec_id = codec_id;
-	pcc->flags |= CODEC_FLAG_GLOBAL_HEADER;
 	pcc->bit_rate = br;
-	pcc->width = w;
-	pcc->height = h;
+	pcc->width = width;
+	pcc->height = height;
 	pcc->time_base.num = 1;
-	pcc->time_base.den = fps;
-	//av_set_parameters(fc, 0);
+	pcc->time_base.den = 1000;
+	pcc->pix_fmt = AV_PIX_FMT_YUV420P;
+	if (fc->oformat->flags & AVFMT_GLOBALHEADER)
+		pcc->flags |= CODEC_FLAG_GLOBAL_HEADER;
+
+	if (avcodec_open2(pcc, codec, NULL) < 0)
+	{
+		TL_INFO("unable to open codec");
+		exit(1);
+	}
+
 	if (!(fc->oformat->flags & AVFMT_NOFILE))
 		avio_open(&fc->pb, fc->filename, AVIO_FLAG_WRITE);
 
@@ -212,6 +272,38 @@ int main(int argc, char* argv[])
 	//FILE* f = fopen("dump", "wb");
 
 	signal(SIGINT, handler);
+	struct timeval start_time;
+	gettimeofday(&start_time, NULL);
+
+/*
+    AVFrame* frame = avcodec_alloc_frame();
+    if (!frame) {
+        fprintf(stderr, "Could not allocate video frame\n");
+        exit(1);
+    }
+    frame->format = pcc->pix_fmt;
+    frame->width  = pcc->width;
+    frame->height = pcc->height;
+
+    av_image_alloc(frame->data, frame->linesize, pcc->width, pcc->height, pcc->pix_fmt, 32);
+
+    {
+    	TL_INFO("internal: %p", pcc->internal);
+		int got_output = 0;
+		AVPacket pkt;
+		av_init_packet(&pkt);
+		pkt.data = NULL;
+		pkt.size = 0;
+		pkt.flags |= AV_PKT_FLAG_KEY;
+		if (avcodec_encode_video2(pcc, &pkt, frame, &got_output) && got_output)
+		{
+			pkt.dts = pkt.pts = AV_NOPTS_VALUE;
+			pkt.stream_index = pst->index;
+			av_write_frame(fc, &pkt);
+		}
+    }
+
+*/
 	while (!terminate)
 	{
 		if (rtp_recv(session.stream_socket, &mdesc) == 0)
@@ -228,9 +320,11 @@ int main(int argc, char* argv[])
 				pkt.size = vframe.len;
 
 				pkt.dts = AV_NOPTS_VALUE;
-				pkt.pts = AV_NOPTS_VALUE;
+				struct timeval recv_time;
+				gettimeofday(&recv_time, NULL);
+				pkt.pts = av_rescale_q((recv_time.tv_sec-start_time.tv_sec)*1000 + (recv_time.tv_usec-start_time.tv_usec)/1000, pcc->time_base, pst->time_base);
 
-				av_interleaved_write_frame(fc, &pkt);
+				av_write_frame(fc, &pkt);
 			}
         }
 	}
