@@ -249,7 +249,6 @@ int main(int argc, char* argv[])
 	if ( !(ofc->oformat->flags & AVFMT_RAWPICTURE) )
 	{
 		/* allocate output buffer */
-		/* XXX: API change will be done */
 		video_outbuf_size = 200000;
 		video_outbuf = (uint8_t *)malloc(video_outbuf_size);
 	}
