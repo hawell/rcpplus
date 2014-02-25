@@ -9,8 +9,12 @@ export PREFIX
 
 .PHONY: src example
 
-all:
+all: src example
+
+src:
 	$(MAKE) -C src
+	
+example: $(LIBNAME)
 	$(MAKE) -C example
 	
 clean:
