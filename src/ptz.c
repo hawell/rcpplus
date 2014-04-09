@@ -73,8 +73,14 @@ static int send_osrd(int lease_time, int opcode, unsigned char* data, int data_l
 	osrd_req.payload_length = 8 + data_len + 1;
 
 	rcp_packet* osrd_resp = rcp_command(&osrd_req);
+
 	if (osrd_resp == NULL)
 		goto error;
+	if (osrd_resp->payload[0] == 0)
+	{
+		TL_ERROR("access to serial port denied");
+		goto error;
+	}
 
 	return 0;
 
@@ -202,4 +208,26 @@ int iris_brighter()
 	ptz.iris_brighter = 1;
 
 	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+}
+
+int preposition_set(unsigned short preposition_number)
+{
+	Preposition prep;
+	memset(&prep, 0, sizeof(Preposition));
+	prep.function_code = 4;
+	prep.data_bit_lo = preposition_number & 0x03FF;
+	prep.data_bit_hi = (preposition_number >> 7) & 0x07;
+
+	return send_osrd(1, 7, (unsigned char*)&prep, sizeof(prep));
+}
+
+int preposition_shot(unsigned short preposition_number)
+{
+	Preposition prep;
+	memset(&prep, 0, sizeof(Preposition));
+	prep.function_code = 5;
+	prep.data_bit_lo = preposition_number & 0x03FF;
+	prep.data_bit_hi = (preposition_number >> 7) & 0x07;
+
+	return send_osrd(1, 7, (unsigned char*)&prep, sizeof(prep));
 }

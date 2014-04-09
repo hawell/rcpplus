@@ -49,6 +49,15 @@ typedef struct {
 	unsigned char db3_res:1;
 } VarSpeedPTZ;
 
+typedef struct {
+	unsigned char function_code:4;
+	unsigned char data_bit_hi:3;
+	unsigned char res1:1;
+
+	unsigned char data_bit_lo:7;
+	unsigned char res2:1;
+} Preposition;
+
 int ptz_available();
 
 int move_stop();
@@ -67,5 +76,8 @@ int focus_near();
 
 int iris_darker();
 int iris_brighter();
+
+int preposition_set(unsigned short preposition_number);
+int preposition_shot(unsigned short preposition_number);
 
 #endif /* PTZ_H_ */

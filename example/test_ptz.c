@@ -52,6 +52,17 @@ int main(int argc, char* argv[])
 	sleep(1);
 	move_stop();
 
+	preposition_set(3);
+	sleep(1);
+	iris_brighter();
+	sleep(1);
+	move_right(5);
+	sleep(2);
+	move_stop();
+	sleep(1);
+	preposition_shot(3);
+	sleep(1);
+
 	stop_event_handler();
 
 	return 0;
