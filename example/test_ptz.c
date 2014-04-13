@@ -44,6 +44,14 @@ int main(int argc, char* argv[])
 	sleep(1);
 	move_down(5);
 	sleep(1);
+	move_up_right(5, 5);
+	sleep(1);
+	move_up_left(5, 5);
+	sleep(1);
+	move_down_right(5, 5);
+	sleep(1);
+	move_down_left(5, 5);
+	sleep(1);
 	move_stop();
 
 	zoom_in(5);

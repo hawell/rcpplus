@@ -103,7 +103,7 @@ int ptz_available()
 
 error:
 	TL_ERROR("ptz_available()");
-	return -1;
+	return 0;
 }
 
 int move_right(int speed)
@@ -142,6 +142,54 @@ int move_down(int speed)
 	memset(&ptz, 0, sizeof(VarSpeedPTZ));
 	ptz.tilt_down = 1;
 	ptz.tilt_speed = speed;
+
+	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+}
+
+int move_up_right(int pan_speed, int tilt_speed)
+{
+	VarSpeedPTZ ptz;
+	memset(&ptz, 0, sizeof(VarSpeedPTZ));
+	ptz.tilt_up = 1;
+	ptz.tilt_speed = tilt_speed;
+	ptz.pan_right = 1;
+	ptz.pan_speed = pan_speed;
+
+	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+}
+
+int move_up_left(int pan_speed, int tilt_speed)
+{
+	VarSpeedPTZ ptz;
+	memset(&ptz, 0, sizeof(VarSpeedPTZ));
+	ptz.tilt_up = 1;
+	ptz.tilt_speed = tilt_speed;
+	ptz.pan_left = 1;
+	ptz.pan_speed = pan_speed;
+
+	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+}
+
+int move_down_right(int pan_speed, int tilt_speed)
+{
+	VarSpeedPTZ ptz;
+	memset(&ptz, 0, sizeof(VarSpeedPTZ));
+	ptz.tilt_down = 1;
+	ptz.tilt_speed = tilt_speed;
+	ptz.pan_right = 1;
+	ptz.pan_speed = pan_speed;
+
+	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+}
+
+int move_down_left(int pan_speed, int tilt_speed)
+{
+	VarSpeedPTZ ptz;
+	memset(&ptz, 0, sizeof(VarSpeedPTZ));
+	ptz.tilt_down = 1;
+	ptz.tilt_speed = tilt_speed;
+	ptz.pan_left = 1;
+	ptz.pan_speed = pan_speed;
 
 	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
 }

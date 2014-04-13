@@ -68,6 +68,12 @@ int move_left(int speed);
 int move_up(int speed);
 int move_down(int speed);
 
+int move_up_right(int pan_speed, int tilt_speed);
+int move_up_left(int pan_speed, int tilt_speed);
+
+int move_down_right(int pan_speed, int tilt_speed);
+int move_down_left(int pan_speed, int tilt_speed);
+
 int zoom_in(int speed);
 int zoom_out(int speed);
 
