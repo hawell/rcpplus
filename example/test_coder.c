@@ -14,6 +14,7 @@
 #include "rcpplus.h"
 #include "rcpcommand.h"
 #include "coder.h"
+#include "preset.h"
 
 
 int main(int argc, char* argv[])
@@ -33,7 +34,16 @@ int main(int argc, char* argv[])
 	client_register(RCP_USER_LEVEL_LIVE, "", RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_MD5);
 
 	rcp_coder_list encoders;
-	get_coder_list(RCP_CODER_DECODER, RCP_MEDIA_TYPE_VIDEO, &encoders);
+	get_coder_list(RCP_CODER_DECODER, RCP_MEDIA_TYPE_VIDEO, &encoders, 2);
+
+	int preset_id = get_coder_preset(8);
+	rcp_mpeg4_preset preset;
+	get_preset(preset_id, &preset, 1);
+	log_preset(TLOG_INFO, &preset, 1);
+	preset.resolution = RCP_VIDEO_RESOLUTION_4CIF;
+	set_preset(preset_id, &preset, 1);
+	log_preset(TLOG_INFO, &preset, 1);
+/*
 	for (int i=0; i<encoders.count; i++)
 	{
 		int mode;
@@ -48,7 +58,7 @@ int main(int argc, char* argv[])
 		TL_INFO("-----------------------");
 	}
 
-	get_coder_list(RCP_CODER_ENCODER, RCP_MEDIA_TYPE_VIDEO, &encoders);
+	get_coder_list(RCP_CODER_ENCODER, RCP_MEDIA_TYPE_VIDEO, &encoders, 1);
 	for (int i=0; i<encoders.count; i++)
 	{
 		int mode;
@@ -64,13 +74,14 @@ int main(int argc, char* argv[])
 	}
 
 
-	get_coder_list(RCP_CODER_DECODER, RCP_MEDIA_TYPE_AUDIO, &encoders);
+	get_coder_list(RCP_CODER_DECODER, RCP_MEDIA_TYPE_AUDIO, &encoders, 1);
 	for (int i=0; i<encoders.count; i++)
 	{
 		TL_INFO("%x %x %x %x %x", encoders.coder[i].number, encoders.coder[i].caps, encoders.coder[i].current_cap, encoders.coder[i].param_caps, encoders.coder[i].current_param);
 		log_coder(TLOG_INFO, &encoders.coder[i]);
 		TL_INFO("-----------------------");
 	}
+*/
 
 	stop_event_handler();
 

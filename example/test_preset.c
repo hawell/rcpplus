@@ -16,11 +16,17 @@
 #include "preset.h"
 #include "coder.h"
 
-int main()
+int main(int argc, char* argv[])
 {
+    if (argc < 2)
+    {
+        printf("%s <ip>\n", argv[0]);
+        return 0;
+    }
+
 	tlog_init(TLOG_MODE_STDERR, TLOG_INFO, NULL);
 
-	rcp_connect("10.25.25.220");
+	rcp_connect(argv[1]);
 
 	start_event_handler();
 

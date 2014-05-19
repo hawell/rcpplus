@@ -60,30 +60,30 @@ typedef struct {
 
 int ptz_available();
 
-int move_stop();
+int move_stop(int line, int lease);
 
-int move_right(int speed);
-int move_left(int speed);
+int move_right(int line, int lease, int speed);
+int move_left(int line, int lease, int speed);
 
-int move_up(int speed);
-int move_down(int speed);
+int move_up(int line, int lease, int speed);
+int move_down(int line, int lease, int speed);
 
-int move_up_right(int pan_speed, int tilt_speed);
-int move_up_left(int pan_speed, int tilt_speed);
+int move_up_right(int line, int lease, int pan_speed, int tilt_speed);
+int move_up_left(int line, int lease, int pan_speed, int tilt_speed);
 
-int move_down_right(int pan_speed, int tilt_speed);
-int move_down_left(int pan_speed, int tilt_speed);
+int move_down_right(int line, int lease, int pan_speed, int tilt_speed);
+int move_down_left(int line, int lease, int pan_speed, int tilt_speed);
 
-int zoom_in(int speed);
-int zoom_out(int speed);
+int zoom_in(int line, int lease, int speed);
+int zoom_out(int line, int lease, int speed);
 
-int focus_far();
-int focus_near();
+int focus_far(int line, int lease);
+int focus_near(int line, int lease);
 
-int iris_darker();
-int iris_brighter();
+int iris_darker(int line, int lease);
+int iris_brighter(int line, int lease);
 
-int preposition_set(unsigned short preposition_number);
-int preposition_shot(unsigned short preposition_number);
+int preposition_set(int line, int lease, unsigned short preposition_number);
+int preposition_shot(int line, int lease, unsigned short preposition_number);
 
 #endif /* PTZ_H_ */

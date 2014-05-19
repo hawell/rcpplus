@@ -105,7 +105,7 @@ int main(int argc, char* argv[])
 	set_mic_level(1, max_mic);
 
 	rcp_coder_list encoders;
-	get_coder_list(RCP_CODER_DECODER, RCP_MEDIA_TYPE_AUDIO, &encoders);
+	get_coder_list(RCP_CODER_DECODER, RCP_MEDIA_TYPE_AUDIO, &encoders, 1);
 	for (int i=0; i<encoders.count; i++)
 	{
 		TL_INFO("%x %x %x %x %x", encoders.coder[i].number, encoders.coder[i].caps, encoders.coder[i].current_cap, encoders.coder[i].param_caps, encoders.coder[i].current_param);

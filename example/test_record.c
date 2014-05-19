@@ -127,7 +127,7 @@ int main(int argc, char* argv[])
 	client_register(RCP_USER_LEVEL_LIVE, "", RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_MD5);
 
 	rcp_coder_list encoders;
-	get_coder_list(RCP_CODER_DECODER, RCP_MEDIA_TYPE_VIDEO, &encoders);
+	get_coder_list(RCP_CODER_DECODER, RCP_MEDIA_TYPE_VIDEO, &encoders, 1);
 	int coder_id = 1;
 	int resolution = RCP_VIDEO_RESOLUTION_QCIF;
 	for (int i=0; i<encoders.count; i++)

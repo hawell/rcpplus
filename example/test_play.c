@@ -101,6 +101,10 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
+	int line = 0;
+	if (argc >= 3)
+		line = atoi(argv[2]);
+
 	rcp_connect(argv[1]);
 
 	start_event_handler();
@@ -111,29 +115,42 @@ int main(int argc, char* argv[])
 	memset(&session, 0, sizeof(rcp_session));
 	unsigned short udp_port = stream_connect_udp(&session);
 
+	int coder=-1, coding, resolution;
+
 	cap_list caps;
 	get_capability_list(&caps);
 	log_capabilities(TLOG_INFO, &caps);
 
-	rcp_coder_list encoders;
-	get_coder_list(RCP_CODER_DECODER, RCP_MEDIA_TYPE_VIDEO, &encoders);
+	int video_section = 0;
+	while (caps.sections[video_section].section_type != CAP_SECTION_TYPE_VIDEO)
+		video_section++;
 
-	int coder, coding, resolution;
+	for (int i=0; i<caps.sections[video_section].n_elems; i++)
+	{
+		cap_element* el = &caps.sections[video_section].elements[i];
+		if (el->element_type == CAP_ELEMENT_VIDEO_ENCODER && el->input_number == line)
+		{
+			coder = el->identifier;
+			coding = (el->compression & VIDEO_COMP_H264)?RCP_VIDEO_CODING_H264:RCP_VIDEO_CODING_H263;
+			break;
+		}
+	}
+	if (coder == -1)
+	{
+		TL_ERROR("no coder found for selected line");
+		goto end1;
+	}
 
-	coder = encoders.coder[0].number;
-	resolution = encoders.coder[0].current_param;
-	resolution &= 0x1EF;
+	int preset_id = get_coder_preset(coder);
 
-	int video_mode;
-	get_coder_video_operation_mode(coder, &video_mode);
+	rcp_mpeg4_preset preset;
+	get_preset(preset_id, &preset, 1);
+	log_preset(TLOG_INFO, &preset, 1);
 
-	if (video_mode == VIDEO_MODE_H263)
-		coding = RCP_VIDEO_CODING_H263;
-	else
-		coding = RCP_VIDEO_CODING_H264;
+	resolution = 0x1EF; // we accept all resolutions
 
 	rcp_media_descriptor desc = {
-			RCP_MEP_UDP, 1, 1, 0, udp_port, 0, 1, coding, resolution
+			RCP_MEP_UDP, 1, 1, 0, udp_port, 0, line, coding, resolution
 	};
 
 	if (client_connect(&session, RCP_CONNECTION_METHOD_GET, RCP_MEDIA_TYPE_VIDEO, 0, &desc) != 0)
@@ -143,7 +160,7 @@ int main(int argc, char* argv[])
 	coding = desc.coding;
 	resolution = highest_bit(desc.resolution);
 
-	TL_INFO("mode=%d res=%d id=%d", video_mode, resolution, coder);
+	TL_INFO("res=%d id=%d", resolution, coder);
 
 	int width, height;
 	switch (resolution)
@@ -190,6 +207,11 @@ int main(int argc, char* argv[])
 
 	}
 
+/*
+	width = 704;
+	height = 576;
+*/
+
 	avcodec_register_all();
 	av_register_all();
 	avfilter_register_all();
@@ -199,15 +221,15 @@ int main(int argc, char* argv[])
 	rtp_merge_desc mdesc;
 	video_frame vframe;
 
-	if (video_mode == VIDEO_MODE_H263)
-	{
-		rtp_init(RTP_PAYLOAD_TYPE_H263, 1, &mdesc);
-		codec_in = avcodec_find_decoder(AV_CODEC_ID_H263);
-	}
-	else
+	if (coding == RCP_VIDEO_CODING_H264)
 	{
 		rtp_init(RTP_PAYLOAD_TYPE_H264, 1, &mdesc);
 		codec_in = avcodec_find_decoder(AV_CODEC_ID_H264);
+	}
+	else
+	{
+		rtp_init(RTP_PAYLOAD_TYPE_H263, 1, &mdesc);
+		codec_in = avcodec_find_decoder(AV_CODEC_ID_H263);
 	}
 
 	if (codec_in == NULL)
@@ -352,6 +374,7 @@ int main(int argc, char* argv[])
 end:
 	pthread_cancel(thread);
 	client_disconnect(&session);
+end1:
 	client_unregister();
 	stop_event_handler();
 

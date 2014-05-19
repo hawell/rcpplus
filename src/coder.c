@@ -117,12 +117,12 @@ error:
 
 #define CODER_SIZE_IN_PAYLOAD	16
 
-int get_coder_list(int coder_type, int media_type, rcp_coder_list* coder_list)
+int get_coder_list(int coder_type, int media_type, rcp_coder_list* coder_list, int line)
 {
 	rcp_packet coders_req;
 
 	init_rcp_header(&coders_req, 0, RCP_COMMAND_CONF_RCP_CODER_LIST, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_OCTET);
-	coders_req.numeric_descriptor = 1; // line number - where do we get this?!!
+	coders_req.numeric_descriptor = line;
 
 	coders_req.payload[0] = media_type;
 	coders_req.payload[1] = coder_type;

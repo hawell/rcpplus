@@ -35,15 +35,6 @@
 #define RCP_VIDEO_CODING_RECORDED	0x4000
 #define RCP_VIDEO_CODING_MPEG2S		0x8000 // program stream
 
-#define RCP_VIDEO_RESOLUTION_QCIF		0x0001
-#define RCP_VIDEO_RESOLUTION_CIF		0x0002
-#define RCP_VIDEO_RESOLUTION_2CIF		0x0004
-#define RCP_VIDEO_RESOLUTION_4CIF		0x0008
-#define RCP_VIDEO_RESOLUTION_QVGA		0x0020
-#define RCP_VIDEO_RESOLUTION_VGA		0x0040
-#define RCP_VIDEO_RESOLUTION_HD720		0x0080
-#define RCP_VIDEO_RESOLUTION_HD1080	0x0100
-
 #define RCP_AUDIO_CODING_G711		0x0001
 #define RCP_AUDIO_CODING_MPEG2P		0x8000
 
@@ -74,7 +65,7 @@ typedef struct {
 	rcp_coder *coder;
 } rcp_coder_list;
 
-int get_coder_list(int coder_type, int media_type, rcp_coder_list* coder_list);
+int get_coder_list(int coder_type, int media_type, rcp_coder_list* coder_list, int line);
 
 int get_coder_video_operation_mode(int coder, int *mode);
 int set_coder_video_operation_mode(int coder, int mode);

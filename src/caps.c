@@ -149,23 +149,23 @@ static const char* video_element_resolution_str(int res)
 {
 	switch (res)
 	{
-		case VIDEO_RESO_QCIF:
+		case RCP_VIDEO_RESOLUTION_QCIF:
 			return "QCIF";
-		case VIDEO_RESO_CIF:
+		case RCP_VIDEO_RESOLUTION_CIF:
 			return "CIF";
-		case VIDEO_RESO_2CIF:
+		case RCP_VIDEO_RESOLUTION_2CIF:
 			return "2CIF";
-		case VIDEO_RESO_4CIF:
+		case RCP_VIDEO_RESOLUTION_4CIF:
 			return "4CIF";
-		case VIDEO_RESO_CUSTOM:
+		case RCP_VIDEO_RESOLUTION_CUSTOM:
 			return "Custom";
-		case VIDEO_RESO_QVGA:
+		case RCP_VIDEO_RESOLUTION_QVGA:
 			return "QVGA";
-		case VIDEO_RESO_VGA:
+		case RCP_VIDEO_RESOLUTION_VGA:
 			return "VGA";
-		case VIDEO_RESO_HD720:
+		case RCP_VIDEO_RESOLUTION_HD720:
 			return "HD720";
-		case VIDEO_RESO_HD1080:
+		case RCP_VIDEO_RESOLUTION_HD1080:
 			return "HD1080";
 		default:
 			return "Unknown Resolution";

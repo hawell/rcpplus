@@ -53,17 +53,6 @@
 #define VIDEO_COMP_H264	0x0004
 #define VIDEO_COMP_JPEG	0x0008
 
-#define VIDEO_RESO_QCIF	0x0001
-#define VIDEO_RESO_CIF		0x0002
-#define VIDEO_RESO_2CIF	0x0004
-#define VIDEO_RESO_4CIF	0x0008
-#define VIDEO_RESO_CUSTOM	0x0010
-#define VIDEO_RESO_QVGA	0x0020
-#define VIDEO_RESO_VGA		0x0040
-#define VIDEO_RESO_HD720	0x0080
-#define VIDEO_RESO_HD1080	0x0100
-
-
 typedef struct {
 	int element_type;
 	int identifier;

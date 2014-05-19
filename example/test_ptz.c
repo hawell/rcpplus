@@ -33,42 +33,42 @@ int main(int argc, char* argv[])
 	if (ptz_available() == 0)
 	{
 		TL_INFO("ptz is not available for this camera");
-		return 0;
+		//return 0;
 	}
 
-	move_right(5);
+	move_right(0, 10, 5);
 	sleep(1);
-	move_left(5);
+	move_left(0, 10, 5);
 	sleep(1);
-	move_up(5);
+	move_up(0, 10, 5);
 	sleep(1);
-	move_down(5);
+	move_down(0, 10, 5);
 	sleep(1);
-	move_up_right(5, 5);
+	move_up_right(0, 10, 5, 5);
 	sleep(1);
-	move_up_left(5, 5);
+	move_up_left(0, 10, 5, 5);
 	sleep(1);
-	move_down_right(5, 5);
+	move_down_right(0, 10, 5, 5);
 	sleep(1);
-	move_down_left(5, 5);
+	move_down_left(0, 10, 5, 5);
 	sleep(1);
-	move_stop();
+	move_stop(0, 10);
 
-	zoom_in(5);
+	zoom_in(0, 10, 5);
 	sleep(1);
-	zoom_out(5);
+	zoom_out(0, 10, 5);
 	sleep(1);
-	move_stop();
+	move_stop(0, 10);
 
-	preposition_set(3);
+	preposition_set(0, 10, 3);
 	sleep(1);
-	iris_brighter();
+	iris_brighter(0, 10);
 	sleep(1);
-	move_right(5);
+	move_right(0, 10, 5);
 	sleep(2);
-	move_stop();
+	move_stop(0, 10);
 	sleep(1);
-	preposition_shot(3);
+	preposition_shot(0, 10, 3);
 	sleep(1);
 
 	stop_event_handler();

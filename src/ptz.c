@@ -46,7 +46,7 @@ static unsigned char checksum(unsigned char* data, int len)
 	return (sum & 0x7f);
 }
 
-static int send_osrd(int lease_time, int opcode, unsigned char* data, int data_len)
+static int send_osrd(int line, int lease_time, int opcode, unsigned char* data, int data_len)
 {
 	rcp_packet osrd_req;
 
@@ -62,7 +62,7 @@ static int send_osrd(int lease_time, int opcode, unsigned char* data, int data_l
 	osrd_req.payload[4] = 0x80 + 4 + data_len; // number of bytes in the remainder of the packet
 
 	osrd_req.payload[5] = 0;
-	osrd_req.payload[6] = 0; // address
+	osrd_req.payload[6] = line; // address
 
 	osrd_req.payload[7] = opcode;
 
@@ -106,47 +106,47 @@ error:
 	return 0;
 }
 
-int move_right(int speed)
+int move_right(int line, int lease, int speed)
 {
 	VarSpeedPTZ ptz;
 	memset(&ptz, 0, sizeof(VarSpeedPTZ));
 	ptz.pan_right = 1;
 	ptz.pan_speed = speed;
 
-	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+	return send_osrd(line, lease, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
 }
 
-int move_left(int speed)
+int move_left(int line, int lease, int speed)
 {
 	VarSpeedPTZ ptz;
 	memset(&ptz, 0, sizeof(VarSpeedPTZ));
 	ptz.pan_left = 1;
 	ptz.pan_speed = speed;
 
-	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+	return send_osrd(line, lease, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
 }
 
-int move_up(int speed)
+int move_up(int line, int lease, int speed)
 {
 	VarSpeedPTZ ptz;
 	memset(&ptz, 0, sizeof(VarSpeedPTZ));
 	ptz.tilt_up = 1;
 	ptz.tilt_speed = speed;
 
-	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+	return send_osrd(line, lease, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
 }
 
-int move_down(int speed)
+int move_down(int line, int lease, int speed)
 {
 	VarSpeedPTZ ptz;
 	memset(&ptz, 0, sizeof(VarSpeedPTZ));
 	ptz.tilt_down = 1;
 	ptz.tilt_speed = speed;
 
-	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+	return send_osrd(line, lease, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
 }
 
-int move_up_right(int pan_speed, int tilt_speed)
+int move_up_right(int line, int lease, int pan_speed, int tilt_speed)
 {
 	VarSpeedPTZ ptz;
 	memset(&ptz, 0, sizeof(VarSpeedPTZ));
@@ -155,10 +155,10 @@ int move_up_right(int pan_speed, int tilt_speed)
 	ptz.pan_right = 1;
 	ptz.pan_speed = pan_speed;
 
-	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+	return send_osrd(line, lease, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
 }
 
-int move_up_left(int pan_speed, int tilt_speed)
+int move_up_left(int line, int lease, int pan_speed, int tilt_speed)
 {
 	VarSpeedPTZ ptz;
 	memset(&ptz, 0, sizeof(VarSpeedPTZ));
@@ -167,10 +167,10 @@ int move_up_left(int pan_speed, int tilt_speed)
 	ptz.pan_left = 1;
 	ptz.pan_speed = pan_speed;
 
-	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+	return send_osrd(line, lease, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
 }
 
-int move_down_right(int pan_speed, int tilt_speed)
+int move_down_right(int line, int lease, int pan_speed, int tilt_speed)
 {
 	VarSpeedPTZ ptz;
 	memset(&ptz, 0, sizeof(VarSpeedPTZ));
@@ -179,10 +179,10 @@ int move_down_right(int pan_speed, int tilt_speed)
 	ptz.pan_right = 1;
 	ptz.pan_speed = pan_speed;
 
-	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+	return send_osrd(line, lease, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
 }
 
-int move_down_left(int pan_speed, int tilt_speed)
+int move_down_left(int line, int lease, int pan_speed, int tilt_speed)
 {
 	VarSpeedPTZ ptz;
 	memset(&ptz, 0, sizeof(VarSpeedPTZ));
@@ -191,74 +191,74 @@ int move_down_left(int pan_speed, int tilt_speed)
 	ptz.pan_left = 1;
 	ptz.pan_speed = pan_speed;
 
-	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+	return send_osrd(line, lease, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
 }
 
-int move_stop()
+int move_stop(int line, int lease)
 {
 	VarSpeedPTZ ptz;
 	memset(&ptz, 0, sizeof(VarSpeedPTZ));
 
-	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+	return send_osrd(line, lease, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
 }
 
-int zoom_in(int speed)
+int zoom_in(int line, int lease, int speed)
 {
 	VarSpeedPTZ ptz;
 	memset(&ptz, 0, sizeof(VarSpeedPTZ));
 	ptz.zoom_in = 1;
 	ptz.zoom_speed = speed;
 
-	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+	return send_osrd(line, lease, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
 }
 
-int zoom_out(int speed)
+int zoom_out(int line, int lease, int speed)
 {
 	VarSpeedPTZ ptz;
 	memset(&ptz, 0, sizeof(VarSpeedPTZ));
 	ptz.zoom_out = 1;
 	ptz.zoom_speed = speed;
 
-	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+	return send_osrd(line, lease, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
 }
 
-int focus_far()
+int focus_far(int line, int lease)
 {
 	VarSpeedPTZ ptz;
 	memset(&ptz, 0, sizeof(VarSpeedPTZ));
 	ptz.focus_far = 1;
 
-	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+	return send_osrd(line, lease, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
 }
 
-int focus_near()
+int focus_near(int line, int lease)
 {
 	VarSpeedPTZ ptz;
 	memset(&ptz, 0, sizeof(VarSpeedPTZ));
 	ptz.focus_near = 1;
 
-	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+	return send_osrd(line, lease, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
 }
 
-int iris_darker()
+int iris_darker(int line, int lease)
 {
 	VarSpeedPTZ ptz;
 	memset(&ptz, 0, sizeof(VarSpeedPTZ));
 	ptz.iris_darker = 1;
 
-	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+	return send_osrd(line, lease, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
 }
 
-int iris_brighter()
+int iris_brighter(int line, int lease)
 {
 	VarSpeedPTZ ptz;
 	memset(&ptz, 0, sizeof(VarSpeedPTZ));
 	ptz.iris_brighter = 1;
 
-	return send_osrd(1, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
+	return send_osrd(line, lease, 5, (unsigned char*)&ptz, sizeof(VarSpeedPTZ));
 }
 
-int preposition_set(unsigned short preposition_number)
+int preposition_set(int line, int lease, unsigned short preposition_number)
 {
 	Preposition prep;
 	memset(&prep, 0, sizeof(Preposition));
@@ -266,10 +266,10 @@ int preposition_set(unsigned short preposition_number)
 	prep.data_bit_lo = preposition_number & 0x03FF;
 	prep.data_bit_hi = (preposition_number >> 7) & 0x07;
 
-	return send_osrd(1, 7, (unsigned char*)&prep, sizeof(prep));
+	return send_osrd(line, lease, 7, (unsigned char*)&prep, sizeof(prep));
 }
 
-int preposition_shot(unsigned short preposition_number)
+int preposition_shot(int line, int lease, unsigned short preposition_number)
 {
 	Preposition prep;
 	memset(&prep, 0, sizeof(Preposition));
@@ -277,5 +277,5 @@ int preposition_shot(unsigned short preposition_number)
 	prep.data_bit_lo = preposition_number & 0x03FF;
 	prep.data_bit_hi = (preposition_number >> 7) & 0x07;
 
-	return send_osrd(1, 7, (unsigned char*)&prep, sizeof(prep));
+	return send_osrd(line, lease, 7, (unsigned char*)&prep, sizeof(prep));
 }
