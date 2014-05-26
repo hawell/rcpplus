@@ -294,7 +294,11 @@ void log_preset(int level, rcp_mpeg4_preset* preset, int basic)
 		case PRESET_RESOLUTION_23D1:val = "2/3 D1";break;
 		case PRESET_RESOLUTION_QVGA:val = "QVGA";break;
 		case PRESET_RESOLUTION_VGA:val = "VGA";break;
+		case PRESET_RESOLUTION_WD144:val = "WD144";break;
+		case PRESET_RESOLUTION_WD288:val = "WD288";break;
+		case PRESET_RESOLUTION_WD432:val = "WD432";break;
 		case PRESET_RESOLUTION_720P:val = "720P";break;
+		default: val="UNKNOWN";break;
 	}
 	tlog(level, "%-25s %s", "resolution", val);
 	tlog(level, "%-25s %d kbps", "bandwidth", preset->bandwidth);

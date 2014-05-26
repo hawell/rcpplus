@@ -163,6 +163,12 @@ static const char* video_element_resolution_str(int res)
 			return "QVGA";
 		case RCP_VIDEO_RESOLUTION_VGA:
 			return "VGA";
+		case RCP_VIDEO_RESOLUTION_WD144:
+			return "WD144";
+		case RCP_VIDEO_RESOLUTION_WD288:
+			return "WD288";
+		case RCP_VIDEO_RESOLUTION_WD432:
+			return "WD432";
 		case RCP_VIDEO_RESOLUTION_HD720:
 			return "HD720";
 		case RCP_VIDEO_RESOLUTION_HD1080:
