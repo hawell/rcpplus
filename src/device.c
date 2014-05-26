@@ -183,7 +183,7 @@ static char* nid_str(int id)
 	{
 		case RCP_HARDWARE_ID_VIPX1:return "VIP X1";
 		case RCP_HARDWARE_ID_VIPX2:return "VIP X2";
-		case RCP_HARDWARE_ID_VIPXDEC:return "VIP XDEX";
+		case RCP_HARDWARE_ID_VIPXDEC:return "VIP XDEC";
 		case RCP_HARDWARE_ID_VJ_X10:return "VJ X10";
 		case RCP_HARDWARE_ID_VJ_X20:return "VJ X20";
 		case RCP_HARDWARE_ID_VJ_X40:return "VJ X40";
@@ -205,6 +205,8 @@ static char* nid_str(int id)
 		case RCP_HARDWARE_ID_AUTODOME_EASY_II:return "AutoDome Easy II";
 		case RCP_HARDWARE_ID_AUTODOME_EASY_II_E:return "AutoDome Easy II E";
 		case RCP_HARDWARE_ID_VIPX1_XF_E:return "VIPX1 XF E";
+		case RCP_HARDWARE_ID_VJT_X20XF_E_2CH:return "VIPX1 XFE 2ChH";
+		case RCP_HARDWARE_ID_VJT_X20XF_E_4CH:return "VJT X20XF E 4CH";
 		case RCP_HARDWARE_ID_VIPX1_XF_W:return "VIPX1 XF W";
 		case RCP_HARDWARE_ID_VG5_AUTODOME_700:return "VG4 AutoDome 700";
 		case RCP_HARDWARE_ID_NDC_455_P:return "NDC 455 P";
@@ -215,6 +217,11 @@ static char* nid_str(int id)
 		case RCP_HARDWARE_ID_NDC_225_P:return "NDC 225 P";
 		case RCP_HARDWARE_ID_NDC_255_P_2:return "NDC 255 P";
 		case RCP_HARDWARE_ID_VOT:return "VOT";
+		case RCP_HARDWARE_ID_NDC_274_P:return "NDC 274 P";
+		case RCP_HARDWARE_ID_NDC_284_P:return "NDC 284 P";
+		case RCP_HARDWARE_ID_NTC_265_PI:return "NTC 265 PI";
+		case RCP_HARDWARE_ID_NDC_265_PIO:return "NDC 265 PIO";
+		case RCP_HARDWARE_ID_NDN_822:return "NDN 822";
 		case RCP_HARDWARE_ID_DINION_720P:return "Dinion 720P";
 		case RCP_HARDWARE_ID_FLEXIDOME_720P:return "FlexiDome 720P";
 		case RCP_HARDWARE_ID_NDC_265_W:return "NDC 265 W";
@@ -225,8 +232,16 @@ static char* nid_str(int id)
 		case RCP_HARDWARE_ID_JR_DOME_HD:return "JR Dome HD";
 		case RCP_HARDWARE_ID_JR_DOME_HD_FIXED:return "JR Dome HD Fixed";
 		case RCP_HARDWARE_ID_EX30_IR:return "EX30 IR";
-		case RCP_HARDWARE_ID_GEN5_HD:return "Gen5 HD";
+		case RCP_HARDWARE_ID_GEN5_HD_PC:return "Gen5 HD PC";
 		case RCP_HARDWARE_ID_EX65:return "EX65";
+		case RCP_HARDWARE_ID_DINION_1080P:return "Dinion 1080P";
+		case RCP_HARDWARE_ID_FLEXIDOME_1080P:return "FlexiDome 1080P";
+		case RCP_HARDWARE_ID_HD_DECODER:return "HD Decoder";
+		case RCP_HARDWARE_ID_GEN5_HD:return "Gen5 HD";
+		case RCP_HARDWARE_ID_NER_L2:return "NER L2";
+		case RCP_HARDWARE_ID_VIP_MIC:return "VIP MIC";
+		case RCP_HARDWARE_ID_NBN_932:return "NBN 932";
+		case RCP_HARDWARE_ID_NDN_932:return "NDN 932";
 		case RCP_HARDWARE_ID_VRM:return "VRM";
 		case RCP_HARDWARE_ID_VIDOS_SERVER:return "Vidos Server";
 		case RCP_HARDWARE_ID_VIDOS_MONITOR:return "Vidos Monitor";
@@ -298,7 +313,7 @@ void log_device(int level, rcp_device* dev)
 		default:strcpy(tmp, "Unknown Device Type");break;
 	}
 	tlog(level, "%-20s %s", "Device Type", tmp);
-	tlog(level, "%-20s %s", "Device Name", dev->old_id==RCP_DEVICE_ESCAPECODE?oid_str(dev->old_id):nid_str(dev->new_id));
+	tlog(level, "%-20s %s %d", "Device Name", dev->old_id==RCP_DEVICE_ESCAPECODE?oid_str(dev->old_id):nid_str(dev->new_id), dev->new_id);
 	sprintf(tmp, "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx", dev->hw_addr[0], dev->hw_addr[1], dev->hw_addr[2], dev->hw_addr[3], dev->hw_addr[4], dev->hw_addr[5]);
 	tlog(level, "%-20s %s", "MAC Address", tmp);
 	sprintf(tmp, "%d.%d.%d.%d", dev->address[0], dev->address[1], dev->address[2], dev->address[3]);
