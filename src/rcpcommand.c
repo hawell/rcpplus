@@ -403,7 +403,7 @@ int client_unregister()
 {
 	rcp_packet unreg_req;
 
-	init_rcp_header(&unreg_req, 0, RCP_COMMAND_CONF_RCP_CLIENT_UNREGISTER, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_T_WORD);
+	init_rcp_header(&unreg_req, 0, RCP_COMMAND_CONF_RCP_CLIENT_UNREGISTER, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_P_OCTET);
 
 	rcp_packet* unreg_resp = rcp_command(&unreg_req);
 	if (unreg_resp == NULL)
