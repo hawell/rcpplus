@@ -230,32 +230,30 @@ static int append_fu_a(unsigned char* data, int len, rtp_merge_desc* mdesc)
 	if (fp->fuh.s == 1)
 	{
 		TL_DEBUG("start");
-		if (mdesc->len == 0)
+		if (mdesc->len != 0)
 		{
-			if (mdesc->prepend_mpeg4_starter)
-			{
-				memcpy(mdesc->data + mdesc->len, NAL_START_FRAME, 4);
-				mdesc->len += 4;
-			}
-
-			nal_unit_header nh;
-			nh.f = fp->nh.f;
-			nh.nri = fp->nh.nri;
-			nh.type = fp->fuh.type;
-
-			TL_DEBUG("nal unit: f=%d nri=%d type=%d", nh.f, nh.nri, nh.type);
-
-			memcpy(mdesc->data + mdesc->len,&nh, 1);
-			mdesc->len++;
-			memcpy(mdesc->data + mdesc->len, fp->payload, len);
-			mdesc->len += len;
-			return 0;
+			TL_WARNING("fragment unit is not the first unit");
+			mdesc->len = 0;
 		}
-		else
+
+		if (mdesc->prepend_mpeg4_starter)
 		{
-			TL_ERROR("fragment unit is not the first unit");
-			return -1;
+			memcpy(mdesc->data + mdesc->len, NAL_START_FRAME, 4);
+			mdesc->len += 4;
 		}
+
+		nal_unit_header nh;
+		nh.f = fp->nh.f;
+		nh.nri = fp->nh.nri;
+		nh.type = fp->fuh.type;
+
+		TL_DEBUG("nal unit: f=%d nri=%d type=%d", nh.f, nh.nri, nh.type);
+
+		memcpy(mdesc->data + mdesc->len,&nh, 1);
+		mdesc->len++;
+		memcpy(mdesc->data + mdesc->len, fp->payload, len);
+		mdesc->len += len;
+		return 0;
 	}
 	else
 	{
@@ -283,7 +281,7 @@ static int append_fu_a(unsigned char* data, int len, rtp_merge_desc* mdesc)
 
 static int append_single_nal(unsigned char* data, int data_len, rtp_merge_desc* mdesc)
 {
-	assert(mdesc->len == 0);
+	mdesc->len = 0;
 	if (mdesc->prepend_mpeg4_starter)
 	{
 		memcpy(mdesc->data + mdesc->len, NAL_START_FRAME, 4);
@@ -299,7 +297,7 @@ static int append_single_nal(unsigned char* data, int data_len, rtp_merge_desc* 
 
 static int append_stap_a(unsigned char* data, rtp_merge_desc* mdesc)
 {
-	assert(mdesc->len == 0);
+	mdesc->len = 0;
 	if (mdesc->prepend_mpeg4_starter)
 	{
 		memcpy(mdesc->data + mdesc->len, NAL_START_FRAME, 4);
