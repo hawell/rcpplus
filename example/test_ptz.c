@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
 
 	client_register(RCP_USER_LEVEL_LIVE, "", RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_MD5);
 
-	if (ptz_available() == 0)
+	if (ptz_available(1) == 0)
 	{
 		TL_INFO("ptz is not available for this camera");
 		//return 0;

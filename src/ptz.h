@@ -58,7 +58,7 @@ typedef struct {
 	unsigned char res2:1;
 } Preposition;
 
-int ptz_available();
+int ptz_available(int line);
 
 int move_stop(int line, int lease);
 
