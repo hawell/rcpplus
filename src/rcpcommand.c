@@ -232,7 +232,7 @@ static void* event_handler(void* params)
 int start_event_handler()
 {
 	pthread_create(&event_handler_thread, NULL, event_handler, NULL);
-	for (int i=0; i<265; i++)
+	for (int i=0; i<256; i++)
 	{
 		sem_init(&resp_available[i], 0, 0);
 	}
@@ -242,7 +242,7 @@ int start_event_handler()
 int stop_event_handler()
 {
 	pthread_cancel(event_handler_thread);
-	for (int i=0; i<265; i++)
+	for (int i=0; i<256; i++)
 	{
 		sem_destroy(&resp_available[i]);
 	}
@@ -480,7 +480,7 @@ int client_connect(rcp_session* session, int method, int media, int flags, rcp_m
 	init_rcp_header(&con_req, 0, RCP_COMMAND_CONF_CONNECT_PRIMITIVE, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_P_OCTET);
 
 	int len = 0;
-	unsigned char* mdesc = con_req.payload;
+	char* mdesc = con_req.payload;
 
 	unsigned short tmp16;
 	mdesc[0] = method;
