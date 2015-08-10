@@ -207,7 +207,6 @@ int main(int argc, char* argv[])
 	avcodec_register_all();
 	av_register_all();
 	rtp_merge_desc mdesc;
-	video_frame vframe;
 
 	if (video_mode == VIDEO_MODE_H263)
 	{
@@ -308,16 +307,16 @@ int main(int argc, char* argv[])
 	{
 		if (rtp_recv(session.stream_socket, &mdesc) == 0)
         {
-			if (rtp_pop_frame(&vframe, &mdesc) == 0)
+			if (rtp_pop_frame(&mdesc) == 0)
 			{
 				//fwrite(vframe.data, vframe.len, 1, f);
 				AVStream *pst = fc->streams[0];
 				AVPacket pkt;
 				av_init_packet(&pkt);
-				pkt.flags |= (0 >= getVopType(vframe.data, vframe.len)) ? AV_PKT_FLAG_KEY : 0;
+				pkt.flags |= (0 >= getVopType(mdesc.data, mdesc.frame_lenght)) ? AV_PKT_FLAG_KEY : 0;
 				pkt.stream_index = pst->index;
-				pkt.data = (uint8_t*)vframe.data;
-				pkt.size = vframe.len;
+				pkt.data = (uint8_t*)mdesc.data;
+				pkt.size = mdesc.frame_lenght;
 
 				pkt.dts = AV_NOPTS_VALUE;
 				struct timeval recv_time;

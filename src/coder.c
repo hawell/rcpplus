@@ -33,7 +33,9 @@ int get_coder_preset(int coder)
 	rcp_packet mp4_req;
 
 	init_rcp_header(&mp4_req, 0, RCP_COMMAND_CONF_MPEG4_CURRENT_PARAMS, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_T_DWORD);
-	mp4_req.numeric_descriptor = coder;
+
+	// XXX : seems to fix the problem,
+	mp4_req.numeric_descriptor = coder + 1;
 
 	rcp_packet* mp4_resp = rcp_command(&mp4_req);
 	if (mp4_resp == NULL)
@@ -115,6 +117,226 @@ error:
 	return -1;
 }
 
+int get_h264_encoder_video_operation_mode(int mode[])
+{
+	rcp_packet mode_req;
+
+	init_rcp_header(&mode_req, 0, RCP_COMMAND_CONF_VIDEO_H264_ENC_BASE_OPERATION_MODE, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_OCTET);
+	mode_req.numeric_descriptor = 0;
+
+	rcp_packet* mode_resp = rcp_command(&mode_req);
+	if (mode_resp == NULL)
+		goto error;
+
+	mode[0] = ntohl(*(unsigned int*)mode_resp->payload);
+	mode[1] = ntohl(*(unsigned int*)(mode_resp->payload+4));
+
+	return 0;
+
+error:
+	TL_ERROR("get_h264_encoder_video_operation_mode()");
+	return -1;
+}
+
+int set_h264_encoder_video_operation_mode(int mode[])
+{
+	rcp_packet mode_req;
+
+	init_rcp_header(&mode_req, 0, RCP_COMMAND_CONF_VIDEO_H264_ENC_BASE_OPERATION_MODE, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_P_OCTET);
+	mode_req.numeric_descriptor = 0;
+
+	unsigned int tmp32 = htonl(mode[0]);
+	memcpy(mode_req.payload, &tmp32, 4);
+	tmp32 = htonl(mode[1]);
+	memcpy(mode_req.payload+4, &tmp32, 4);
+	mode_req.payload_length = 8;
+
+	rcp_packet* mode_resp = rcp_command(&mode_req);
+	if (mode_resp == NULL)
+		goto error;
+
+	return 0;
+
+error:
+	TL_ERROR("set_h264_encoder_video_operation_mode()");
+	return -1;
+}
+
+int get_resolution_from_h264_operation_mode(int mode, int *width, int *height)
+{
+	switch (mode)
+	{
+		case RCP_H264_OPERATION_MODE_MP_SD:
+		case RCP_H264_OPERATION_MODE_MP_SD_ROI_PTZ:
+		case RCP_H264_OPERATION_MODE_MP_SD_UPRIGHT:
+		case RCP_H264_OPERATION_MODE_MP_SD_4CIF_4_3:
+		case RCP_H264_OPERATION_MODE_MP_SD_DUAL_IND_ROI:
+			*width = 704;
+			*height = 576;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_FIXED_720P:
+		case RCP_H264_OPERATION_MODE_MP_FIXED_720P_FULL:
+		case RCP_H264_OPERATION_MODE_MP_FIXED_720P_SKIP3:
+		case RCP_H264_OPERATION_MODE_MP_FIXED_720P_SKIP4:
+		case RCP_H264_OPERATION_MODE_MP_FIXED_720P_SKIP7:
+		case RCP_H264_OPERATION_MODE_MP_HD_720p:
+			*width = 1280;
+			*height = 720;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_FIXED_1080P:
+			*width = 1920;
+			*height = 1080;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_HD_2592x1944:
+			*width = 2592;
+			*height = 1944;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_HD_1280x960:
+			*width = 1280;
+			*height = 960;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_HD_1440x1080:
+			*width = 1440;
+			*height = 1080;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_HD_1280x1024:
+			*width = 1280;
+			*height = 1024;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_576x1024:
+			*width = 576;
+			*height = 1024;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_HD_2704x2032:
+			*width = 2704;
+			*height = 2032;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_HD_2992x1680:
+			*width = 2992;
+			*height = 1680;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_HD_3840x2160:
+			*width = 3840;
+			*height = 2160;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_HD_4000x3000:
+			*width = 4000;
+			*height = 3000;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_HD_3584x2016:
+			*width = 3584;
+			*height = 2016;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_HD_800x600:
+			*width = 800;
+			*height = 600;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_HD_1024x768:
+			*width = 1024;
+			*height = 768;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_HD_1280x960_C:
+			*width = 1280;
+			*height = 960;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_HD_1600x1200:
+			*width = 1600;
+			*height = 1200;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_HD_3648x2160:
+			*width = 3648;
+			*height = 2160;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_HD_2640x2640:
+			*width = 2640;
+			*height = 2640;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_HD_1792x1792:
+			*width = 1792;
+			*height = 1792;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_HD_1024x1024:
+			*width = 1024;
+			*height = 1024;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_HD_800x800_ROI:
+			*width = 800;
+			*height = 800;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_HD_1536x864:
+			*width = 1536;
+			*height = 864;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_HD_2560x1440:
+			*width = 2560;
+			*height = 1440;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_HD_2560x960:
+			*width = 2560;
+			*height = 960;
+		break;
+		case RCP_H264_OPERATION_MODE_FEDC_MODE_MP_3648x1080:
+			*width = 3648;
+			*height = 1080;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_HD_1824x1080:
+			*width = 1824;
+			*height = 1080;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_HD_1824x540:
+			*width = 1824;
+			*height = 540;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_HD_1280x480:
+			*width = 1280;
+			*height = 480;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_HD_1536x1536:
+			*width = 1536;
+			*height = 1536;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_HD_800x800:
+			*width = 800;
+			*height = 800;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_768x768:
+			*width = 768;
+			*height = 768;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_768x288:
+			*width = 768;
+			*height = 288;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_2048x1152:
+			*width = 2048;
+			*height = 1152;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_2688x800:
+			*width = 2688;
+			*height = 800;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_672x200:
+			*width = 672;
+			*height = 200;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_608x360:
+			*width = 608;
+			*height = 360;
+		break;
+		case RCP_H264_OPERATION_MODE_640x240:
+			*width = 640;
+			*height = 240;
+		break;
+		case RCP_H264_OPERATION_MODE_MP_768x576:
+			*width = 768;
+			*height = 576;
+		break;
+		default:
+			return -1;
+	}
+	return 0;
+}
+
 #define CODER_SIZE_IN_PAYLOAD	16
 
 int get_coder_list(int coder_type, int media_type, rcp_coder_list* coder_list, int line)
@@ -136,7 +358,7 @@ int get_coder_list(int coder_type, int media_type, rcp_coder_list* coder_list, i
 	coder_list->count = coders_resp->payload_length / CODER_SIZE_IN_PAYLOAD;
 	coder_list->coder = (rcp_coder*)malloc(sizeof(rcp_coder) * coder_list->count);
 
-	unsigned char* pos = coders_resp->payload;
+	char* pos = coders_resp->payload;
 	for (int i=0; i<coder_list->count; i++)
 	{
 		rcp_coder* c = coder_list->coder + i;

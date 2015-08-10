@@ -88,9 +88,8 @@ int main()
 /*
 		rtp_recv(session.stream_socket, &mdesc);
 
-		TL_INFO("1");
-		if (rtp_pop_frame(&vframe, &mdesc) == 0)
-			fwrite(vframe.data, vframe.len, 1, stdout);
+		if (rtp_pop_frame(&mdesc) == 0)
+			fwrite(mdesc.data, mdesc.frame_lenght, 1, stdout);
 */
 	}
 

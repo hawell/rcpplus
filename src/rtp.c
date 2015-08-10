@@ -522,18 +522,17 @@ error:
 	return -1;
 }
 
-int rtp_pop_frame(video_frame* frame, rtp_merge_desc* mdesc)
+int rtp_pop_frame(rtp_merge_desc* mdesc)
 {
 	//TL_INFO("frame_complete = %d", mdesc->frame_complete);
 	if (mdesc->frame_complete)
 	{
-		frame->data = mdesc->data;
-		frame->len = mdesc->len;
-		frame->timestamp = mdesc->timestamp;
 		mdesc->frame_complete = 0;
+		mdesc->frame_lenght = mdesc->len;
 		mdesc->len = 0;
 		//mdesc->ebit = 0;
 
+		TL_DEBUG("frame size = %d", mdesc->frame_lenght);
 		return 0;
 	}
 	return -1;

@@ -53,6 +53,9 @@
 #define VIDEO_COMP_H264	0x0004
 #define VIDEO_COMP_JPEG	0x0008
 
+#define RCP_COMMAND_CONF_CAPABILITY_LIST				0xff10
+#define RCP_COMMAND_CONF_DEVICE_CAPABILITIES			0x0b60
+
 typedef struct {
 	int element_type;
 	int identifier;
@@ -75,6 +78,8 @@ typedef struct {
 } cap_list;
 
 int get_capability_list(cap_list* caps);
+
+void free_cap_list(cap_list* caps);
 
 void log_capabilities(int level, cap_list* caps);
 

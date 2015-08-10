@@ -294,7 +294,6 @@ int main(int argc, char* argv[])
 
 	rtp_merge_desc mdesc;
 	rtp_init(RTP_PAYLOAD_TYPE_H263, 1, &mdesc);
-	video_frame vframe;
 
 	time_t end_time = time(NULL) + 10;
 	while (time(NULL) < end_time)
@@ -306,11 +305,11 @@ int main(int argc, char* argv[])
 */
 		rtp_recv(session.stream_socket, &mdesc);
 
-		if (rtp_pop_frame(&vframe, &mdesc) == 0)
+		if (rtp_pop_frame(&mdesc) == 0)
 		{
 			int have_frame=0;
-			in_pkt.data = vframe.data;
-			in_pkt.size = vframe.len;
+			in_pkt.data = mdesc.data;
+			in_pkt.size = mdesc.frame_lenght;
 			//TL_ERROR("1");
 			int ret = avcodec_decode_video2(codec_ctx_in, raw_frame, &have_frame, &in_pkt);
 			if (ret && have_frame)

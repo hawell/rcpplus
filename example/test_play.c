@@ -97,11 +97,11 @@ int main(int argc, char* argv[])
 
 	if (argc < 2)
 	{
-		TL_INFO("%s ip\n", argv[0]);
+		TL_INFO("%s ip [line] [coder]\n", argv[0]);
 		return 0;
 	}
 
-	int line = 0;
+	int line = 1;
 	if (argc >= 3)
 		line = atoi(argv[2]);
 
@@ -135,6 +135,8 @@ int main(int argc, char* argv[])
 			break;
 		}
 	}
+	if (argc >= 4)
+			coder = atoi(argv[3]);
 	if (coder == -1)
 	{
 		TL_ERROR("no coder found for selected line");
@@ -150,67 +152,83 @@ int main(int argc, char* argv[])
 	resolution = 0x1EF; // we accept all resolutions
 
 	rcp_media_descriptor desc = {
-			RCP_MEP_UDP, 1, 1, 0, udp_port, 0, line, coding, resolution
+			RCP_MEP_UDP, 1, 1, 0, udp_port, coder, line, coding, resolution
 	};
 
 	if (client_connect(&session, RCP_CONNECTION_METHOD_GET, RCP_MEDIA_TYPE_VIDEO, 0, &desc) != 0)
 		return -1;
 
-	coder = desc.coder;
-	coding = desc.coding;
-	resolution = highest_bit(desc.resolution);
-
-	TL_INFO("res=%d id=%d", resolution, coder);
+	//coder = desc.coder;
+	//coding = desc.coding;
 
 	int width, height;
-	switch (resolution)
+
+	int mode = -1;
+	get_coder_video_operation_mode(coder, &mode);
+	TL_INFO("mode = %d coder = %d", mode, coder);
+
+	int modes[2];
+	if (mode == RCP_CODER_MODE_H264 && get_h264_encoder_video_operation_mode(modes) == 0)
+		get_resolution_from_h264_operation_mode(modes[0], &width, &height);
+	else
 	{
-		case RCP_VIDEO_RESOLUTION_HD1080:
-			width = 1920;
-			height = 1080;
-		break;
+		resolution = highest_bit(desc.resolution);
 
-		case RCP_VIDEO_RESOLUTION_HD720:
-			width = 1280;
-			height = 720;
-		break;
+		TL_INFO("res=%d id=%d", resolution, coder);
 
-		case RCP_VIDEO_RESOLUTION_VGA:
-			width = 640;
-			height = 480;
-		break;
-
-		case RCP_VIDEO_RESOLUTION_QVGA:
-			width = 320;
-			height = 240;
-		break;
-
-		case RCP_VIDEO_RESOLUTION_4CIF:
-			width = 704;
-			height = 576;
-		break;
-
-		case RCP_VIDEO_RESOLUTION_2CIF:
-			width = 704;
-			height = 288;
-		break;
-
-		case RCP_VIDEO_RESOLUTION_CIF:
-			width = 352;
-			height = 288;
-		break;
-
-		case RCP_VIDEO_RESOLUTION_QCIF:
-			width = 176;
-			height = 144;
-		break;
-
+		switch (resolution)
+		{
+			case RCP_VIDEO_RESOLUTION_HD2592x1944:
+				width = 2592;
+				height = 1944;
+			break;
+			case RCP_VIDEO_RESOLUTION_HD1080:
+				width = 1920;
+				height = 1080;
+			break;
+			case RCP_VIDEO_RESOLUTION_HD720:
+				width = 1280;
+				height = 720;
+			break;
+			case RCP_VIDEO_RESOLUTION_VGA:
+				width = 640;
+				height = 480;
+			break;
+			case RCP_VIDEO_RESOLUTION_QVGA:
+				width = 320;
+				height = 240;
+			break;
+			case RCP_VIDEO_RESOLUTION_4CIF:
+				width = 704;
+				height = 576;
+			break;
+			case RCP_VIDEO_RESOLUTION_2CIF:
+				width = 704;
+				height = 288;
+			break;
+			case RCP_VIDEO_RESOLUTION_CIF:
+				width = 352;
+				height = 288;
+			break;
+			case RCP_VIDEO_RESOLUTION_QCIF:
+				width = 176;
+				height = 144;
+			break;
+			case RCP_VIDEO_RESOLUTION_WD144:
+				width = 256;
+				height = 144;
+			break;
+			case RCP_VIDEO_RESOLUTION_WD288:
+				width = 512;
+				height = 288;
+			break;
+			case RCP_VIDEO_RESOLUTION_WD432:
+				width = 768;
+				height = 432;
+			break;
+		}
 	}
-
-/*
-	width = 704;
-	height = 576;
-*/
+	TL_INFO("width=%d height=%d", width, height);
 
 	avcodec_register_all();
 	av_register_all();
@@ -219,7 +237,6 @@ int main(int argc, char* argv[])
 	AVCodec* codec_in;
 
 	rtp_merge_desc mdesc;
-	video_frame vframe;
 
 	if (coding == RCP_VIDEO_CODING_H264)
 	{
@@ -338,11 +355,11 @@ int main(int argc, char* argv[])
 	{
 		if (rtp_recv(session.stream_socket, &mdesc) == 0)
         {
-			if (rtp_pop_frame(&vframe, &mdesc) == 0)
+			if (rtp_pop_frame(&mdesc) == 0)
 			{
 				int have_frame = 0;
-				in_pkt.data = vframe.data;
-				in_pkt.size = vframe.len;
+				in_pkt.data = mdesc.data;
+				in_pkt.size = mdesc.frame_lenght;
 				int ret = avcodec_decode_video2(dec_ctx, raw_frame, &have_frame, &in_pkt);
 				if (ret && have_frame)
 				{

@@ -44,7 +44,7 @@ int get_capability_list(cap_list* caps)
 	caps->version = ntohs(*(unsigned short*)(resp->payload + 2));
 	caps->section_count = ntohs(*(unsigned short*)(resp->payload + 4));
 	caps->sections = malloc(sizeof(cap_section) * caps->section_count);
-	unsigned char* pos = resp->payload + 6;
+	char* pos = resp->payload + 6;
 	for (int i=0; i<caps->section_count; i++)
 	{
 		caps->sections[i].section_type = ntohs(*(unsigned short*)pos);
@@ -94,6 +94,16 @@ int get_capability_list(cap_list* caps)
 error:
 	TL_ERROR("capability_list()");
 	return -1;
+}
+
+void free_cap_list(cap_list* caps)
+{
+	for (int i=0; i<caps->section_count; i++)
+		{
+			cap_section* sec = &caps->sections[i];
+			free(sec->elements);
+		}
+	free(caps->sections);
 }
 
 static const char* cap_section_str(int section)

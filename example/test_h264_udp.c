@@ -86,7 +86,6 @@ int main(int argc, char* argv[])
 
 	rtp_merge_desc mdesc;
 	rtp_init(RTP_PAYLOAD_TYPE_H264, 1, &mdesc);
-	video_frame vframe;
 
 	signal(SIGTERM, term_handler);
 
@@ -101,9 +100,9 @@ int main(int argc, char* argv[])
 */
 		if (rtp_recv(session.stream_socket, &mdesc) == 0)
         {
-			if (rtp_pop_frame(&vframe, &mdesc) == 0)
+			if (rtp_pop_frame(&mdesc) == 0)
 			{
-				fwrite(vframe.data, vframe.len, 1, out);
+				fwrite(mdesc.data, mdesc.frame_lenght, 1, out);
 			}
         }
 		//char cmd[100];

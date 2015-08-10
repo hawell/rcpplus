@@ -34,12 +34,15 @@
 #include <tlog/tlog.h>
 
 #include "device.h"
+#include "rcpdefs.h"
+#include "rcpplus.h"
+#include "rcpcommand.h"
 
 #define BC_AUTODETECT_PORT	1757
 #define BC_ADDRESSCHANGE_PORT 1759
 #define BC_COMMAND_PORT 1760
 
-#define AUTODETECT_TIMEOUT	1000	// ms
+#define AUTODETECT_TIMEOUT	2200	// ms
 
 static int broadcast(void* message, int len, unsigned short port)
 {
@@ -164,8 +167,10 @@ int autodetect(rcp_device** devs, int* num)
 			memcpy(dev->netmask, buffer+20, 4);
 			memcpy(dev->gateway, buffer+24, 4);
 
-			dev->old_id = buffer[15];
+			dev->old_id = (unsigned char)buffer[15] >> 4;
+			TL_INFO("%d", dev->old_id);
 			dev->new_id = buffer[31];
+			TL_INFO("%d", dev->new_id);
 			dev->type = buffer[28];
 			dev->connections = buffer[29];
 		}
@@ -241,7 +246,66 @@ static char* nid_str(int id)
 		case RCP_HARDWARE_ID_NER_L2:return "NER L2";
 		case RCP_HARDWARE_ID_VIP_MIC:return "VIP MIC";
 		case RCP_HARDWARE_ID_NBN_932:return "NBN 932";
-		case RCP_HARDWARE_ID_NDN_932:return "NDN 932";
+		case RCP_HARDWARE_ID_TESLA_DOME:return "Tesla Dome";
+		case RCP_HARDWARE_ID_GEN5_A5_700:return "Gen5 A5 700";
+		case RCP_HARDWARE_ID_VJ_GENERIC_TRANSCODER:return "VJ Genric Transcoder";
+		case RCP_HARDWARE_ID_HD_DECODER_M:return "HD Decoder M";
+		case RCP_HARDWARE_ID_OASIS:return "Oasis";
+		case RCP_HARDWARE_ID_GALILEO_BOXED:return "Galileo Boxed";
+		case RCP_HARDWARE_ID_GALILEO_DOME:return "Galileo Dome";
+		case RCP_HARDWARE_ID_HUYGENS_KEPPLER:return "HuyGens Keppler";
+		case RCP_HARDWARE_ID_TESLA_KEPPLER:return "Tesla Keppler";
+		case RCP_HARDWARE_ID_GALILEO_KEPPLER:return "Galileo Keppler";
+		case RCP_HARDWARE_ID_NUC_20002:return "NUC 20002";
+		case RCP_HARDWARE_ID_NUC_20012:return "NUC 20012";
+		case RCP_HARDWARE_ID_NUC_50022:return "NUC 50022";
+		case RCP_HARDWARE_ID_NUC_50051:return "NUC 50051";
+		case RCP_HARDWARE_ID_NPC_20002:return "NPC 20002";
+		case RCP_HARDWARE_ID_NPC_20012:return "NPC 20012";
+		case RCP_HARDWARE_ID_NPC_20012_W:return "NPC 20012 W";
+		case RCP_HARDWARE_ID_NIN_50022:return "NIN 50022";
+		case RCP_HARDWARE_ID_NII_50022:return "NII 50022";
+		case RCP_HARDWARE_ID_NDN_50022:return "NDN 50022";
+		case RCP_HARDWARE_ID_NDI_50022:return "NDI 50022";
+		case RCP_HARDWARE_ID_NTI_50022:return "NTI 50022";
+		case RCP_HARDWARE_ID_NIN_50051:return "NIN 50051";
+		case RCP_HARDWARE_ID_NDN_50051:return "NDN 50051";
+		case RCP_HARDWARE_ID_NAI_90022:return "NAI 90022";
+		case RCP_HARDWARE_ID_NCN_90022:return "NCN 90022";
+		case RCP_HARDWARE_ID_NEVADA_DECODER:return "Nevada Decoder";
+		case RCP_HARDWARE_ID_NBN_50022_C:return "NBN 50022 C";
+		case RCP_HARDWARE_ID_NBN_40012_C:return "NBN 40012 C";
+		case RCP_HARDWARE_ID_NBN_80052:return "NBN 80052";
+		case RCP_HARDWARE_ID_MIC_7000:return "MIC 7000";
+		case RCP_HARDWARE_ID_EX65_HD:return "EX65 HD";
+		case RCP_HARDWARE_ID_NBN_80122:return "NBN 80122";
+		case RCP_HARDWARE_ID_NPC_20012_L:return "NPC 20012 L";
+		case RCP_HARDWARE_ID_MIC_NPS:return "MIC NPS";
+		case RCP_HARDWARE_ID_NBN_50051_C:return "NBN 50051 C";
+		case RCP_HARDWARE_ID_NIN_40012:return "NIN 40012";
+		case RCP_HARDWARE_ID_NII_40012:return "NII 40012";
+		case RCP_HARDWARE_ID_NDN_40012:return "NDN 40012";
+		case RCP_HARDWARE_ID_NDI_40012:return "NDI 40012";
+		case RCP_HARDWARE_ID_NTI_40012:return "NTI 40012";
+		case RCP_HARDWARE_ID_NII_50051:return "NII 50051";
+		case RCP_HARDWARE_ID_NDI_50051:return "NDI 50051";
+		case RCP_HARDWARE_ID_NEZ_4000:return "NEZ 4000";
+		case RCP_HARDWARE_ID_VEGA_3000_HD:return "Vega 3000 HD";
+		case RCP_HARDWARE_ID_VEGA_4000_HD:return "Vega 4000 HD";
+		case RCP_HARDWARE_ID_VEGA_5000_HD:return "Vega 5000 HD";
+		case RCP_HARDWARE_ID_VEGA_5000_MP:return "Vega 5000 MP";
+		case RCP_HARDWARE_ID_NIN_70122_180:return "NIN 70122 180";
+		case RCP_HARDWARE_ID_NIN_70122_360:return "NIN 70122 360";
+		case RCP_HARDWARE_ID_NEZ_5000:return "NEZ 5000";
+		case RCP_HARDWARE_ID_NEZ_5000_IR:return "NEZ 5000 IR";
+		case RCP_HARDWARE_ID_ROLA:return "Rola";
+		case RCP_HARDWARE_ID_NBN_80122_CA:return "NBN 80122 CA";
+		case RCP_HARDWARE_ID_ISCSI_TARGET:return "ISCSI Target";
+		case RCP_HARDWARE_ID_VRM_PROXY_16:return "VRM Proxy 16";
+		case RCP_HARDWARE_ID_VRM_UL_APP:return "VRM UL APP";
+		case RCP_HARDWARE_ID_VRM_LE_APP:return "VRM LE APP";
+		case RCP_HARDWARE_ID_CAMNETWORK:return "CamNetwork";
+		case RCP_HARDWARE_ID_VRM_PROXY:return "VRM Proxy";
 		case RCP_HARDWARE_ID_VRM:return "VRM";
 		case RCP_HARDWARE_ID_VIDOS_SERVER:return "Vidos Server";
 		case RCP_HARDWARE_ID_VIDOS_MONITOR:return "Vidos Monitor";
@@ -268,6 +332,76 @@ static char* oid_str(int id)
 		case RCP_DEVICE_ESCAPECODE: return "New Id";
 	}
 	return "Unknown Device";
+}
+
+int get_device(rcp_device* dev)
+{
+	rcp_packet req;
+	rcp_packet* resp;
+
+	init_rcp_header(&req, 0, RCP_COMMAND_CONF_MAC_ADDRESS, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_OCTET);
+	req.numeric_descriptor = 0;
+
+	resp = rcp_command(&req);
+	if (resp == NULL)
+		goto error;
+
+	memcpy(dev->hw_addr, resp->payload, resp->payload_length);
+
+	init_rcp_header(&req, 0, RCP_COMMAND_CONF_IP_STR, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_STRING);
+	req.numeric_descriptor = 0;
+
+	resp = rcp_command(&req);
+	if (resp == NULL)
+		goto error;
+
+	sscanf(resp->payload, "%hhu.%hhu.%hhu.%hhu", &dev->address[0], &dev->address[1], &dev->address[2], &dev->address[3]);
+
+	init_rcp_header(&req, 0, RCP_COMMAND_CONF_GATEWAY_IP_STR, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_STRING);
+	req.numeric_descriptor = 0;
+
+	resp = rcp_command(&req);
+	if (resp == NULL)
+		goto error;
+
+	sscanf(resp->payload, "%hhu.%hhu.%hhu.%hhu", &dev->gateway[0], &dev->gateway[1], &dev->gateway[2], &dev->gateway[3]);
+
+	init_rcp_header(&req, 0, RCP_COMMAND_CONF_SUBNET, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_T_DWORD);
+	req.numeric_descriptor = 0;
+
+	resp = rcp_command(&req);
+	if (resp == NULL)
+		goto error;
+
+	unsigned int tmp = ntohl(*resp->payload);
+	memcpy(dev->netmask, &tmp, 4);
+
+	init_rcp_header(&req, 0, RCP_COMMAND_CONF_HARDWARE_VERSION, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_STRING);
+	req.numeric_descriptor = 0;
+
+	resp = rcp_command(&req);
+	if (resp == NULL)
+		goto error;
+
+	if (resp->payload[0] == 'F')
+	{
+		dev->old_id = RCP_DEVICE_ESCAPECODE;
+		dev->new_id = resp->payload[4]>='A'?(resp->payload[4]-'A'+10)*16:(resp->payload[4]-'0')*16;
+		dev->new_id += resp->payload[5]>='A'?(resp->payload[5]-'A'+10):(resp->payload[5]-'0');
+	}
+	else
+	{
+		dev->old_id = resp->payload[0]>='A'?(resp->payload[0]-'A'+10):(resp->payload[0]-'0');
+		dev->new_id = 0;
+	}
+
+	dev->connections = 0;
+
+	return 0;
+
+error:
+	TL_ERROR("get_device()");
+	return -1;
 }
 
 int set_device_address(rcp_device* dev)
@@ -302,6 +436,14 @@ int broadcast_command(rcp_device* dev, int cmd, int data)
 	return broadcast(message, 16, BC_COMMAND_PORT);
 }
 
+const char* get_device_type_str(rcp_device* dev)
+{
+	if (dev->old_id == RCP_DEVICE_ESCAPECODE)
+		return nid_str(dev->new_id);
+	else
+		return oid_str(dev->old_id);
+}
+
 void log_device(int level, rcp_device* dev)
 {
 	char tmp[100];
@@ -313,7 +455,7 @@ void log_device(int level, rcp_device* dev)
 		default:strcpy(tmp, "Unknown Device Type");break;
 	}
 	tlog(level, "%-20s %s", "Device Type", tmp);
-	tlog(level, "%-20s %s %d", "Device Name", dev->old_id==RCP_DEVICE_ESCAPECODE?oid_str(dev->old_id):nid_str(dev->new_id), dev->new_id);
+	tlog(level, "%-20s %s %d %d", "Device Name", get_device_type_str(dev), dev->old_id, dev->new_id);
 	sprintf(tmp, "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx", dev->hw_addr[0], dev->hw_addr[1], dev->hw_addr[2], dev->hw_addr[3], dev->hw_addr[4], dev->hw_addr[5]);
 	tlog(level, "%-20s %s", "MAC Address", tmp);
 	sprintf(tmp, "%d.%d.%d.%d", dev->address[0], dev->address[1], dev->address[2], dev->address[3]);

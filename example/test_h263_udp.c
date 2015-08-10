@@ -76,7 +76,6 @@ int main()
 
 	rtp_merge_desc mdesc;
 	rtp_init(RTP_PAYLOAD_TYPE_H263, 1, &mdesc);
-	video_frame vframe;
 
 	time_t end_time = time(NULL) + 10;
 	while (time(NULL) < end_time)
@@ -88,8 +87,8 @@ int main()
 */
 		rtp_recv(session.stream_socket, &mdesc);
 
-		if (rtp_pop_frame(&vframe, &mdesc) == 0)
-			fwrite(vframe.data, vframe.len, 1, stdout);
+		if (rtp_pop_frame(&mdesc) == 0)
+			fwrite(mdesc.data, mdesc.frame_lenght, 1, stdout);
 	}
 
 	pthread_cancel(thread);

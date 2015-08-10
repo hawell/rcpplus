@@ -44,7 +44,7 @@ typedef struct {
 	unsigned short numeric_descriptor;	/* specifies an attribute for components which are installed more than one time inside the VideoJet, e.g. inputs or relays. */
 	unsigned short payload_length;		/* The number of data bytes inside the payload section. The length field itself is not counted. */
 
-	unsigned char payload[MAX_PAYLOAD_LENGTH];
+	char payload[MAX_PAYLOAD_LENGTH];
 } rcp_packet;
 
 typedef struct {
