@@ -66,6 +66,11 @@ int rcp_connect(const char* ip)
 	return 0;
 }
 
+int rcp_disconnect()
+{
+	return close(con.control_socket);
+}
+
 int stream_connect_udp(rcp_session* session)
 {
 	session->stream_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);

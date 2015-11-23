@@ -295,7 +295,7 @@ int get_stream_profile(int line_number, int stream_number)
 	return profileId;
 
 error:
-	Error("get_stream_profile()");
+	TL_ERROR("get_stream_profile()");
 	return -1;
 }
 

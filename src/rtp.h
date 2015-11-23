@@ -31,31 +31,33 @@
 #ifndef RTP_H_
 #define RTP_H_
 
-#define MAX_FRAME_LENGTH	700000
-#define MTU_LENGTH			1500
-#define FRAGMENT_COUNT		60
+#define MAX_FRAME_LENGTH	700*1024
+#define MTU_LENGTH			1600
+#define FRAGMENT_COUNT		256
 
 #define RTP_PAYLOAD_TYPE_H263	1
 #define RTP_PAYLOAD_TYPE_H264	2
 
 typedef struct rtp_merge_desc {
-	unsigned char fragment[FRAGMENT_COUNT][MTU_LENGTH];
-	int fragment_size[FRAGMENT_COUNT];
+	char data[MAX_FRAME_LENGTH];
 
+	char fragment[FRAGMENT_COUNT][MTU_LENGTH];
+	int fragment_size[FRAGMENT_COUNT];
 	int fragments_queue[FRAGMENT_COUNT];
+	int fragments_heap[FRAGMENT_COUNT];
 	int queue_start, queue_end, queue_size;
 
-	int fragments_heap[FRAGMENT_COUNT];
 	int heap_size;
 
+	int ebit;
+
 	int type;
-	unsigned char data[MAX_FRAME_LENGTH];
 	int len;
 	int timestamp;
 	int frame_complete;
 	int frame_lenght;
 	int frame_error;
-	int (*append)(unsigned char* fragment, int frag_len, struct rtp_merge_desc* mdesc);
+	int (*append)(char* fragment, int frag_len, struct rtp_merge_desc* mdesc);
 	int prepend_mpeg4_starter;
 
 } rtp_merge_desc;

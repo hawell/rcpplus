@@ -42,10 +42,11 @@
 #define MAX_PAYLOAD_LENGHT	1000
 #define MAX_PASSPHRASE_LEN	1000
 
-rcp_packet resp[256];
+rcp_packet response[256];
 sem_t resp_available[256];
 
 pthread_t event_handler_thread;
+pthread_mutex_t send_mutex;
 
 static int write_TPKT_header(unsigned char* buffer, int len)
 {
@@ -71,7 +72,11 @@ static int rcp_send(rcp_packet* hdr)
 
 	TL_DEBUG("sending %d bytes...", len);
 	tlog_hex(TLOG_DEBUG, "data", buffer, len);
+
+	pthread_mutex_lock(&send_mutex);
 	int res = send(con.control_socket, buffer, len, 0);
+	pthread_mutex_unlock(&send_mutex);
+
 	TL_DEBUG("%d sent", res);
 	if (res == -1)
 		TL_ERROR("unable to send packet: %d - %s", errno, strerror(errno));
@@ -113,7 +118,7 @@ static int rcp_recv()
 
 	int request_id = get_request_id(buffer);
 
-	rcp_packet* hdr = &resp[request_id];
+	rcp_packet* hdr = &response[request_id];
 
 	read_rcp_header(buffer, hdr);
 
@@ -128,6 +133,8 @@ error:
 
 int init_rcp_header(rcp_packet* hdr, int session_id, int tag, int rw, int data_type)
 {
+	static int request_id = 1;
+
 	memset(hdr, 0, sizeof(rcp_packet));
 
 	hdr->version = RCP_VERSION;
@@ -135,7 +142,7 @@ int init_rcp_header(rcp_packet* hdr, int session_id, int tag, int rw, int data_t
 	hdr->rw = rw;
 	hdr->action = RCP_PACKET_ACTION_REQUEST;
 	hdr->data_type = data_type;
-	hdr->request_id = rand() % 0x100;
+	hdr->request_id = ++request_id % 0x100;
 
 	hdr->client_id = con.client_id;
 	hdr->session_id = session_id;
@@ -195,21 +202,17 @@ rcp_packet* rcp_command(rcp_packet* req)
 {
 	int res = rcp_send(req);
 	if (res == -1)
-		goto error;
+		return NULL;
 
 	sem_wait(&resp_available[req->request_id]);
 
-	if (resp[req->request_id].action == RCP_PACKET_ACTION_ERROR)
+	if (response[req->request_id].action == RCP_PACKET_ACTION_ERROR)
 	{
-		TL_ERROR("%s", error_str(resp[req->request_id].payload[0]));
+		TL_ERROR("%s", error_str(response[req->request_id].payload[0]));
 		return NULL;
 	}
 
-	return &resp[req->request_id];
-
-error:
-	TL_ERROR("rcp_command()");
-	return NULL;
+	return &response[req->request_id];
 }
 
 static void* event_handler(void* params)
@@ -221,7 +224,7 @@ static void* event_handler(void* params)
 		int request_id = rcp_recv();
 		if (request_id != -1)
 		{
-			TL_DEBUG("packet received: %d", resp[request_id].tag);
+			TL_DEBUG("packet received: %d", response[request_id].tag);
 			sem_post(&resp_available[request_id]);
 		}
 	}
@@ -349,6 +352,8 @@ error:
 
 int client_register(int user_level, const char* password, int type, int mode)
 {
+	pthread_mutex_init(&send_mutex, NULL);
+
 	con.user_level = user_level;
 	strcpy(con.password, password);
 
@@ -401,6 +406,8 @@ error:
 
 int client_unregister()
 {
+	pthread_mutex_destroy(&send_mutex);
+
 	rcp_packet unreg_req;
 
 	init_rcp_header(&unreg_req, 0, RCP_COMMAND_CONF_RCP_CLIENT_UNREGISTER, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_P_OCTET);
@@ -647,7 +654,7 @@ error:
 	return -1;
 }
 
-int request_sps_pps(rcp_session* session, int coder, unsigned char* data, int *len)
+int request_sps_pps(rcp_session* session, int coder, char* data, int *len)
 {
 	rcp_packet req;
 	*len = 0;

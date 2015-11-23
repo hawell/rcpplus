@@ -308,7 +308,7 @@ int main(int argc, char* argv[])
 		if (rtp_pop_frame(&mdesc) == 0)
 		{
 			int have_frame=0;
-			in_pkt.data = mdesc.data;
+			in_pkt.data = (unsigned char*)mdesc.data;
 			in_pkt.size = mdesc.frame_lenght;
 			//TL_ERROR("1");
 			int ret = avcodec_decode_video2(codec_ctx_in, raw_frame, &have_frame, &in_pkt);

@@ -42,7 +42,7 @@ int get_audio_stat()
 	return resp->payload[0];
 
 error:
-	Error("get_audio_stat()");
+	TL_ERROR("get_audio_stat()");
 	return -1;
 }
 
@@ -62,7 +62,7 @@ int set_audio_stat(int on_off)
 	return 0;
 
 error:
-	Error("set_audio_stat()");
+	TL_ERROR("set_audio_stat()");
 	return -1;
 }
 

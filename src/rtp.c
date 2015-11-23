@@ -224,7 +224,7 @@ static int queue_pop(rtp_merge_desc* mdesc)
 	return ret;
 }
 
-static int append_fu_a(unsigned char* data, int len, rtp_merge_desc* mdesc)
+static int append_fu_a(char* data, int len, rtp_merge_desc* mdesc)
 {
 	fu_a_packet *fp = (fu_a_packet*)data;
 	if (fp->fuh.s == 1)
@@ -279,7 +279,7 @@ static int append_fu_a(unsigned char* data, int len, rtp_merge_desc* mdesc)
 	return 0;
 }
 
-static int append_single_nal(unsigned char* data, int data_len, rtp_merge_desc* mdesc)
+static int append_single_nal(char* data, int data_len, rtp_merge_desc* mdesc)
 {
 	mdesc->len = 0;
 	if (mdesc->prepend_mpeg4_starter)
@@ -295,7 +295,7 @@ static int append_single_nal(unsigned char* data, int data_len, rtp_merge_desc* 
 	return 0;
 }
 
-static int append_stap_a(unsigned char* data, rtp_merge_desc* mdesc)
+static int append_stap_a(char* data, rtp_merge_desc* mdesc)
 {
 	mdesc->len = 0;
 	if (mdesc->prepend_mpeg4_starter)
@@ -324,10 +324,8 @@ static int append_stap_a(unsigned char* data, rtp_merge_desc* mdesc)
 	return 0;
 }
 
-static int append_h263(unsigned char *fragment, int fragment_len, rtp_merge_desc* mdesc)
+static int append_h263(char *fragment, int fragment_len, rtp_merge_desc* mdesc)
 {
-	static int ebit = 0;
-
 	rtp_header *rtp_hdr = (rtp_header*)fragment;
 	int rtp_header_len = RTP_HEADER_LENGTH_MANDATORY + rtp_hdr->cc*4;
 	TL_DEBUG("m=%d pt=%d hlen=%d len=%d seq=%d ts=%u", rtp_hdr->m, rtp_hdr->pt, rtp_header_len, fragment_len, ntohs(rtp_hdr->seq), ntohl(rtp_hdr->timestamp));
@@ -339,14 +337,14 @@ static int append_h263(unsigned char *fragment, int fragment_len, rtp_merge_desc
 		if (rtp_hdr->m)
 		{
 			mdesc->frame_error = 0;
-			ebit = 0;
+			mdesc->ebit = 0;
 		}
 		return 0;
 	}
 
 	h263_header *h263_hdr = (h263_header*)(fragment+rtp_header_len);
 	TL_DEBUG("sbit=%d ebit=%d", h263_hdr->sbit, h263_hdr->ebit);
-	unsigned char* pos = fragment+rtp_header_len;
+	char* pos = fragment+rtp_header_len;
 	int len = fragment_len - rtp_header_len;
 	if (h263_hdr->f == 0)	// type A
 	{
@@ -365,17 +363,17 @@ static int append_h263(unsigned char *fragment, int fragment_len, rtp_merge_desc
 	}
 	//fwrite(pos, len, 1, stdout);
 
-	TL_DEBUG("%d %d", ebit, h263_hdr->sbit);
+	TL_DEBUG("%d %d", mdesc->ebit, h263_hdr->sbit);
 	//assert((mdesc->ebit + h263_hdr->sbit) % 8 == 0);
-	if (((ebit + h263_hdr->sbit) % 8 != 0))
+	if (((mdesc->ebit + h263_hdr->sbit) % 8 != 0))
 	{
 		mdesc->frame_error = 1;
-		TL_ERROR("malformed frame received sbit=%d ebit=%d", h263_hdr->sbit, ebit);
+		TL_ERROR("malformed frame received sbit=%d ebit=%d", h263_hdr->sbit, mdesc->ebit);
 		return 0;
 	}
 	if (h263_hdr->sbit)
 	{
-		mdesc->data[mdesc->len - 1] &= ebit_mask[ebit];
+		mdesc->data[mdesc->len - 1] &= ebit_mask[mdesc->ebit];
 		pos[0] &= sbit_mask[h263_hdr->sbit];
 		mdesc->data[mdesc->len - 1] |= pos[0];
 		pos++;
@@ -383,7 +381,7 @@ static int append_h263(unsigned char *fragment, int fragment_len, rtp_merge_desc
 	}
 	memcpy(mdesc->data+mdesc->len, pos, len);
 	mdesc->len += len;
-	ebit = h263_hdr->ebit;
+	mdesc->ebit = h263_hdr->ebit;
 
 	if (rtp_hdr->m == 1) // end of frame
 	{
@@ -394,7 +392,7 @@ static int append_h263(unsigned char *fragment, int fragment_len, rtp_merge_desc
 	return 0;
 }
 
-static int append_h264(unsigned char *fragment, int fragment_len, rtp_merge_desc* mdesc)
+static int append_h264(char *fragment, int fragment_len, rtp_merge_desc* mdesc)
 {
 	rtp_header *rtp = (rtp_header*)fragment;
 	int rtp_header_len = RTP_HEADER_LENGTH_MANDATORY + rtp->cc*4;
@@ -445,6 +443,7 @@ static int append_h264(unsigned char *fragment, int fragment_len, rtp_merge_desc
 
 int rtp_init(int type, int prepend_mpeg4_starter, rtp_merge_desc* mdesc)
 {
+	mdesc->ebit = 0;
 	mdesc->len = 0;
 	mdesc->type = type;
 	mdesc->frame_complete = 0;
@@ -530,7 +529,7 @@ int rtp_pop_frame(rtp_merge_desc* mdesc)
 		mdesc->frame_complete = 0;
 		mdesc->frame_lenght = mdesc->len;
 		mdesc->len = 0;
-		//mdesc->ebit = 0;
+		mdesc->ebit = 0;
 
 		TL_DEBUG("frame size = %d", mdesc->frame_lenght);
 		return 0;

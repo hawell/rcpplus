@@ -51,6 +51,6 @@ int get_jpeg_snapshot(char* ip, char* data, int* len);
 
 int request_intraframe(rcp_session* session);
 
-int request_sps_pps(rcp_session* session, int coder, unsigned char* data, int *len);
+int request_sps_pps(rcp_session* session, int coder, char* data, int *len);
 
 #endif /* RCPCOMMAND_H_ */

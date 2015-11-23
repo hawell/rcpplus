@@ -71,6 +71,7 @@ typedef struct {
 extern rcp_connection con;
 
 int rcp_connect(const char* ip);
+int rcp_disconnect();
 
 int stream_connect_udp(rcp_session* session);
 int stream_connect_tcp(rcp_session* session);

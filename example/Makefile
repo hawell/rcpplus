@@ -19,7 +19,7 @@ FFMPEGLIB = \
 		
 FFMPEGINC = -I$(FFMPEG)
 
-all: preset h264_udp h263_udp h263_tcp detect coder ptz transcode play record jpeg audio mpegts test
+all: preset h264_udp h263_udp h263_tcp detect coder ptz transcode play record jpeg audio test
 
 preset: test_preset.o
 	$(CC) test_preset.o $(LIB) -o preset

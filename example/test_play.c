@@ -168,8 +168,9 @@ int main(int argc, char* argv[])
 	TL_INFO("mode = %d coder = %d", mode, coder);
 
 	int modes[2];
+	const char* resolution_name;
 	if (mode == RCP_CODER_MODE_H264 && get_h264_encoder_video_operation_mode(modes) == 0)
-		get_resolution_from_h264_operation_mode(modes[0], &width, &height);
+		get_resolution_from_h264_operation_mode(modes[0], &width, &height, &resolution_name);
 	else
 	{
 		resolution = highest_bit(desc.resolution);
@@ -304,7 +305,7 @@ int main(int argc, char* argv[])
 
 	pthread_create(&thread, NULL, keep_alive_thread, &session);
 
-	unsigned char sps_pps[5000];
+	char sps_pps[5000];
 	int sps_pps_len;
 	request_sps_pps(&session, coder, sps_pps, &sps_pps_len);
 	if (sps_pps_len)
@@ -333,7 +334,7 @@ int main(int argc, char* argv[])
 		avcodec_decode_video2(dec_ctx, raw_frame, &have_frame, &in_pkt);
 	}
 
-	dec_ctx->extradata = sps_pps;
+	dec_ctx->extradata = (unsigned char*)sps_pps;
 	dec_ctx->extradata_size = sps_pps_len;
 
 	SDL_Rect rect;
@@ -358,7 +359,7 @@ int main(int argc, char* argv[])
 			if (rtp_pop_frame(&mdesc) == 0)
 			{
 				int have_frame = 0;
-				in_pkt.data = mdesc.data;
+				in_pkt.data = (unsigned char*)mdesc.data;
 				in_pkt.size = mdesc.frame_lenght;
 				int ret = avcodec_decode_video2(dec_ctx, raw_frame, &have_frame, &in_pkt);
 				if (ret && have_frame)
