@@ -280,6 +280,86 @@ error:
 	return -1;
 }
 
+int get_stream_profile(int line_number, int stream_number)
+{
+	rcp_packet req;
+
+	init_rcp_header(&req, 0, RCP_COMMAND_CONF_VIDEO_H264_ENC_CONFIG, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_OCTET);
+	req.numeric_descriptor = line_number;
+
+	rcp_packet* resp = rcp_command(&req);
+	if (resp == NULL)
+		goto error;
+
+	uint32_t profileId = ntohl(*(uint32_t*)(resp->payload + 4 * stream_number));
+	return profileId;
+
+error:
+	Error("get_stream_profile()");
+	return -1;
+}
+
+int get_resolution_from_preset(rcp_mpeg4_preset *preset, int *width, int *height, const char** name)
+{
+	switch (preset->resolution)
+	{
+		case PRESET_RESOLUTION_720P:
+			*width = 1280;
+			*height = 720;
+			*name = "HD";
+		break;
+		case PRESET_RESOLUTION_VGA:
+			*width = 640;
+			*height = 480;
+			*name = "VGA";
+		break;
+		case PRESET_RESOLUTION_QVGA:
+			*width = 320;
+			*height = 240;
+			*name = "QVGA";
+		break;
+		case PRESET_RESOLUTION_4CIF:
+			*width = 704;
+			*height = 576;
+			*name = "CIF";
+		break;
+		case PRESET_RESOLUTION_2CIF:
+			*width = 704;
+			*height = 288;
+			*name = "2CIF";
+		break;
+		case PRESET_RESOLUTION_CIF:
+			*width = 352;
+			*height = 288;
+			*name = "CIF";
+		break;
+		case PRESET_RESOLUTION_QCIF:
+			*width = 176;
+			*height = 144;
+			*name = "QCIF";
+		break;
+		case PRESET_RESOLUTION_WD144:
+			*width = 256;
+			*height = 144;
+			*name = "WD144";
+		break;
+		case PRESET_RESOLUTION_WD288:
+			*width = 512;
+			*height = 288;
+			*name = "WD288";
+		break;
+		case PRESET_RESOLUTION_WD432:
+			*width = 768;
+			*height = 432;
+			*name = "WD432";
+		break;
+		default:
+			return -1;
+	}
+
+	return 0;
+}
+
 void log_preset(int level, rcp_mpeg4_preset* preset, int basic)
 {
 	const char* val;

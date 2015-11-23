@@ -162,7 +162,7 @@ error:
 	return -1;
 }
 
-int get_resolution_from_h264_operation_mode(int mode, int *width, int *height)
+int get_resolution_from_h264_operation_mode(int mode, int *width, int *height, const char** name)
 {
 	switch (mode)
 	{
@@ -173,6 +173,7 @@ int get_resolution_from_h264_operation_mode(int mode, int *width, int *height)
 		case RCP_H264_OPERATION_MODE_MP_SD_DUAL_IND_ROI:
 			*width = 704;
 			*height = 576;
+			*name = "4CIF";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_FIXED_720P:
 		case RCP_H264_OPERATION_MODE_MP_FIXED_720P_FULL:
@@ -182,154 +183,192 @@ int get_resolution_from_h264_operation_mode(int mode, int *width, int *height)
 		case RCP_H264_OPERATION_MODE_MP_HD_720p:
 			*width = 1280;
 			*height = 720;
+			*name = "HD";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_FIXED_1080P:
 			*width = 1920;
 			*height = 1080;
+			*name = "FullHD";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_HD_2592x1944:
 			*width = 2592;
 			*height = 1944;
+			*name = "5MP 4:3";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_HD_1280x960:
 			*width = 1280;
 			*height = 960;
+			*name = "SXGA-";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_HD_1440x1080:
 			*width = 1440;
 			*height = 1080;
+			*name = "FullHD Subsampled";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_HD_1280x1024:
 			*width = 1280;
 			*height = 1024;
+			*name = "SXGA";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_576x1024:
 			*width = 576;
 			*height = 1024;
+			*name = "576x1024";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_HD_2704x2032:
 			*width = 2704;
 			*height = 2032;
+			*name = "5MP 4:3";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_HD_2992x1680:
 			*width = 2992;
 			*height = 1680;
+			*name = "5MP 16:9";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_HD_3840x2160:
 			*width = 3840;
 			*height = 2160;
+			*name = "UHD 4K";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_HD_4000x3000:
 			*width = 4000;
 			*height = 3000;
+			*name = "4000x3000";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_HD_3584x2016:
 			*width = 3584;
 			*height = 2016;
+			*name = "3584x2016";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_HD_800x600:
 			*width = 800;
 			*height = 600;
+			*name = "SVGA";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_HD_1024x768:
 			*width = 1024;
 			*height = 768;
+			*name = "XGA";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_HD_1280x960_C:
 			*width = 1280;
 			*height = 960;
+			*name = "SXGA-";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_HD_1600x1200:
 			*width = 1600;
 			*height = 1200;
+			*name = "UXGA";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_HD_3648x2160:
 			*width = 3648;
 			*height = 2160;
+			*name = "3648x2160";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_HD_2640x2640:
 			*width = 2640;
 			*height = 2640;
+			*name = "2640x2640";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_HD_1792x1792:
 			*width = 1792;
 			*height = 1792;
+			*name = "1792x1792";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_HD_1024x1024:
 			*width = 1024;
 			*height = 1024;
+			*name = "1024x1024";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_HD_800x800_ROI:
 			*width = 800;
 			*height = 800;
+			*name = "800x800";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_HD_1536x864:
 			*width = 1536;
 			*height = 864;
+			*name = "1536x864";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_HD_2560x1440:
 			*width = 2560;
 			*height = 1440;
+			*name = "2560x1440";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_HD_2560x960:
 			*width = 2560;
 			*height = 960;
+			*name = "2560x960";
 		break;
 		case RCP_H264_OPERATION_MODE_FEDC_MODE_MP_3648x1080:
 			*width = 3648;
 			*height = 1080;
+			*name = "3648x1080";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_HD_1824x1080:
 			*width = 1824;
 			*height = 1080;
+			*name = "1824x1080";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_HD_1824x540:
 			*width = 1824;
 			*height = 540;
+			*name = "1824x540";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_HD_1280x480:
 			*width = 1280;
 			*height = 480;
+			*name = "1280x480";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_HD_1536x1536:
 			*width = 1536;
 			*height = 1536;
+			*name = "1536x1536";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_HD_800x800:
 			*width = 800;
 			*height = 800;
+			*name = "800x800";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_768x768:
 			*width = 768;
 			*height = 768;
+			*name = "768x768";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_768x288:
 			*width = 768;
 			*height = 288;
+			*name = "768x288";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_2048x1152:
 			*width = 2048;
 			*height = 1152;
+			*name = "2048x1152";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_2688x800:
 			*width = 2688;
 			*height = 800;
+			*name = "2688x800";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_672x200:
 			*width = 672;
 			*height = 200;
+			*name = "672x200";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_608x360:
 			*width = 608;
 			*height = 360;
+			*name = "608x360";
 		break;
 		case RCP_H264_OPERATION_MODE_640x240:
 			*width = 640;
 			*height = 240;
+			*name = "640x240";
 		break;
 		case RCP_H264_OPERATION_MODE_MP_768x576:
 			*width = 768;
 			*height = 576;
+			*name = "768x576";
 		break;
 		default:
 			return -1;

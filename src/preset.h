@@ -51,6 +51,7 @@
 #define RCP_COMMAND_CONF_MPEG4_AVC_GOP_STRUCTURE			0x0a94
 #define RCP_COMMAND_CONF_MPEG4_AVC_CABAC					0x0aa6
 #define RCP_COMMAND_CONF_VIDEO_QUALITY						0x0a82
+#define RCP_COMMAND_CONF_VIDEO_H264_ENC_CONFIG				0x0ad2
 
 #define PRESET_RESOLUTION_QCIF 0
 #define PRESET_RESOLUTION_CIF  1
@@ -121,6 +122,10 @@ int set_preset_name(int preset_id, char* name);
 
 int get_preset_param(int preset_id, int param, int *value);
 int set_preset_param(int preset_id, int param, int value);
+
+int get_stream_profile(int line_number, int stream_number);
+
+int get_resolution_from_preset(rcp_mpeg4_preset *preset, int *width, int *height, const char** name);
 
 void log_preset(int level, rcp_mpeg4_preset* preset, int basic);
 

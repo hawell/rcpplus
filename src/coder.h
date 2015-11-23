@@ -125,7 +125,7 @@ int set_coder_video_operation_mode(int coder, int mode);
 int get_h264_encoder_video_operation_mode(int mode[]);
 int set_h264_encoder_video_operation_mode(int mode[]);
 
-int get_resolution_from_h264_operation_mode(int mode, int *width, int *height);
+int get_resolution_from_h264_operation_mode(int mode, int *width, int *height, const char** name);
 
 int get_coder_preset(int coder);
 int set_coder_preset(int coder, int preset);
