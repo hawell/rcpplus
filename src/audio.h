@@ -27,6 +27,7 @@
 #define RCP_AUDIO_INPUT_MIC	1
 #define RCP_AUDIO_INPUT_MUTE	2
 
+#define RCP_COMMAND_CONF_AUDIO_ON_OFF		0x000c
 #define RCP_COMMAND_CONF_AUDIO_INPUT_LEVEL	0x000a
 #define RCP_COMMAND_CONF_AUDIO_INPUT		0x09b8
 #define RCP_COMMAND_CONF_AUDIO_INPUT_MAX	0x09ba
@@ -34,6 +35,9 @@
 #define RCP_COMMAND_CONF_AUDIO_MIC_MAX		0x09bd
 #define RCP_COMMAND_CONF_AUDIO_OPTIONS		0x09bf
 #define RCP_COMMAND_CONF_AUDIO_INPUT_PEEK	0x09c6
+
+int get_audio_stat();
+int set_audio_stat(int on_off);
 
 int get_audio_input_level(int line);
 int set_audio_input_level(int line, int level);

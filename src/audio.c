@@ -28,6 +28,44 @@
 #include "rcpdefs.h"
 #include "rcpcommand.h"
 
+int get_audio_stat()
+{
+	rcp_packet req;
+
+	init_rcp_header(&req, 0, RCP_COMMAND_CONF_AUDIO_ON_OFF, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_F_FLAG);
+	req.numeric_descriptor = 0;
+
+	rcp_packet* resp = rcp_command(&req);
+	if (resp == NULL)
+		goto error;
+
+	return resp->payload[0];
+
+error:
+	Error("get_audio_stat()");
+	return -1;
+}
+
+int set_audio_stat(int on_off)
+{
+	rcp_packet req;
+
+	init_rcp_header(&req, 0, RCP_COMMAND_CONF_AUDIO_ON_OFF, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_F_FLAG);
+	req.numeric_descriptor = 0;
+	req.payload[0] = on_off;
+	req.payload_length = 1;
+
+	rcp_packet* resp = rcp_command(&req);
+	if (resp == NULL)
+		goto error;
+
+	return 0;
+
+error:
+	Error("set_audio_stat()");
+	return -1;
+}
+
 int get_audio_input_level(int line)
 {
 	rcp_packet req;
