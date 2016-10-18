@@ -1,8 +1,8 @@
 CC = gcc
-SRCS = rcpplus.c rcpcommand.c md5.c rtp.c preset.c device.c coder.c caps.c ptz.c audio.c
-HDRS = rcpplus.h rcpcommand.h md5.h rtp.h preset.h device.h coder.h caps.h ptz.h rcpdefs.h audio.h
+SRCS = rcpplus.c rcpcommand.c md5.c rtp.c preset.c device.c coder.c caps.c ptz.c audio.c alarm.c
+HDRS = rcpplus.h rcpcommand.h md5.h rtp.h preset.h device.h coder.h caps.h ptz.h rcpdefs.h audio.h alarm.h
 OBJS = $(SRCS:.c=.o)
-CFLAGS = -g -O0 -std=c99 -Wall -W
+CFLAGS = -g -O0 -std=gnu99 -Wall -W
 
 all : $(OBJS)
 	ar  rcf ../$(LIBNAME) $(OBJS)

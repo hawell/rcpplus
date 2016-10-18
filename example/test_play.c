@@ -107,7 +107,7 @@ int main(int argc, char* argv[])
 
 	rcp_connect(argv[1]);
 
-	start_event_handler();
+	start_message_manager();
 
 	client_register(RCP_USER_LEVEL_SERVICE, "", RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_PLAIN);
 
@@ -168,68 +168,24 @@ int main(int argc, char* argv[])
 	TL_INFO("mode = %d coder = %d", mode, coder);
 
 	int modes[2];
-	const char* resolution_name;
+	const char* res_name;
+    int format;
+    get_video_input_format(1, &format);
 	if (mode == RCP_CODER_MODE_H264 && get_h264_encoder_video_operation_mode(modes) == 0)
-		get_resolution_from_h264_operation_mode(modes[0], &width, &height, &resolution_name);
+	{
+		if (get_resolution_from_h264_operation_mode(modes[0], &width, &height, &res_name) != 0)
+		{
+			TL_INFO("%d", preset.resolution);
+			get_resolution_from_preset(&preset, format, &width, &height, &res_name);
+		}
+	}
 	else
 	{
 		resolution = highest_bit(desc.resolution);
-
-		TL_INFO("res=%d id=%d", resolution, coder);
-
-		switch (resolution)
-		{
-			case RCP_VIDEO_RESOLUTION_HD2592x1944:
-				width = 2592;
-				height = 1944;
-			break;
-			case RCP_VIDEO_RESOLUTION_HD1080:
-				width = 1920;
-				height = 1080;
-			break;
-			case RCP_VIDEO_RESOLUTION_HD720:
-				width = 1280;
-				height = 720;
-			break;
-			case RCP_VIDEO_RESOLUTION_VGA:
-				width = 640;
-				height = 480;
-			break;
-			case RCP_VIDEO_RESOLUTION_QVGA:
-				width = 320;
-				height = 240;
-			break;
-			case RCP_VIDEO_RESOLUTION_4CIF:
-				width = 704;
-				height = 576;
-			break;
-			case RCP_VIDEO_RESOLUTION_2CIF:
-				width = 704;
-				height = 288;
-			break;
-			case RCP_VIDEO_RESOLUTION_CIF:
-				width = 352;
-				height = 288;
-			break;
-			case RCP_VIDEO_RESOLUTION_QCIF:
-				width = 176;
-				height = 144;
-			break;
-			case RCP_VIDEO_RESOLUTION_WD144:
-				width = 256;
-				height = 144;
-			break;
-			case RCP_VIDEO_RESOLUTION_WD288:
-				width = 512;
-				height = 288;
-			break;
-			case RCP_VIDEO_RESOLUTION_WD432:
-				width = 768;
-				height = 432;
-			break;
-		}
+		get_resolution_from_preset(&preset, format, &width, &height, &res_name);
 	}
-	TL_INFO("width=%d height=%d", width, height);
+
+	TL_INFO("width=%d height=%d %s", width, height, res_name);
 
 	avcodec_register_all();
 	av_register_all();
@@ -394,7 +350,7 @@ end:
 	client_disconnect(&session);
 end1:
 	client_unregister();
-	stop_event_handler();
+	stop_message_manager();
 
 	return 0;
 }

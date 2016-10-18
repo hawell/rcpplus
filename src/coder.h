@@ -47,6 +47,8 @@
 #define RCP_COMMAND_CONF_RCP_CODER_LIST						0xff11
 #define RCP_COMMAND_CONF_CODER_VIDEO_OPERATION_MODE			0x0a9c
 #define RCP_COMMAND_CONF_VIDEO_H264_ENC_BASE_OPERATION_MODE	0x0ad3
+#define RCP_COMMAND_CONF_VIDEO_H264_ENC_CURRENT_PROFILE        0x0ad4
+#define RCP_COMMAND_CONF_VID_H264_ENC_BASE_OPERATION_MODE_CAPS 0x0af9
 
 #define RCP_CODER_MODE_H263	1
 #define RCP_CODER_MODE_H264	2
@@ -125,10 +127,14 @@ int set_coder_video_operation_mode(int coder, int mode);
 int get_h264_encoder_video_operation_mode(int mode[]);
 int set_h264_encoder_video_operation_mode(int mode[]);
 
+int get_supported_video_operation_modes(int line, int *stream_count, int *valid_tuples_count, int mode[]);
+
 int get_resolution_from_h264_operation_mode(int mode, int *width, int *height, const char** name);
 
 int get_coder_preset(int coder);
 int set_coder_preset(int coder, int preset);
+
+int get_current_stream_profile(int line, int stream, int *profile_id);
 
 void log_coder(int level, rcp_coder* coder);
 

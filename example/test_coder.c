@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
 
 	rcp_connect(argv[1]);
 
-	start_event_handler();
+	start_message_manager();
 
 	client_register(RCP_USER_LEVEL_LIVE, "", RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_MD5);
 
@@ -83,7 +83,7 @@ int main(int argc, char* argv[])
 	}
 */
 
-	stop_event_handler();
+	stop_message_manager();
 
 	return 0;
 }

@@ -162,19 +162,40 @@ error:
 	return -1;
 }
 
+int get_supported_video_operation_modes(int line, int *stream_count, int *valid_tuples_count, int mode[])
+{
+    rcp_packet req;
+
+    init_rcp_header(&req, 0, RCP_COMMAND_CONF_VID_H264_ENC_BASE_OPERATION_MODE_CAPS, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_OCTET);
+    req.numeric_descriptor = line;
+
+    rcp_packet* resp = rcp_command(&req);
+    if (resp == NULL)
+        goto error;
+
+    tlog_hex(TLOG_DEBUG, "", resp->payload, resp->payload_length);
+
+    *stream_count = ntohl(*(unsigned int*)resp->payload);
+    *valid_tuples_count = (resp->payload_length - 4) / (*stream_count * 4);
+
+    int pos = 4;
+    for (int i=0; i<(resp->payload_length-4)/4; i++)
+    {
+        mode[i] = ntohl(*(unsigned int*)(resp->payload + pos));
+        pos += 4;
+    }
+
+    return 0;
+
+error:
+    TL_ERROR("get_supported_video_operation_modes()");
+    return -1;
+}
+
 int get_resolution_from_h264_operation_mode(int mode, int *width, int *height, const char** name)
 {
 	switch (mode)
 	{
-		case RCP_H264_OPERATION_MODE_MP_SD:
-		case RCP_H264_OPERATION_MODE_MP_SD_ROI_PTZ:
-		case RCP_H264_OPERATION_MODE_MP_SD_UPRIGHT:
-		case RCP_H264_OPERATION_MODE_MP_SD_4CIF_4_3:
-		case RCP_H264_OPERATION_MODE_MP_SD_DUAL_IND_ROI:
-			*width = 704;
-			*height = 576;
-			*name = "4CIF";
-		break;
 		case RCP_H264_OPERATION_MODE_MP_FIXED_720P:
 		case RCP_H264_OPERATION_MODE_MP_FIXED_720P_FULL:
 		case RCP_H264_OPERATION_MODE_MP_FIXED_720P_SKIP3:
@@ -370,6 +391,13 @@ int get_resolution_from_h264_operation_mode(int mode, int *width, int *height, c
 			*height = 576;
 			*name = "768x576";
 		break;
+
+		// SD Streams use preset resolution
+        case RCP_H264_OPERATION_MODE_MP_SD:
+        case RCP_H264_OPERATION_MODE_MP_SD_ROI_PTZ:
+        case RCP_H264_OPERATION_MODE_MP_SD_UPRIGHT:
+        case RCP_H264_OPERATION_MODE_MP_SD_4CIF_4_3:
+        case RCP_H264_OPERATION_MODE_MP_SD_DUAL_IND_ROI:
 		default:
 			return -1;
 	}
@@ -489,6 +517,30 @@ static char* coder_codparam_str(int codparam, int media_type)
 	}
 
 	return "Unknown";
+}
+
+int get_current_stream_profile(int line, int stream, int *profile_id)
+{
+    rcp_packet req;
+
+    init_rcp_header(&req, 0, RCP_COMMAND_CONF_VIDEO_H264_ENC_CURRENT_PROFILE, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_OCTET);
+    req.numeric_descriptor = line;
+
+    rcp_packet* resp = rcp_command(&req);
+    if (resp == NULL)
+        goto error;
+
+    tlog_hex(TLOG_INFO, "", resp->payload, resp->payload_length);
+
+    uint32_t int_value;
+    memcpy(&int_value, resp->payload+(stream-1)*4, 4);
+    *profile_id = ntohl(int_value);
+
+    return 0;
+
+error:
+    TL_ERROR("get_current_stream_profile()");
+    return -1;
 }
 
 void log_coder(int level, rcp_coder* coder)

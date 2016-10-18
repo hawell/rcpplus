@@ -20,6 +20,7 @@
  *  along with rcpplus.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <sys/time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -79,7 +80,15 @@ int stream_connect_udp(rcp_session* session)
 	session->stream_addr.sin_port = htons(0);
 	session->stream_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-	int res = bind(session->stream_socket, (struct sockaddr*)&session->stream_addr, sizeof(session->stream_addr));
+	struct timeval tv = {10, 0};
+	int res = setsockopt(session->stream_socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+	if (res == -1)
+	{
+		TL_ERROR("cannot set socket timeout");
+		return -1;
+	}
+
+	res = bind(session->stream_socket, (struct sockaddr*)&session->stream_addr, sizeof(session->stream_addr));
 	if (res == -1)
 	{
 		TL_ERROR("cannot bind %d - %s", errno, strerror(errno));

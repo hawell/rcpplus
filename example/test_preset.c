@@ -28,17 +28,20 @@ int main(int argc, char* argv[])
 
 	rcp_connect(argv[1]);
 
-	start_event_handler();
+	start_message_manager();
 
 	client_register(RCP_USER_LEVEL_LIVE, "", RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_MD5);
 
-	get_coder_preset(1);
+	int preset_id = get_coder_preset(1);
+	TL_INFO("preset id = %d", preset_id);
+	preset_id = get_current_stream_profile(1, 1, &preset_id);
+	TL_INFO("preset id = %d", preset_id);
 
 	preset_set_default(1);
 
 	rcp_mpeg4_preset preset;
-	get_preset(1, &preset, 0);
-	log_preset(TLOG_INFO, &preset, 1);
+    get_preset(1, &preset, 0);
+    log_preset(TLOG_INFO, &preset, 0);
 
 	strcpy(preset.name, "myConfig");
 	preset.resolution = PRESET_RESOLUTION_4CIF;
@@ -46,15 +49,20 @@ int main(int argc, char* argv[])
 	preset.bandwidth = 100000;
 	preset.bandwidth_soft_limit = 100000;
 	preset.video_quality = 1;
+    preset.avc_gop_structure = 0;
+    preset.averaging_period = 0;
+    preset.iframe_distance = 31;
+    preset.avc_pframe_qunatizer_min = 0;
+    preset.avc_delta_ipquantizer = 5;
 
-	set_preset(1, &preset, 1);
+	set_preset(1, &preset, 0);
 
 	get_preset(1, &preset, 0);
-	log_preset(TLOG_INFO, &preset, 1);
+	log_preset(TLOG_INFO, &preset, 0);
 
 	client_unregister();
 
-	stop_event_handler();
+	stop_message_manager();
 
 	return 0;
 }

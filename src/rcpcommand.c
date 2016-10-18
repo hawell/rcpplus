@@ -20,30 +20,32 @@
  *  along with rcpplus.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <semaphore.h>
 #include <stdio.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <unistd.h>
-#include <time.h>
 #include <limits.h>
 #include <tlog/tlog.h>
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
 #include <pthread.h>
-#include <semaphore.h>
-
 
 #include "rcpcommand.h"
 #include "rcpdefs.h"
 #include "rcpplus.h"
 #include "md5.h"
 
-#define MAX_PAYLOAD_LENGHT	1000
 #define MAX_PASSPHRASE_LEN	1000
 
 rcp_packet response[256];
 sem_t resp_available[256];
+
+#define MAX_ALARM_TAG	0x0bff
+
+event_handler_t registered_events[MAX_ALARM_TAG];
+void* registered_events_param[MAX_ALARM_TAG];
 
 pthread_t event_handler_thread;
 pthread_mutex_t send_mutex;
@@ -204,7 +206,14 @@ rcp_packet* rcp_command(rcp_packet* req)
 	if (res == -1)
 		return NULL;
 
-	sem_wait(&resp_available[req->request_id]);
+	struct timespec ts;
+	clock_gettime(CLOCK_REALTIME, &ts);
+	ts.tv_sec += 10;
+	if (sem_timedwait(&resp_available[req->request_id], &ts))
+	{
+		TL_ERROR("rcp_command: %d - %s\n", errno, strerror(errno));
+		return NULL;
+	}
 
 	if (response[req->request_id].action == RCP_PACKET_ACTION_ERROR)
 	{
@@ -215,7 +224,7 @@ rcp_packet* rcp_command(rcp_packet* req)
 	return &response[req->request_id];
 }
 
-static void* event_handler(void* params)
+static void* message_manager_rutine(void* params)
 {
 	UNUSED(params);
 
@@ -224,25 +233,40 @@ static void* event_handler(void* params)
 		int request_id = rcp_recv();
 		if (request_id != -1)
 		{
-			TL_DEBUG("packet received: %d", response[request_id].tag);
+			int tag = response[request_id].tag;
+			//TL_INFO("packet received: %d", tag);
 			sem_post(&resp_available[request_id]);
+			if (tag < MAX_ALARM_TAG && registered_events[tag] != NULL)
+			{
+				//TL_INFO("registered event : ");
+				//TL_INFO("%d", tag);
+				registered_events[tag](&response[request_id], registered_events_param[tag]);
+			}
 		}
 	}
 
 	return NULL;
 }
 
-int start_event_handler()
+int register_event(int event_tag, event_handler_t handler, void* param)
 {
-	pthread_create(&event_handler_thread, NULL, event_handler, NULL);
+	registered_events[event_tag] = handler;
+	registered_events_param[event_tag] = param;
+	return 0;
+}
+
+int start_message_manager()
+{
+	pthread_create(&event_handler_thread, NULL, message_manager_rutine, NULL);
 	for (int i=0; i<256; i++)
 	{
 		sem_init(&resp_available[i], 0, 0);
 	}
+	memset(registered_events, 0, sizeof(event_handler_t)*MAX_ALARM_TAG);
 	return 0;
 }
 
-int stop_event_handler()
+int stop_message_manager()
 {
 	pthread_cancel(event_handler_thread);
 	for (int i=0; i<256; i++)
@@ -679,3 +703,184 @@ error:
 	TL_ERROR("request_sps_pps()");
 	return -1;
 }
+
+int set_password(int level, char* password)
+{
+    rcp_packet req;
+    init_rcp_header(&req, 0, RCP_COMMAND_CONF_PASSWORD_SETTINGS, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_P_STRING);
+
+    req.numeric_descriptor = level;
+    strcpy(req.payload, password);
+
+    rcp_packet* resp = rcp_command(&req);
+    if (resp == NULL)
+        goto error;
+
+    return 0;
+
+error:
+    TL_ERROR("set_password()");
+    return -1;
+
+}
+
+
+int set_defaults()
+{
+    rcp_packet req;
+    init_rcp_header(&req, 0, RCP_COMMAND_CONF_DEFAULTS, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_F_FLAG);
+
+    req.payload[0] = 1;
+
+    rcp_packet* resp = rcp_command(&req);
+    if (resp == NULL)
+        goto error;
+
+    return 0;
+
+error:
+    TL_ERROR("set_defaults()");
+    return -1;
+}
+
+int set_factory_defaults()
+{
+    rcp_packet req;
+    init_rcp_header(&req, 0, RCP_COMMAND_CONF_FACTORY_DEFAULTS, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_F_FLAG);
+
+    req.payload[0] = 1;
+
+    rcp_packet* resp = rcp_command(&req);
+    if (resp == NULL)
+        goto error;
+
+    return 0;
+
+error:
+    TL_ERROR("set_factory_defaults()");
+    return -1;
+}
+
+int board_reset()
+{
+    rcp_packet req;
+    init_rcp_header(&req, 0, RCP_COMMAND_CONF_BOARD_RESET, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_F_FLAG);
+
+    req.payload[0] = 1;
+
+    rcp_packet* resp = rcp_command(&req);
+    if (resp == NULL)
+        goto error;
+
+    return 0;
+
+error:
+    TL_ERROR("board_reset()");
+    return -1;
+}
+
+int get_video_input_format(int line, int* format)
+{
+    rcp_packet req;
+    init_rcp_header(&req, 0, RCP_COMMAND_CONF_VIDEO_INPUT_FORMAT, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_T_DWORD);
+
+    req.numeric_descriptor = line;
+
+    rcp_packet* resp = rcp_command(&req);
+    if (resp == NULL)
+        goto error;
+    *format = ntohl(*(unsigned int*)resp->payload);
+
+    TL_INFO("format = %d", *format);
+
+    return 0;
+
+error:
+    TL_ERROR("get_video_input_format()");
+    return -1;
+}
+
+int get_video_input_format_ex(int line, int* format)
+{
+    rcp_packet req;
+    init_rcp_header(&req, 0, RCP_COMMAND_CONF_VIDEO_INPUT_FORMAT_EX, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_OCTET);
+
+    req.numeric_descriptor = line;
+
+    rcp_packet* resp = rcp_command(&req);
+    if (resp == NULL)
+        goto error;
+    *format = resp->payload[1];
+
+    TL_INFO("format = %d", *format);
+
+    return 0;
+
+error:
+    TL_ERROR("get_video_input_format_ex()");
+    return -1;
+}
+
+int get_video_output_format(int line, int* format)
+{
+    rcp_packet req;
+    init_rcp_header(&req, 0, RCP_COMMAND_CONF_VIDEO_OUT_STANDARD, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_T_OCTET);
+
+    req.numeric_descriptor = line;
+
+    rcp_packet* resp = rcp_command(&req);
+    if (resp == NULL)
+        goto error;
+    *format = resp->payload[0];
+
+    TL_INFO("format = %d", *format);
+
+    return 0;
+
+error:
+    TL_ERROR("get_video_output_format()");
+    return -1;
+}
+
+int set_video_output_format(int line, int format)
+{
+    rcp_packet req;
+    init_rcp_header(&req, 0, RCP_COMMAND_CONF_VIDEO_OUT_STANDARD, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_T_OCTET);
+
+    req.numeric_descriptor = line;
+
+    req.payload[0] = format;
+    req.payload_length = 1;
+
+    rcp_packet* resp = rcp_command(&req);
+    if (resp == NULL)
+        goto error;
+
+    return 0;
+
+error:
+    TL_ERROR("get_video_output_format()");
+    return -1;
+}
+
+int get_video_input_frequency(int line, int* frequency)
+{
+    rcp_packet req;
+    init_rcp_header(&req, 0, RCP_COMMAND_CONF_VIN_BASE_FRAMERATE, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_T_DWORD);
+
+    req.numeric_descriptor = line;
+
+    rcp_packet* resp = rcp_command(&req);
+    if (resp == NULL)
+        goto error;
+    *frequency = ntohl(*(unsigned int*)(resp->payload));
+
+    TL_INFO("frequency = %d", *frequency);
+
+    return 0;
+
+error:
+    TL_ERROR("get_video_input_frequency()");
+	return -1;
+}
+

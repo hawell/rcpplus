@@ -54,6 +54,9 @@ int get_preset(int preset_id, rcp_mpeg4_preset* preset, int basic)
 		get_preset_param(preset_id, RCP_COMMAND_CONF_MPEG4_AVC_CODING_MODE, &preset->avc_coding_mode);
 		get_preset_param(preset_id, RCP_COMMAND_CONF_MPEG4_AVC_GOP_STRUCTURE, &preset->avc_gop_structure);
 		get_preset_param(preset_id, RCP_COMMAND_CONF_MPEG4_AVC_CABAC, &preset->avc_cabac);
+		get_preset_param(preset_id, RCP_COMMAND_CONF_VIDEO_BITRATE_AVERAGING_PERIOD, &preset->averaging_period);
+		get_preset_param(preset_id, RCP_COMMAND_CONF_MPEG4_AVC_QUANT_ADJ_BACKGROUND, &preset->avc_quant_adj_background);
+		get_preset_param(preset_id, RCP_COMMAND_CONF_MPEG4_AVC_QUANT_ADJ_OBJECTS, &preset->avc_quant_adj_objects);
 	}
 
 	return 0;
@@ -86,6 +89,9 @@ int set_preset(int preset_id, rcp_mpeg4_preset* preset, int basic)
 		set_preset_param(preset_id, RCP_COMMAND_CONF_MPEG4_AVC_CODING_MODE, preset->avc_coding_mode);
 		set_preset_param(preset_id, RCP_COMMAND_CONF_MPEG4_AVC_GOP_STRUCTURE, preset->avc_gop_structure);
 		set_preset_param(preset_id, RCP_COMMAND_CONF_MPEG4_AVC_CABAC, preset->avc_cabac);
+        set_preset_param(preset_id, RCP_COMMAND_CONF_VIDEO_BITRATE_AVERAGING_PERIOD, preset->averaging_period);
+        set_preset_param(preset_id, RCP_COMMAND_CONF_MPEG4_AVC_QUANT_ADJ_BACKGROUND, preset->avc_quant_adj_background);
+        set_preset_param(preset_id, RCP_COMMAND_CONF_MPEG4_AVC_QUANT_ADJ_OBJECTS, preset->avc_quant_adj_objects);
 	}
 
 	return 0;
@@ -170,19 +176,22 @@ int get_param_type(int param)
 		case RCP_COMMAND_CONF_MPEG4_AVC_I_FRAME_QUANT:
 		case RCP_COMMAND_CONF_MPEG4_AVC_P_FRAME_QUANT:
 		case RCP_COMMAND_CONF_VIDEO_QUALITY:
+		case RCP_COMMAND_CONF_VIDEO_BITRATE_AVERAGING_PERIOD:
+        case RCP_COMMAND_CONF_MPEG4_AVC_P_FRAME_QUANT_MIN:
 			return RCP_DATA_TYPE_T_DWORD;
 
 		case RCP_COMMAND_CONF_MPEG4_FIELD_MODE:
 		case RCP_COMMAND_CONF_MPEG4_AVC_CODING_MODE:
 		case RCP_COMMAND_CONF_MPEG4_AVC_GOP_STRUCTURE:
 		case RCP_COMMAND_CONF_MPEG4_AVC_CABAC:
-		case RCP_COMMAND_CONF_MPEG4_AVC_P_FRAME_QUANT_MIN:
-		case RCP_COMMAND_CONF_MPEG4_AVC_DELTA_IPQUANT:
 			return RCP_DATA_TYPE_T_OCTET;
 
 		case RCP_COMMAND_CONF_MPEG4_AVC_DEBLOCKING_ALPHA:
 		case RCP_COMMAND_CONF_MPEG4_AVC_DEBLOCKING_BETA:
 		case RCP_COMMAND_CONF_MPEG4_AVC_CHROMA_QUANT_OFF:
+		case RCP_COMMAND_CONF_MPEG4_AVC_DELTA_IPQUANT:
+		case RCP_COMMAND_CONF_MPEG4_AVC_QUANT_ADJ_OBJECTS:
+		case RCP_COMMAND_CONF_MPEG4_AVC_QUANT_ADJ_BACKGROUND:
 			return RCP_DATA_TYPE_T_INT;
 
 		case RCP_COMMAND_CONF_MPEG4_AVC_DEBLOCKING_ENABLE:
@@ -299,7 +308,7 @@ error:
 	return -1;
 }
 
-int get_resolution_from_preset(rcp_mpeg4_preset *preset, int *width, int *height, const char** name)
+int get_resolution_from_preset(rcp_mpeg4_preset *preset, int input_format, int *width, int *height, const char** name)
 {
 	switch (preset->resolution)
 	{
@@ -320,22 +329,22 @@ int get_resolution_from_preset(rcp_mpeg4_preset *preset, int *width, int *height
 		break;
 		case PRESET_RESOLUTION_4CIF:
 			*width = 704;
-			*height = 576;
+            *height = (input_format == RCP_VIDEO_INPUT_FORMAT_NTSC)?480:576;
 			*name = "CIF";
 		break;
 		case PRESET_RESOLUTION_2CIF:
 			*width = 704;
-			*height = 288;
+            *height = (input_format == RCP_VIDEO_INPUT_FORMAT_NTSC)?240:288;
 			*name = "2CIF";
 		break;
 		case PRESET_RESOLUTION_CIF:
 			*width = 352;
-			*height = 288;
+            *height = (input_format == RCP_VIDEO_INPUT_FORMAT_NTSC)?240:288;
 			*name = "CIF";
 		break;
 		case PRESET_RESOLUTION_QCIF:
 			*width = 176;
-			*height = 144;
+			*height = (input_format == RCP_VIDEO_INPUT_FORMAT_NTSC)?120:144;
 			*name = "QCIF";
 		break;
 		case PRESET_RESOLUTION_WD144:
@@ -443,5 +452,8 @@ void log_preset(int level, rcp_mpeg4_preset* preset, int basic)
 		else
 			val = "on";
 		tlog(level, "%-25s %s", "avc cabac", val);
+		tlog(level, "%-25s %d", "averaging period", preset->averaging_period);
+		tlog(level, "%-25s %d", "background q level", preset->avc_quant_adj_background);
+		tlog(level, "%-25s %d", "object q level", preset->avc_quant_adj_objects);
 	}
 }

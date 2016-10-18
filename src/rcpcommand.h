@@ -25,15 +25,18 @@
 
 #include "rcpplus.h"
 
+typedef void (*event_handler_t)(rcp_packet* data, void* param);
+
 int init_rcp_header(rcp_packet* hdr, int session_id, int tag, int rw, int data_type);
 int write_rcp_header(unsigned char* packet, rcp_packet* hdr);
 int read_rcp_header(unsigned char* packet, rcp_packet* hdr);
 
 rcp_packet* rcp_command(rcp_packet* req);
 
-int start_event_handler();
-int stop_event_handler();
+int register_event(int event_tag, event_handler_t handler, void* param);
 
+int start_message_manager();
+int stop_message_manager();
 
 int get_md5_random(unsigned char* md5);
 
@@ -52,5 +55,24 @@ int get_jpeg_snapshot(char* ip, char* data, int* len);
 int request_intraframe(rcp_session* session);
 
 int request_sps_pps(rcp_session* session, int coder, char* data, int *len);
+
+int set_password(int level, char* password);
+
+int set_defaults();
+
+int set_factory_defaults();
+
+int board_reset();
+
+int get_video_input_format(int line, int* format);
+
+int get_video_input_format_ex(int line, int* format);
+
+int get_video_output_format(int line, int* format);
+
+int set_video_output_format(int line, int format);
+
+int get_video_input_frequency(int line, int* frequency);
+
 
 #endif /* RCPCOMMAND_H_ */

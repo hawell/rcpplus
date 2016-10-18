@@ -26,14 +26,14 @@
 #include "rcpdefs.h"
 #include "rcpplus.h"
 
-#define RCP_COMMAND_CONF_MPEG4_DEFAULTS						0x0601
+#define RCP_COMMAND_CONF_MPEG4_DEFAULTS					0x0601
 
-#define RCP_COMMAND_CONF_MPEG4_NAME							0x0602
+#define RCP_COMMAND_CONF_MPEG4_NAME						0x0602
 #define RCP_COMMAND_CONF_MPEG4_BANDWIDTH_KBPS				0x0607
 #define RCP_COMMAND_CONF_MPEG4_BANDWIDTH_KBPS_SOFT_LIMIT	0x0612
 #define RCP_COMMAND_CONF_MPEG4_BANDWIDTH_KBPS_HARD_LIMIT	0x0613
-#define RCP_COMMAND_CONF_MPEG4_INTRA_FRAME_DISTANCE			0x0604
-#define RCP_COMMAND_CONF_MPEG4_FRAME_SKIP_RATIO				0x0606
+#define RCP_COMMAND_CONF_MPEG4_INTRA_FRAME_DISTANCE		0x0604
+#define RCP_COMMAND_CONF_MPEG4_FRAME_SKIP_RATIO			0x0606
 #define RCP_COMMAND_CONF_MPEG4_RESOLUTION					0x0608
 #define RCP_COMMAND_CONF_MPEG4_FIELD_MODE					0x060e
 #define RCP_COMMAND_CONF_MPEG4_I_FRAME_QUANT				0x060a
@@ -44,12 +44,15 @@
 #define RCP_COMMAND_CONF_MPEG4_AVC_P_FRAME_QUANT_MIN		0x0620
 #define RCP_COMMAND_CONF_MPEG4_AVC_DELTA_IPQUANT			0x0621
 #define RCP_COMMAND_CONF_MPEG4_AVC_DEBLOCKING_ENABLE		0x0617
-#define RCP_COMMAND_CONF_MPEG4_AVC_DEBLOCKING_ALPHA			0x0618
+#define RCP_COMMAND_CONF_MPEG4_AVC_DEBLOCKING_ALPHA		0x0618
 #define RCP_COMMAND_CONF_MPEG4_AVC_DEBLOCKING_BETA			0x0619
-#define RCP_COMMAND_CONF_MPEG4_AVC_CHROMA_QUANT_OFF			0x061a
+#define RCP_COMMAND_CONF_MPEG4_AVC_CHROMA_QUANT_OFF		0x061a
 #define RCP_COMMAND_CONF_MPEG4_AVC_CODING_MODE				0x0a45
 #define RCP_COMMAND_CONF_MPEG4_AVC_GOP_STRUCTURE			0x0a94
 #define RCP_COMMAND_CONF_MPEG4_AVC_CABAC					0x0aa6
+#define RCP_COMMAND_CONF_MPEG4_AVC_QUANT_ADJ_BACKGROUND    0x0624
+#define RCP_COMMAND_CONF_MPEG4_AVC_QUANT_ADJ_OBJECTS       0x0625
+#define RCP_COMMAND_CONF_VIDEO_BITRATE_AVERAGING_PERIOD    0x0622
 #define RCP_COMMAND_CONF_VIDEO_QUALITY						0x0a82
 #define RCP_COMMAND_CONF_VIDEO_H264_ENC_CONFIG				0x0ad2
 
@@ -109,6 +112,9 @@ typedef struct {
 	int avc_chroma_quantisation_offset;    // chroma quantisation offset (-12...12)
 	int avc_coding_mode;                   // 0=frame; 1=field; 2=macro block adaptive ff; 3=picture adaptive ff
 	int avc_gop_structure;                 // 0=IP; 1=IBP; 2=IBBP; 3=IBBRBP
+	int avc_quant_adj_background;          // -51..51
+	int avc_quant_adj_objects;             // -51..51
+	int averaging_period;                  // 0=no bitrate averaging, 1 min, 2 min, 5 min, 1 hour, 2 hour, ...
 	int avc_cabac;                         // 0=off; 1=on
 } rcp_mpeg4_preset;
 
@@ -125,7 +131,7 @@ int set_preset_param(int preset_id, int param, int value);
 
 int get_stream_profile(int line_number, int stream_number);
 
-int get_resolution_from_preset(rcp_mpeg4_preset *preset, int *width, int *height, const char** name);
+int get_resolution_from_preset(rcp_mpeg4_preset *preset, int input_format, int *width, int *height, const char** name);
 
 void log_preset(int level, rcp_mpeg4_preset* preset, int basic);
 

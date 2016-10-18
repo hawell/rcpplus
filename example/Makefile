@@ -1,5 +1,5 @@
 CC = gcc
-SRCS = test_preset.c test_h264_udp.c test_h263_udp.c test_h263_tcp.c test_detect.c test_coder.c test_ptz.c test_transcode.c test_play.c test_record.c test_jpeg.c test_audio.c
+SRCS = test_preset.c test_h264_udp.c test_h263_udp.c test_h263_tcp.c test_detect.c test_coder.c test_ptz.c test_transcode.c test_play.c test_record.c test_jpeg.c test_audio.c test_alarm.c bulk_config.c
 OBJS = $(SRCS:.c=.o)
 INCS = -I../src/
 CFLAGS = -g -O0 -std=c99 -Wall -W -Wno-deprecated -Wno-deprecated-declarations
@@ -19,7 +19,7 @@ FFMPEGLIB = \
 		
 FFMPEGINC = -I$(FFMPEG)
 
-all: preset h264_udp h263_udp h263_tcp detect coder ptz transcode play record jpeg audio test
+all: preset h264_udp h263_udp h263_tcp detect coder ptz transcode play record jpeg audio alarm config
 
 preset: test_preset.o
 	$(CC) test_preset.o $(LIB) -o preset
@@ -59,12 +59,12 @@ jpeg: test_jpeg.o
 audio: test_audio.o
 	$(CC) test_audio.o $(LIB) $(FFMPEGLIB) `sdl-config --cflags --libs` -o audio
 	
-mpegts: mpegts.o
-	$(CC) mpegts.o $(LIB) $(FFMPEGLIB) `sdl-config --cflags --libs` -o mpegts
+alarm: test_alarm.o
+	$(CC) test_alarm.o $(LIB) -o alarm
 	
-test: test.o
-	$(CC) test.o $(LIB) $(FFMPEGLIB) -o test
-	
+config: bulk_config.o
+	$(CC) bulk_config.o $(LIB) -o config
+
 .c.o:
 	$(CC) $(CFLAGS) $(INCS) $(FFMPEGINC) -c $< -o $@ 
 	

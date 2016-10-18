@@ -27,7 +27,7 @@
 
 struct rcp_coder_tag;
 
-#define MAX_PAYLOAD_LENGTH		3000
+#define MAX_PAYLOAD_LENGTH		5000
 #define MAX_PASSWORD_LENGTH		255
 #define MAX_IP_LENGTH	20
 
