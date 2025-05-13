@@ -92,16 +92,14 @@ static char resp1_header_magic[] = {
 
 int autodetect(rcp_device** devs, int* num)
 {
-	int res;
-
-	int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	const int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
 	struct sockaddr_in addr;
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(0);
 	addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-	res = bind(fd, (struct sockaddr*)&addr, sizeof(addr));
+	int res = bind(fd, (struct sockaddr*)&addr, sizeof(addr));
 	if (res == -1)
 	{
 		TL_ERROR("cannot bind %d - %s\n", errno, strerror(errno));
@@ -337,12 +335,11 @@ static char* oid_str(int id)
 int get_device(rcp_device* dev)
 {
 	rcp_packet req;
-	rcp_packet* resp;
 
 	init_rcp_header(&req, 0, RCP_COMMAND_CONF_MAC_ADDRESS, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_OCTET);
 	req.numeric_descriptor = 0;
 
-	resp = rcp_command(&req);
+	rcp_packet* resp = rcp_command(&req);
 	if (resp == NULL)
 		goto error;
 
@@ -420,7 +417,7 @@ int set_device_address(rcp_device* dev)
 int broadcast_command(rcp_device* dev, int cmd, int data)
 {
 	unsigned char* message[16];
-	memset(message, 0, 16);
+	memset(message, 0, 16 * sizeof(*message));
 
 	memcpy(message, dev->hw_addr, 6);
 

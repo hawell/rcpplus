@@ -1,72 +1,109 @@
-CC = gcc
-SRCS = test_preset.c test_h264_udp.c test_h263_udp.c test_h263_tcp.c test_detect.c test_coder.c test_ptz.c test_transcode.c test_play.c test_record.c test_jpeg.c test_audio.c test_alarm.c bulk_config.c
-OBJS = $(SRCS:.c=.o)
+SRCS = test_preset.c test_h264_udp.c test_h263_udp.c test_h263_tcp.c \
+test_detect.c test_coder.c test_ptz.c test_transcode.c test_play.c \
+test_record.c test_jpeg.c test_audio.c test_alarm.c bulk_config.c
+
+OBJS = $(SRCS:.c=../$(BUILD_DIR)/%.o)
 INCS = -I../src/
-CFLAGS = -g -O0 -std=c99 -Wall -W -Wno-deprecated -Wno-deprecated-declarations
-LIB = ../$(LIBNAME) -ltlog-1.0.0 -lpthread -lrt
+LIB = ../$(BUILD_DIR)/$(LIBNAME) -ltlog-1.0.0 -lpthread
+#FFMPEG = $(HOME)/Projects/ffmpeg/debug
+SDLLIBS = -lSDL2
+FFMPEGLIBS = -lavformat -lavcodec -lavutil -lswresample
 
-FFMPEG = /home/arash/Projects/ffmpeg-2.0
-FFMPEGLIB = \
-		$(FFMPEG)/libavdevice/libavdevice.a \
-		$(FFMPEG)/libavformat/libavformat.a \
-		$(FFMPEG)/libavfilter/libavfilter.a \
-		$(FFMPEG)/libavcodec/libavcodec.a \
-		$(FFMPEG)/libswresample/libswresample.a \
-		$(FFMPEG)/libswscale/libswscale.a \
-		$(FFMPEG)/libavutil/libavutil.a \
-		$(FFMPEG)/libpostproc/libpostproc.a \
-		 -lz -lm -lpthread -lmp3lame -lfaac -lx264 -lbz2
-		
-FFMPEGINC = -I$(FFMPEG)
+ifdef FFMPEG
+	FFMPEGLIBS += -lbz2 -llzma -lz
+endif
 
-all: preset h264_udp h263_udp h263_tcp detect coder ptz transcode play record jpeg audio alarm config
+ifeq ($(UNAME_S), Darwin)
+ifdef FFMPEG
+	FFMPEGLIBS += -liconv \
+		-framework CoreFoundation -framework CoreMedia -framework CoreVideo \
+		-framework AudioToolbox -framework VideoToolbox -framework Security
+endif
+else ifeq ($(UNAME_S), Linux)
+    LIB += -ldispatch
+	ifdef FFMPEG
+		FFMPEGLIBS += -ldrm -lm -lva -lva-drm -lva-x11
+		SDLLIBS += -lX11
+	endif
+endif
 
-preset: test_preset.o
-	$(CC) test_preset.o $(LIB) -o preset
+ifdef FFMPEG
+	FFMPEGINC = -I$(FFMPEG)/include
+	FFMPEGLDFLAGS = -L$(FFMPEG)/lib
+endif
+
+all: ../$(BUILD_DIR)/preset ../$(BUILD_DIR)/h264_udp ../$(BUILD_DIR)/h263_udp \
+../$(BUILD_DIR)/h263_tcp ../$(BUILD_DIR)/detect ../$(BUILD_DIR)/coder \
+../$(BUILD_DIR)/ptz ../$(BUILD_DIR)/transcode ../$(BUILD_DIR)/play \
+../$(BUILD_DIR)/record ../$(BUILD_DIR)/jpeg ../$(BUILD_DIR)/audio \
+../$(BUILD_DIR)/alarm ../$(BUILD_DIR)/config
+
+../$(BUILD_DIR)/preset: ../$(BUILD_DIR)/test_preset.o
+	@mkdir -p $(@D)
+	$(CC) ../$(BUILD_DIR)/test_preset.o $(LIB) -o ../$(BUILD_DIR)/preset
 	
-h264_udp: test_h264_udp.o
-	$(CC) test_h264_udp.o $(LIB) -o h264_udp
+../$(BUILD_DIR)/h264_udp: ../$(BUILD_DIR)/test_h264_udp.o
+	@mkdir -p $(@D)
+	$(CC) ../$(BUILD_DIR)/test_h264_udp.o $(LIB) -o ../$(BUILD_DIR)/h264_udp
 	
-h263_udp: test_h263_udp.o
-	$(CC) test_h263_udp.o $(LIB) -o h263_udp
+../$(BUILD_DIR)/h263_udp: ../$(BUILD_DIR)/test_h263_udp.o
+	@mkdir -p $(@D)
+	$(CC) ../$(BUILD_DIR)/test_h263_udp.o $(LIB) -o ../$(BUILD_DIR)/h263_udp
 
-h263_tcp: test_h263_tcp.o
-	$(CC) test_h263_tcp.o $(LIB) -o h263_tcp
+../$(BUILD_DIR)/h263_tcp: ../$(BUILD_DIR)/test_h263_tcp.o
+	@mkdir -p $(@D)
+	$(CC) ../$(BUILD_DIR)/test_h263_tcp.o $(LIB) -o ../$(BUILD_DIR)/h263_tcp
 
-detect: test_detect.o
-	$(CC) test_detect.o $(LIB) -o detect
+../$(BUILD_DIR)/detect: ../$(BUILD_DIR)/test_detect.o
+	@mkdir -p $(@D)
+	$(CC) ../$(BUILD_DIR)/test_detect.o $(LIB) -o ../$(BUILD_DIR)/detect
 
-coder: test_coder.o
-	$(CC) test_coder.o $(LIB) -o coder
+../$(BUILD_DIR)/coder: ../$(BUILD_DIR)/test_coder.o
+	@mkdir -p $(@D)
+	$(CC) ../$(BUILD_DIR)/test_coder.o $(LIB) -o ../$(BUILD_DIR)/coder
 	
-ptz: test_ptz.o
-	$(CC) test_ptz.o $(LIB) -o ptz
+../$(BUILD_DIR)/ptz: ../$(BUILD_DIR)/test_ptz.o
+	@mkdir -p $(@D)
+	$(CC) ../$(BUILD_DIR)/test_ptz.o $(LIB) -o ../$(BUILD_DIR)/ptz
 	
-transcode: test_transcode.o
-	$(CC) test_transcode.o $(LIB) $(FFMPEGLIB) -o transcode
+../$(BUILD_DIR)/transcode: ../$(BUILD_DIR)/test_transcode.o
+	@mkdir -p $(@D)
+	$(CC) -c $(CFLAGS) $(INCS) $(FFMPEGINC) test_transcode.c -o ../$(BUILD_DIR)/test_transcode.o
+	$(CC) ../$(BUILD_DIR)/test_transcode.o $(LIB) $(FFMPEGLDFLAGS) $(FFMPEGLIBS) -o ../$(BUILD_DIR)/transcode
 	
-play: test_play.o
-	$(CC) -c $(CFLAGS) $(INCS) $(FFMPEGINC) test_play.c -o test_play.o
-	$(CC) test_play.o $(LIB) $(FFMPEGLIB) `sdl-config --cflags --libs` -o play
+../$(BUILD_DIR)/play: ../$(BUILD_DIR)/test_play.o
+	@mkdir -p $(@D)
+	$(CC) -c $(CFLAGS) $(INCS) $(FFMPEGINC) test_play.c -o ../$(BUILD_DIR)/test_play.o
+	$(CC) ../$(BUILD_DIR)/test_play.o $(LIB) $(SDLLIBS) $(FFMPEGLDFLAGS) $(FFMPEGLIBS) -o ../$(BUILD_DIR)/play
 	
-record: test_record.o
-	$(CC) -c $(CFLAGS) $(INCS) $(FFMPEGINC) test_record.c -o test_record.o
-	$(CC) test_record.o $(LIB) $(FFMPEGLIB) -o record
+../$(BUILD_DIR)/record: ../$(BUILD_DIR)/test_record.o
+	@mkdir -p $(@D)
+	$(CC) -c $(CFLAGS) $(INCS) $(FFMPEGINC) test_record.c -o ../$(BUILD_DIR)/test_record.o
+	$(CC) ../$(BUILD_DIR)/test_record.o $(LIB) $(SDLLIBS) $(FFMPEGLDFLAGS) $(FFMPEGLIBS) -o ../$(BUILD_DIR)/record
 
-jpeg: test_jpeg.o
-	$(CC) test_jpeg.o $(LIB) $(FFMPEGLIB) -o jpeg
+../$(BUILD_DIR)/jpeg: ../$(BUILD_DIR)/test_jpeg.o
+	@mkdir -p $(@D)
+	$(CC) ../$(BUILD_DIR)/test_jpeg.o $(LIB) -o ../$(BUILD_DIR)/jpeg
 
-audio: test_audio.o
-	$(CC) test_audio.o $(LIB) $(FFMPEGLIB) `sdl-config --cflags --libs` -o audio
+../$(BUILD_DIR)/audio: ../$(BUILD_DIR)/test_audio.o
+	@mkdir -p $(@D)
+	$(CC) -c $(CFLAGS) $(INCS) $(FFMPEGINC) test_audio.c -o ../$(BUILD_DIR)/test_audio.o
+	$(CC) ../$(BUILD_DIR)/test_audio.o $(LIB) $(SDLLIBS) $(FFMPEGLDFLAGS) $(FFMPEGLIBS) -o ../$(BUILD_DIR)/audio
 	
-alarm: test_alarm.o
-	$(CC) test_alarm.o $(LIB) -o alarm
+../$(BUILD_DIR)/alarm: ../$(BUILD_DIR)/test_alarm.o
+	@mkdir -p $(@D)
+	$(CC) ../$(BUILD_DIR)/test_alarm.o $(LIB) -o ../$(BUILD_DIR)/alarm
 	
-config: bulk_config.o
-	$(CC) bulk_config.o $(LIB) -o config
+../$(BUILD_DIR)/config: ../$(BUILD_DIR)/bulk_config.o
+	@mkdir -p $(@D)
+	$(CC) ../$(BUILD_DIR)/bulk_config.o $(LIB) -o ../$(BUILD_DIR)/config
 
-.c.o:
-	$(CC) $(CFLAGS) $(INCS) $(FFMPEGINC) -c $< -o $@ 
+../$(BUILD_DIR)/%.o: %.c
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) $(INCS) $(FFMPEGINC) -c $< -o $@
 	
 clean:
-	rm -f *.o  h264_udp h263_udp h263_tcp preset detect coder ptz transcode play record jpeg audio mpegts test
+	rm -f ../$(BUILD_DIR)/*.o  ../$(BUILD_DIR)/h264_udp h263_udp ../$(BUILD_DIR)/h263_tcp ../$(BUILD_DIR)/preset \
+	../$(BUILD_DIR)/detect ../$(BUILD_DIR)/coder ../$(BUILD_DIR)/ptz ../$(BUILD_DIR)/transcode ../$(BUILD_DIR)/play \
+	../$(BUILD_DIR)/record ../$(BUILD_DIR)/jpeg ../$(BUILD_DIR)/audio ../$(BUILD_DIR)/mpegts ../$(BUILD_DIR)/test
+

@@ -39,10 +39,10 @@
 #define RTP_PAYLOAD_TYPE_H264	2
 
 typedef struct rtp_merge_desc {
-	char data[MAX_FRAME_LENGTH];
+	unsigned char data[MAX_FRAME_LENGTH];
 
 	char fragment[FRAGMENT_COUNT][MTU_LENGTH];
-	int fragment_size[FRAGMENT_COUNT];
+	ssize_t fragment_size[FRAGMENT_COUNT];
 	int fragments_queue[FRAGMENT_COUNT];
 	int fragments_heap[FRAGMENT_COUNT];
 	int queue_start, queue_end, queue_size;

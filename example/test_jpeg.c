@@ -23,7 +23,7 @@ int main()
 	get_jpeg_snapshot("10.25.25.237", data, &len);
 	gettimeofday(&end, NULL);
 
-	printf("%ld\n", (end.tv_usec - st.tv_usec) / 1000);
+	printf("%d\n", (int)((end.tv_usec - st.tv_usec) / 1000));
 
 	FILE* out = fopen("snap.jpeg", "w");
 	fwrite(data, len, 1, out);

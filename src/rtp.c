@@ -104,7 +104,6 @@ typedef struct {
 
 } h263_b;
 
-#define NAL_START_FRAME_LENGTH	3
 static unsigned char NAL_START_FRAME[] = {0x00, 0x00, 0x00, 0x01};
 
 static unsigned char sbit_mask[] = {0xFF, 0x7F, 0x3F, 0x1F, 0x0F, 0x07, 0x03, 0x01, 0x00};
@@ -115,11 +114,11 @@ int seq_cmp(int x, int y, rtp_merge_desc* mdesc)
 	if (x == -INT_MAX)
 		return -1;
 
-	int t1 = ntohl(((rtp_header*)mdesc->fragment[x])->timestamp);
-	int t2 = ntohl(((rtp_header*)mdesc->fragment[y])->timestamp);
+	const int t1 = ntohl(((rtp_header*)mdesc->fragment[x])->timestamp);
+	const int t2 = ntohl(((rtp_header*)mdesc->fragment[y])->timestamp);
 
-	int s1 = ntohs(((rtp_header*)mdesc->fragment[x])->seq);
-	int s2 = ntohs(((rtp_header*)mdesc->fragment[y])->seq);
+	const int s1 = ntohs(((rtp_header*)mdesc->fragment[x])->seq);
+	const int s2 = ntohs(((rtp_header*)mdesc->fragment[y])->seq);
 
 	if (s1 < 100 && s2 > 65500)
 		return 1;
@@ -128,15 +127,15 @@ int seq_cmp(int x, int y, rtp_merge_desc* mdesc)
 
 	if (t1 > t2)
 		return 1;
-	else if (t1 < t2)
+
+	if (t1 < t2)
 		return -1;
-	else
-	{
-		if (s1 > s2)
-			return 1;
-		else if (s1 < s2)
-			return -1;
-	}
+
+	if (s1 > s2)
+		return 1;
+
+	if (s1 < s2)
+		return -1;
 
 	return 0;
 }
@@ -170,9 +169,9 @@ static int heap_pop(rtp_merge_desc* mdesc)
 	if (mdesc->heap_size == 0)
 		return -1;
 
-	int min, last, child, now;
-	min = mdesc->fragments_heap[1];
-	last = mdesc->fragments_heap[mdesc->heap_size--];
+	int child, now;
+	const int min = mdesc->fragments_heap[1];
+	const int last = mdesc->fragments_heap[mdesc->heap_size--];
 
 	for(now = 1; now*2 <= mdesc->heap_size; now = child)
 	{
@@ -218,15 +217,15 @@ static int queue_pop(rtp_merge_desc* mdesc)
 		return -1;
 
 	int ret = mdesc->queue_start;
-	mdesc->queue_start = (mdesc->queue_start+1) % FRAGMENT_COUNT;
+	mdesc->queue_start = (mdesc->queue_start + 1) % FRAGMENT_COUNT;
 	mdesc->queue_size--;
 
 	return ret;
 }
 
-static int append_fu_a(char* data, int len, rtp_merge_desc* mdesc)
+static int append_fu_a(const char* data, int len, rtp_merge_desc* mdesc)
 {
-	fu_a_packet *fp = (fu_a_packet*)data;
+	const fu_a_packet *fp = (fu_a_packet*)data;
 	if (fp->fuh.s == 1)
 	{
 		TL_DEBUG("start");
@@ -279,7 +278,7 @@ static int append_fu_a(char* data, int len, rtp_merge_desc* mdesc)
 	return 0;
 }
 
-static int append_single_nal(char* data, int data_len, rtp_merge_desc* mdesc)
+static int append_single_nal(const char* data, int data_len, rtp_merge_desc* mdesc)
 {
 	mdesc->len = 0;
 	if (mdesc->prepend_mpeg4_starter)
@@ -371,6 +370,7 @@ static int append_h263(char *fragment, int fragment_len, rtp_merge_desc* mdesc)
 		TL_ERROR("malformed frame received sbit=%d ebit=%d", h263_hdr->sbit, mdesc->ebit);
 		return 0;
 	}
+
 	if (h263_hdr->sbit)
 	{
 		mdesc->data[mdesc->len - 1] &= ebit_mask[mdesc->ebit];
@@ -379,6 +379,7 @@ static int append_h263(char *fragment, int fragment_len, rtp_merge_desc* mdesc)
 		pos++;
 		len--;
 	}
+
 	memcpy(mdesc->data+mdesc->len, pos, len);
 	mdesc->len += len;
 	mdesc->ebit = h263_hdr->ebit;
@@ -395,9 +396,11 @@ static int append_h263(char *fragment, int fragment_len, rtp_merge_desc* mdesc)
 static int append_h264(char *fragment, int fragment_len, rtp_merge_desc* mdesc)
 {
 	rtp_header *rtp = (rtp_header*)fragment;
-	int rtp_header_len = RTP_HEADER_LENGTH_MANDATORY + rtp->cc*4;
+	const int rtp_header_len = RTP_HEADER_LENGTH_MANDATORY + rtp->cc*4;
 
-	//TL_DEBUG("v  - %d\np  - %d\nx  - %d\ncc - %d\nm  - %d\npt - %d\nsq - %d\n", rtp->version, rtp->p, rtp->x, rtp->cc, rtp->m, rtp->pt, rtp->seq);
+	TL_DEBUG("v - %d p - %d x - %d cc - %d m  - %d pt - %d sq - %d",
+		rtp->version, rtp->p, rtp->x, rtp->cc, rtp->m, rtp->pt, rtp->seq);
+
 	unsigned char nal_unit_header = *((unsigned char*)fragment + rtp_header_len);
 	TL_DEBUG("nal = %hhx", nal_unit_header);
 
@@ -405,8 +408,7 @@ static int append_h264(char *fragment, int fragment_len, rtp_merge_desc* mdesc)
 	if (nal_type < 24)
 	{
 		// Single NAL Unit
-		TL_DEBUG("Single NAL Unit %d", nal_type);
-		return append_single_nal(fragment+rtp_header_len,  fragment_len-rtp_header_len, mdesc);
+		return append_single_nal(fragment + rtp_header_len,  fragment_len - rtp_header_len, mdesc);
 	}
 	else
 	{
@@ -415,7 +417,8 @@ static int append_h264(char *fragment, int fragment_len, rtp_merge_desc* mdesc)
 			case 24: // STAP-A
 			{
 				TL_DEBUG("STAP-A");
-				tlog_hex(TLOG_DEBUG, "STAP-A", fragment + rtp_header_len, fragment_len-rtp_header_len);
+				tlog_hex(TLOG_DEBUG, "STAP-A", fragment + rtp_header_len,
+					fragment_len-rtp_header_len);
 				return append_stap_a(fragment+rtp_header_len, mdesc);
 				//TL_DEBUG("sps: %x %d", *(unsigned char*)&np[0].nh, np[0].size);
 				//tlog_hex(LOG_DEBUG, "payload", np[0].payload, np[0].size);
@@ -427,7 +430,8 @@ static int append_h264(char *fragment, int fragment_len, rtp_merge_desc* mdesc)
 			case 28: // FU-A
 			{
 				TL_DEBUG("FU-A");
-				return append_fu_a(fragment+rtp_header_len, fragment_len - (rtp_header_len+FU_A_HEADER_LENGTH), mdesc);
+				return append_fu_a(fragment + rtp_header_len,
+					fragment_len - (rtp_header_len + FU_A_HEADER_LENGTH), mdesc);
 			}
 			break;
 

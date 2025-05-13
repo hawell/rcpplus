@@ -21,7 +21,9 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
+
 #include <tlog/tlog.h>
 
 #include "caps.h"
@@ -203,14 +205,15 @@ static const char* audio_element_type_str(int type)
 
 static const char* audio_element_comp_str(int comp)
 {
-	switch (comp)
-	{
-		case AUDIO_COMP_MPEG2:
-			return "Mpeg2";
-		case AUDIO_COMP_G711:
-			return "G711";
-		default:
-			return "Unknown Compression";
+	switch (comp) {
+	case AUDIO_COMP_MPEG2:
+		return "Mpeg2";
+	case AUDIO_COMP_G711:
+		return "G711";
+	case AUDIO_COMP_AAC:
+		return "AAC";
+	default:
+		return NULL;
 	}
 }
 
@@ -270,10 +273,13 @@ void log_capabilities(int level, cap_list* caps)
 					tlog(level, "%-20s %s", "Type", audio_element_type_str(el->element_type));
 					tlog(level, "%-20s %d", "Id", el->identifier);
 					tmp[0] = 0;
-					for (int i=1; i<=8000; i<<=1)
-						if (el->compression & i)
-						{
-							strcat(tmp, audio_element_comp_str(i));
+					for (int i = 1; i <= 8000; i <<=1)
+						if (el->compression & i) {
+							const char* comp_str = audio_element_comp_str(i);
+							if (comp_str)
+								strcat(tmp, comp_str);
+							else
+								sprintf(tmp, "0x%04x", i);
 							strcat(tmp, ", ");
 						}
 					tlog(level, "%-20s %s", "Compression", tmp);
