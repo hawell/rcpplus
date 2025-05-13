@@ -10,11 +10,17 @@
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
+#include <sysexits.h>
 #include <unistd.h>
-#include <tlog/tlog.h>
 
-#include "libavcodec/avcodec.h"
-#include "libavformat/avformat.h"
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_thread.h>
+#include <SDL2/SDL_audio.h>
+
+#include <tlog/tlog.h>
 
 #include "rcpdefs.h"
 #include "rcpplus.h"
@@ -22,25 +28,21 @@
 #include "coder.h"
 #include "audio.h"
 
-#include <SDL/SDL.h>
-#include <SDL/SDL_thread.h>
-#include <SDL/SDL_audio.h>
+static const enum AVCodecID codec_id = AV_CODEC_ID_PCM_MULAW;
+static volatile sig_atomic_t stop = 0;
 
-int terminate = 0;
-
-void term_handler(int param __attribute__((unused)))
+void handle_stop(const int sig __attribute__((__unused__)))
 {
-	terminate = 1;
+	stop = 1;
 }
 
 pthread_t thread;
 void* keep_alive_thread(void* params)
 {
-	rcp_session* session = (rcp_session*)params;
-	while (1)
-	{
-		int n = keep_alive(session);
-		TL_INFO("active connections = %d", n);
+	rcp_session* session = params;
+	while (1) {
+		const int n = keep_alive(session);
+		TL_DEBUG("active connections = %d", n);
 		if (n < 0)
 			break;
 
@@ -49,66 +51,52 @@ void* keep_alive_thread(void* params)
 	return NULL;
 }
 
-AVCodec* codec_in;
-AVCodecContext *dec_ctx;
-
-void audio_callback(void *userdata, Uint8 *stream, int len)
-{
-	//TL_INFO("len = %d", len);
-	AVPacket pkt;
-	av_init_packet(&pkt);
-	rcp_session* session = (rcp_session*)userdata;
-	unsigned char buff[2000];
-	int size = recvfrom(session->stream_socket, buff, 1500, 0, NULL, NULL);
-	struct timeval tv;
-	gettimeofday(&tv, NULL);
-	//TL_INFO("received : %d", tv.tv_usec);
-	if (size > 0)
-	{
-		// skip rtp header, payload has no header
-		pkt.size = size-12;
-		pkt.data = buff+12;
-
-		int len1 = len;
-		int len2 = avcodec_decode_audio3(dec_ctx, (int16_t*)stream, &len1, &pkt);
-		if (len2 < 0)
-		{
-			TL_ERROR("error decoding audio");
-			return;
-		}
-	}
-
-}
+#define BUF_SIZE 1024
 
 int main(int argc, char* argv[])
 {
 	tlog_init(TLOG_MODE_STDERR, TLOG_INFO, NULL);
 
-	if (argc < 2)
-	{
+	int rc = 0;
+
+	if (argc < 2) {
 		TL_INFO("%s <ip>\n", argv[0]);
-		return 0;
+		return EX_USAGE;
 	}
 
-	rcp_connect(argv[1]);
+	signal(SIGTERM, handle_stop);
+	signal(SIGINT, handle_stop);
+
+	if ((rc = rcp_connect(argv[1])) < 0)
+		return rc;
 
 	start_message_manager();
 
-	client_register(RCP_USER_LEVEL_LIVE, "", RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_MD5);
+	const char* pwd = getenv("PWD");
+
+	if ((rc = client_register(RCP_USER_LEVEL_LIVE, pwd ? pwd : "",
+		RCP_REGISTRATION_TYPE_NORMAL, RCP_ENCRYPTION_MODE_PLAIN)) < 0) {
+			fprintf(stderr, "Wrong password?\n");
+		return rc;
+	}
 
 	int max_in = get_max_audio_input_level(1);
 	set_audio_input_level(1, max_in);
 
 	if (get_audio_input(1) != RCP_AUDIO_INPUT_MIC)
 		set_audio_input(1, RCP_AUDIO_INPUT_MIC);
+
 	int max_mic = get_max_mic_level(1);
 	set_mic_level(1, max_mic);
 
 	rcp_coder_list encoders;
 	get_coder_list(RCP_CODER_DECODER, RCP_MEDIA_TYPE_AUDIO, &encoders, 1);
-	for (int i=0; i<encoders.count; i++)
-	{
-		TL_INFO("%x %x %x %x %x", encoders.coder[i].number, encoders.coder[i].caps, encoders.coder[i].current_cap, encoders.coder[i].param_caps, encoders.coder[i].current_param);
+
+	TL_INFO("-----------------------");
+
+	for (int i = 0; i < encoders.count; i++) {
+		TL_INFO("%x %x %x %x %x", encoders.coder[i].number, encoders.coder[i].caps, encoders.coder[i].current_cap,
+		        encoders.coder[i].param_caps, encoders.coder[i].current_param);
 		log_coder(TLOG_INFO, &encoders.coder[i]);
 		TL_INFO("-----------------------");
 	}
@@ -116,30 +104,28 @@ int main(int argc, char* argv[])
 
 	rcp_session session;
 
-	avcodec_register_all();
-	av_register_all();
+	const AVCodec* codec_in = avcodec_find_decoder(codec_id);
 
-	codec_in = avcodec_find_decoder(AV_CODEC_ID_PCM_MULAW);
-
-	dec_ctx = avcodec_alloc_context3(codec_in);
-	if (dec_ctx == NULL)
-	{
-		TL_ERROR("cannot allocate codec context");
+	AVCodecContext* dec_ctx = avcodec_alloc_context3(codec_in);
+	if (dec_ctx == NULL) {
 		return -1;
+		TL_ERROR("cannot allocate codec context");
 	}
 
 	dec_ctx->sample_rate = 8000;
-	dec_ctx->channels = 1;
+	dec_ctx->ch_layout.nb_channels = 1;
 	dec_ctx->bit_rate = 64000;
 	dec_ctx->sample_fmt = AV_SAMPLE_FMT_S16P;
 
-	if (avcodec_open2(dec_ctx, codec_in, NULL) < 0)
-	{
+	if (avcodec_open2(dec_ctx, codec_in, NULL) < 0) {
 		TL_ERROR("cannot open codec");
 		return -1;
 	}
 
-	SDL_Init(SDL_INIT_EVERYTHING);
+	if (SDL_Init(SDL_INIT_AUDIO)) {
+		TL_ERROR("could not initialize SDL - %s\n", SDL_GetError());
+		return -1;
+	}
 
 	SDL_AudioSpec desired, obtained;
 
@@ -147,52 +133,77 @@ int main(int argc, char* argv[])
 	desired.format = AUDIO_S16SYS;
 	desired.channels = 1;
 	desired.silence = 0;
-	desired.samples = 640*2;
-	desired.callback = audio_callback;
-	desired.userdata = &session;
+	desired.samples = BUF_SIZE;
+	desired.callback = NULL;
+	desired.userdata = NULL;
 
-	if (SDL_OpenAudio(&desired, &obtained) != 0)
-	{
+	SDL_AudioDeviceID dev = SDL_OpenAudioDevice(NULL, 0, &desired, &obtained, 0);
+	if (!dev) {
+		fprintf(stderr, "SDL_OpenAudioDevice failed: %s\n", SDL_GetError());
+		return -1;
+	}
+
+	if (SDL_OpenAudio(&desired, &obtained) != 0) {
 		TL_ERROR("error opening audio");
 		return -1;
 	}
+
 	TL_INFO("%d %x %d %d %d", obtained.freq, obtained.format, obtained.channels, obtained.silence, obtained.samples);
 
 	memset(&session, 0, sizeof(rcp_session));
-	unsigned short udp_port = stream_connect_udp(&session);
+	const unsigned short udp_port = stream_connect_udp(&session);
 
 	rcp_media_descriptor desc = {
-			RCP_MEP_UDP, 1, 1, 0, udp_port, 0, 1,
-			4, 	// G.711_8kHz (sampling rate: 8 kHz, rtp clock rate: 8 kHz)
-			0
+		RCP_MEP_UDP, 1, 1, 0, udp_port, 0, 1,
+		RCP_AUDIO_CODING_G711_8kHz, // G.711_8kHz (sampling rate: 8 kHz, rtp clock rate: 8 kHz)
+		0
 	};
 
-	client_connect(&session, RCP_CONNECTION_METHOD_GET, RCP_MEDIA_TYPE_AUDIO, 0, &desc);
+	if ((rc = client_connect(&session, RCP_CONNECTION_METHOD_GET,
+		RCP_MEDIA_TYPE_AUDIO, 0, &desc)) < 0)
+		return rc;
 
 	pthread_create(&thread, NULL, keep_alive_thread, &session);
 
-	signal(SIGTERM, term_handler);
+	SDL_PauseAudioDevice(dev, 0);
 
-	SDL_PauseAudio(0);
+	ssize_t rtp_len;
+	const int bps = av_get_bytes_per_sample(dec_ctx->sample_fmt);
+	AVPacket pkt = {0};
+	AVFrame frame = {0};
+	unsigned char buff[BUF_SIZE];
 
-	while (!terminate)
-	{
-		SDL_Event event;
-		SDL_PollEvent(&event);
-		if (event.type == SDL_QUIT)
-		{
-			SDL_Quit();
-			goto end;
+	while (!stop) {
+		if ((rtp_len = recvfrom(session.stream_socket, buff, BUF_SIZE, 0, NULL, NULL)) > 12) {
+			pkt.data = buff + 12;
+			pkt.size = rtp_len - 12;
+
+			if ((rc = avcodec_send_packet(dec_ctx, &pkt)) < 0) {
+				av_log(NULL, AV_LOG_ERROR, "avcodec_send_packet(): %s\n",
+					   av_err2str(rc));
+				break;
+			}
+
+			while (!stop && avcodec_receive_frame(dec_ctx, &frame) >= 0)
+				if (SDL_QueueAudio(dev, frame.data[0], frame.nb_samples * bps) < 0) {
+					av_log(NULL, AV_LOG_ERROR, "SDL_QueueAudio(): %s\n", SDL_GetError());
+					stop = 1;
+					break;
+				}
+
+			while (!stop && SDL_GetQueuedAudioSize(dev) > (unsigned int)(obtained.freq * bps))
+				SDL_Delay(1);
 		}
-		sleep(1);
 	}
 
-end:
+	if (!stop) {
+		while (SDL_GetQueuedAudioSize(dev) > 0) {
+			SDL_Delay(10);
+		}
+	}
 
 	client_disconnect(&session);
-
 	client_unregister();
-
 	stop_message_manager();
 
 	return 0;

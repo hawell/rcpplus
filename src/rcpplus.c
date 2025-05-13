@@ -49,19 +49,19 @@ int rcp_connect(const char* ip)
 	}
 
 	strcpy(con.address, ip);
-	struct hostent *hp;
-	hp = gethostbyname(ip);
+	struct hostent* hp = gethostbyname(ip);
 
 	memset(&con.ctrl_addr, 0, sizeof(struct sockaddr_in));
 
 	con.ctrl_addr.sin_family = AF_INET;
-	memcpy((char *)&con.ctrl_addr.sin_addr, hp->h_addr_list[0],  hp->h_length);
+	memcpy((char *)&con.ctrl_addr.sin_addr, hp->h_addr_list[0], hp->h_length);
 	con.ctrl_addr.sin_port = htons(RCP_CONTROL_PORT);
 
-	int res = connect(con.control_socket, (struct sockaddr *)&con.ctrl_addr, sizeof (con.ctrl_addr));
-	if (res == -1)
-	{
-		TL_ERROR("connection failed : %d - %s\n", errno, strerror(errno));
+	const int res = connect(con.control_socket, (struct sockaddr*)&con.ctrl_addr,
+		sizeof (con.ctrl_addr));
+	if (res == -1) {
+		TL_ERROR("connection failed: %d - %s", errno, strerror(errno));
+		return res;
 	}
 
 	return 0;
@@ -111,9 +111,8 @@ int stream_connect_tcp(rcp_session* session)
 	session->stream_addr.sin_family = AF_INET;
 	session->stream_addr.sin_port = htons(80);
 
-	struct hostent* hp;
-	hp = gethostbyname(con.address);
-	memcpy((char *)&session->stream_addr.sin_addr, hp->h_addr_list[0],  hp->h_length);
+	struct hostent* hp = gethostbyname(con.address);
+	memcpy((char *)&session->stream_addr.sin_addr, hp->h_addr_list[0], hp->h_length);
 
 	int res = connect(session->stream_socket, (struct sockaddr*)&session->stream_addr, sizeof(session->stream_addr));
 	if (res == -1)
@@ -133,10 +132,10 @@ int initiate_tcp_stream(rcp_session* session, struct rcp_coder_tag* coder)
 {
 	unsigned char buffer[RCP_MAX_PACKET_LEN];
 
-	int size = sprintf((char*)buffer, "GET /media_tunnel/%08u/%d/%d/%d/%d HTTP 1.0\r\n\r\n", ntohl(session->session_id), coder->media_type, coder->direction, 1, coder->number);
-	int res = send(session->stream_socket, buffer, size, 0);
-	if (res == -1)
-	{
+	const int size = sprintf((char*)buffer, "GET /media_tunnel/%08u/%d/%d/%d/%d HTTP 1.0\r\n\r\n",
+		ntohl(session->session_id), coder->media_type, coder->direction, 1, coder->number);
+	ssize_t res = send(session->stream_socket, buffer, size, 0);
+	if (res == -1) {
 		TL_ERROR("cannot sent initiative sequence: %d - %s", errno, strerror(errno));
 		return -1;
 	}

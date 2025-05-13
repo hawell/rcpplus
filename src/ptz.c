@@ -38,7 +38,7 @@ typedef struct {
 	unsigned char data_byte[3];
 } osrd_packet;
 
-static unsigned char checksum(char* data, int len)
+static unsigned char checksum(const char* data, int len)
 {
 	unsigned char sum = 0;
 	for (int i=0; i<len; i++)

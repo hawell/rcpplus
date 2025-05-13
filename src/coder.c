@@ -21,7 +21,9 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
+
 #include <tlog/tlog.h>
 
 #include "coder.h"
@@ -446,7 +448,7 @@ error:
 	return -1;
 }
 
-static char* coder_cap_str(int cap, int media_type)
+static char* coder_cap_str(const int cap, const int media_type)
 {
 	switch (media_type)
 	{
@@ -468,8 +470,13 @@ static char* coder_cap_str(int cap, int media_type)
 		case RCP_MEDIA_TYPE_AUDIO:
 			switch (cap)
 			{
-				case RCP_AUDIO_CODING_G711:return "G.711";
-				case RCP_AUDIO_CODING_MPEG2P:return "Mpeg2 PrgStr";
+			case RCP_AUDIO_CODING_G711: return "G.711";
+			case RCP_AUDIO_CODING_AAC: return "AAC";
+			case RCP_AUDIO_CODING_G711_8kHz: return "G.711 (8kHz)";
+			case RCP_AUDIO_CODING_L16_16kHz: return "L16 (16kHz)";
+			case RCP_AUDIO_CODING_L16: return "L16";
+			case RCP_AUDIO_CODING_REC_MEDIA: return "Recorded Media";
+			case RCP_AUDIO_CODING_MPEG2P: return "Mpeg2 PrgStr";
 			}
 		break;
 
@@ -564,18 +571,28 @@ void log_coder(int level, rcp_coder* coder)
 	}
 	tlog(level, "%-20s %s", "Media Type", tmp);
 	tmp[0] = 0;
-	for (int i=1; i<=0x8000; i<<=1)
-		if ( (coder->caps & i) && strcmp(coder_cap_str(i, coder->media_type), "Unknown")!=0 )
-		{
-			strcat(tmp, coder_cap_str(i, coder->media_type));
+
+	for (int i = 1; i <= 0x8000; i <<= 1)
+		if (coder->caps & i) {
+			const char* cap_str = coder_cap_str(i, coder->media_type);
+			if (strcmp(cap_str, "Unknown") != 0)
+				strcat(tmp, cap_str);
+			else
+				sprintf(tmp, "0x%04x", i);
 			strcat(tmp, ", ");
 		}
+
 	tlog(level, "%-20s %s", "Encoding Caps", tmp);
 	tmp[0] = 0;
+
 	for (int i=1; i<=0x8000; i<<=1)
-		if ( (coder->current_cap & i) && strcmp(coder_cap_str(i, coder->media_type), "Unknown")!=0 )
+		if (coder->current_cap & i)
 		{
-			strcat(tmp, coder_cap_str(i, coder->media_type));
+			const char* cap_str = coder_cap_str(i, coder->media_type);
+			if (strcmp(cap_str, "Unknown") != 0)
+				strcat(tmp, cap_str);
+			else
+				sprintf(tmp, "0x%04x", i);
 			strcat(tmp, ", ");
 		}
 	tlog(level, "%-20s %s", "Current Cap", tmp);

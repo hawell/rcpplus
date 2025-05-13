@@ -203,7 +203,7 @@ int get_param_type(int param)
 	}
 }
 
-int get_preset_param(int preset_id, int param, int* value)
+int get_preset_param(const int preset_id, const int param, int* value)
 {
 	rcp_packet p_req;
 
@@ -237,7 +237,7 @@ int get_preset_param(int preset_id, int param, int* value)
 	return 0;
 
 error:
-	TL_ERROR("get_preset_param()");
+	TL_WARNING("get_preset_param()");
 	return -1;
 }
 

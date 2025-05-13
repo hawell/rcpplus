@@ -30,7 +30,6 @@
 #include "libavformat/avio.h"
 #include "libavutil/avutil.h"
 #include "libavutil/imgutils.h"
-#include "libswscale/swscale.h"
 
 #define VIDEO_MODE_H263	1
 #define VIDEO_MODE_H264	2
@@ -204,8 +203,8 @@ int main(int argc, char* argv[])
 	else
 		coding = RCP_VIDEO_CODING_H264;
 
-	avcodec_register_all();
-	av_register_all();
+	//avcodec_register_all();
+	//av_register_all();
 	rtp_merge_desc mdesc;
 
 	if (video_mode == VIDEO_MODE_H263)
@@ -233,19 +232,20 @@ int main(int argc, char* argv[])
 	pthread_create(&thread, NULL, keep_alive_thread, &session);
 
 	AVFormatContext* fc = NULL;
-	AVCodec* codec;
-	codec = avcodec_find_encoder(AV_CODEC_ID_H264);
+	const AVCodec* codec = avcodec_find_encoder(AV_CODEC_ID_H264);
 	char filename[] = "dump.mp4";
 	enum AVCodecID codec_id = AV_CODEC_ID_H264;
 	int br = 1000000;
-	AVOutputFormat *of = av_guess_format(0, filename, 0);
+	const AVOutputFormat *of = av_guess_format(0, filename, 0);
 	fc = avformat_alloc_context();
 	fc->oformat = of;
-	strcpy(fc->filename, filename);
+	//strcpy(fc->filename, filename);
 	AVStream *pst = avformat_new_stream(fc, codec);
 	pst->index = 0;
-	AVCodecContext *pcc = pst->codec;
-	avcodec_get_context_defaults3(pcc, codec);
+	AVCodecContext *pcc = avcodec_alloc_context3(codec);
+	AVCodecParameters *params = pst->codecpar;
+	avcodec_parameters_to_context(pcc, params);
+
 	pcc->codec_type = AVMEDIA_TYPE_VIDEO;
 	pcc->codec_id = codec_id;
 	pcc->bit_rate = br;
@@ -255,7 +255,7 @@ int main(int argc, char* argv[])
 	pcc->time_base.den = 1000;
 	pcc->pix_fmt = AV_PIX_FMT_YUV420P;
 	if (fc->oformat->flags & AVFMT_GLOBALHEADER)
-		pcc->flags |= CODEC_FLAG_GLOBAL_HEADER;
+		pcc->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
 	if (avcodec_open2(pcc, codec, NULL) < 0)
 	{
@@ -264,9 +264,12 @@ int main(int argc, char* argv[])
 	}
 
 	if (!(fc->oformat->flags & AVFMT_NOFILE))
-		avio_open(&fc->pb, fc->filename, AVIO_FLAG_WRITE);
+		avio_open(&fc->pb, filename, AVIO_FLAG_WRITE);
 
-	avformat_write_header(fc, NULL);
+	int rc;
+	if ((rc = avformat_write_header(fc, NULL)) < 0) {
+		TL_INFO("avformat_write_header(): %s", av_err2str(rc));
+	};
 
 	//FILE* f = fopen("dump", "wb");
 

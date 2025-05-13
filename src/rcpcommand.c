@@ -20,12 +20,11 @@
  *  along with rcpplus.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <semaphore.h>
+#include <dispatch/dispatch.h>
 #include <stdio.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <unistd.h>
-#include <limits.h>
 #include <tlog/tlog.h>
 #include <errno.h>
 #include <string.h>
@@ -35,12 +34,11 @@
 #include "rcpcommand.h"
 #include "rcpdefs.h"
 #include "rcpplus.h"
-#include "md5.h"
 
 #define MAX_PASSPHRASE_LEN	1000
 
 rcp_packet response[256];
-sem_t resp_available[256];
+dispatch_semaphore_t resp_available[256];
 
 #define MAX_ALARM_TAG	0x0bff
 
@@ -76,7 +74,7 @@ static int rcp_send(rcp_packet* hdr)
 	tlog_hex(TLOG_DEBUG, "data", buffer, len);
 
 	pthread_mutex_lock(&send_mutex);
-	int res = send(con.control_socket, buffer, len, 0);
+	const ssize_t res = send(con.control_socket, buffer, len, 0);
 	pthread_mutex_unlock(&send_mutex);
 
 	TL_DEBUG("%d sent", res);
@@ -93,23 +91,17 @@ static int get_request_id(unsigned char* buffer)
 
 static int rcp_recv()
 {
-	int res;
-	int len;
-	int received;
-
 	unsigned char buffer[RCP_MAX_PACKET_LEN];
 
-	res = recv(con.control_socket, buffer, TPKT_HEADER_LENGTH, 0);
+	ssize_t res = recv(con.control_socket, buffer, TPKT_HEADER_LENGTH, 0);
 	if (res == -1)
 		goto error;
 
-	len = ntohs(*(unsigned short*)(buffer+2));
-	len -= TPKT_HEADER_LENGTH;
+	int len = ntohs(*(unsigned short*)(buffer + 2)) - TPKT_HEADER_LENGTH;
 
-	received = 0;
-	while (received < len)
-	{
-		res = recv(con.control_socket, buffer+received, len-received, 0);
+	ssize_t received = 0;
+	while (received < len) {
+		res = recv(con.control_socket, buffer + received, len - received, 0);
 		if (res == -1)
 			goto error;
 		TL_DEBUG("%d bytes received", res);
@@ -118,7 +110,7 @@ static int rcp_recv()
 
 	tlog_hex(TLOG_DEBUG, "received", buffer, received);
 
-	int request_id = get_request_id(buffer);
+	const int request_id = get_request_id(buffer);
 
 	rcp_packet* hdr = &response[request_id];
 
@@ -133,7 +125,7 @@ error:
 	return -1;
 }
 
-int init_rcp_header(rcp_packet* hdr, int session_id, int tag, int rw, int data_type)
+int init_rcp_header(rcp_packet* hdr, const int session_id, const int tag, const int rw, const int data_type)
 {
 	static int request_id = 1;
 
@@ -200,44 +192,54 @@ int read_rcp_header(unsigned char* packet, rcp_packet* hdr)
 	return 0;
 }
 
+int wait_with_timeout(const dispatch_semaphore_t sem, const int timeout_ms)
+{
+	const dispatch_time_t disp_time = dispatch_time(DISPATCH_WALLTIME_NOW,
+		timeout_ms * 1000000);
+    return dispatch_semaphore_wait(sem, disp_time);
+}
+
 rcp_packet* rcp_command(rcp_packet* req)
 {
-	int res = rcp_send(req);
+	const int res = rcp_send(req);
 	if (res == -1)
 		return NULL;
 
-	struct timespec ts;
-	clock_gettime(CLOCK_REALTIME, &ts);
-	ts.tv_sec += 10;
-	if (sem_timedwait(&resp_available[req->request_id], &ts))
-	{
-		TL_ERROR("rcp_command: %d - %s\n", errno, strerror(errno));
+	rcp_packet* resp_packet = &response[req->request_id];
+
+	TL_DEBUG("-> %d 0x%04x", req->request_id, req->tag);
+
+	do {
+		if (wait_with_timeout(resp_available[req->request_id], 10000)) {
+			TL_ERROR("Timeout on #%d 0x%04x", req->request_id, req->tag);
+			return NULL;
+		}
+		TL_DEBUG("<- %d 0x%04x", resp_packet->request_id, resp_packet->tag);
+	} while (req->tag != resp_packet->tag);
+
+	const unsigned char action = resp_packet->action;
+	if (action == RCP_PACKET_ACTION_ERROR) {
+		unsigned char err_code = resp_packet->payload[0];
+		TL_WARNING("Resp. action of 0x%04X is %d: 0x%02x - %s",
+			resp_packet->tag, action, err_code, error_str(err_code));
 		return NULL;
 	}
 
-	if (response[req->request_id].action == RCP_PACKET_ACTION_ERROR)
-	{
-		TL_ERROR("%s", error_str(response[req->request_id].payload[0]));
-		return NULL;
-	}
-
-	return &response[req->request_id];
+	return resp_packet;
 }
 
-static void* message_manager_rutine(void* params)
+static void* message_manager_routine(void* params)
 {
 	UNUSED(params);
 
-	while (1)
-	{
-		int request_id = rcp_recv();
-		if (request_id != -1)
-		{
-			int tag = response[request_id].tag;
+	while (1) {
+		const int request_id = rcp_recv();
+		if (request_id != -1) {
+			const int tag = response[request_id].tag;
 			//TL_INFO("packet received: %d", tag);
-			sem_post(&resp_available[request_id]);
-			if (tag < MAX_ALARM_TAG && registered_events[tag] != NULL)
-			{
+			dispatch_semaphore_signal(resp_available[request_id]);
+
+			if (tag < MAX_ALARM_TAG && registered_events[tag] != NULL) {
 				//TL_INFO("registered event : ");
 				//TL_INFO("%d", tag);
 				registered_events[tag](&response[request_id], registered_events_param[tag]);
@@ -257,11 +259,11 @@ int register_event(int event_tag, event_handler_t handler, void* param)
 
 int start_message_manager()
 {
-	pthread_create(&event_handler_thread, NULL, message_manager_rutine, NULL);
-	for (int i=0; i<256; i++)
-	{
-		sem_init(&resp_available[i], 0, 0);
-	}
+	pthread_create(&event_handler_thread, NULL, message_manager_routine, NULL);
+
+	for (int i = 0; i < 256; i++)
+		resp_available[i] = dispatch_semaphore_create(0);
+
 	memset(registered_events, 0, sizeof(event_handler_t)*MAX_ALARM_TAG);
 	return 0;
 }
@@ -269,22 +271,22 @@ int start_message_manager()
 int stop_message_manager()
 {
 	pthread_cancel(event_handler_thread);
-	for (int i=0; i<256; i++)
-	{
-		sem_destroy(&resp_available[i]);
-	}
+
+	for (int i = 0; i < 256; ++i)
+		dispatch_release(resp_available[i]);
+
 	return 0;
 }
 
-static void md5(unsigned char* in, int len, unsigned char* digest)
-{
-	MD5_CTX ctx;
-	MD5Init(&ctx);
-	MD5Update(&ctx, in, len);
-	MD5Final(&ctx);
-
-	memcpy(digest, ctx.digest, 16);
-}
+// static void md5(unsigned char* in, int len, unsigned char* digest)
+// {
+//	MD5_CTX ctx;
+//	MD5Init(&ctx);
+//	MD5Update(&ctx, in, len);
+//	MD5Final(&ctx);
+//
+//	memcpy(digest, ctx.digest, 16);
+// }
 
 static int generate_passphrase(int mode, int user_level, char* password, char* pphrase, int* len)
 {
@@ -610,22 +612,19 @@ error:
 
 int get_jpeg_snapshot(char* ip, char* data, int* len)
 {
-	int sockfd;
-	struct hostent *server;
-	struct sockaddr_in serveraddr;
-
-	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	if (sockfd < 0)
-	{
+	const int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	if (sockfd < 0) {
 		TL_ERROR("error opening socket : %d - %s", errno, strerror(errno));
 		return -1;
 	}
-	server = gethostbyname(ip);
-	if (server == NULL)
-	{
+
+	struct hostent* server = gethostbyname(ip);
+	if (server == NULL) {
 		TL_ERROR("no such host as %s", ip);
 		return -1;
 	}
+
+	struct sockaddr_in serveraddr;
 	memset((char *) &serveraddr, 0, sizeof(serveraddr));
 	serveraddr.sin_family = AF_INET;
 	memcpy((char *)&serveraddr.sin_addr.s_addr, (char *)server->h_addr_list[0], server->h_length);
@@ -640,9 +639,8 @@ int get_jpeg_snapshot(char* ip, char* data, int* len)
 	sprintf(request, request_template, ip);
 
 	send(sockfd, request, strlen(request), 0);
-	int read_len;
 	int pos = 0;
-	read_len = recv(sockfd, data+pos, 2048, 0);
+	ssize_t read_len = recv(sockfd, data + pos, 2048, 0);
 	int jpeg_size;
 	char* _pos = strstr(data, "Content-Length");
 	sscanf(_pos + strlen("Content-Length: "), "%d", &jpeg_size);
@@ -678,20 +676,23 @@ error:
 	return -1;
 }
 
-int request_sps_pps(rcp_session* session, int coder, char* data, int *len)
+int request_sps_pps(const rcp_session* session, const int coder, char* data, int* len)
 {
 	rcp_packet req;
 	*len = 0;
 
-	init_rcp_header(&req, session->session_id, RCP_COMMAND_CONF_ENC_GET_SPS_AND_PPS, RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_OCTET);
+	init_rcp_header(&req, session->session_id, RCP_COMMAND_CONF_ENC_GET_SPS_AND_PPS,
+		RCP_COMMAND_MODE_READ, RCP_DATA_TYPE_P_OCTET);
 
 	req.numeric_descriptor = coder;
 
+	TL_DEBUG("%d sending 0x%04x request", req.request_id, req.tag);
+
 	rcp_packet* resp = rcp_command(&req);
-	if (resp == NULL)
+	if (!resp)
 		goto error;
 
-	TL_INFO("resp action : %d", resp->action);
+	TL_DEBUG("%d got 0x%04x response", resp->request_id, resp->tag);
 	tlog_hex(TLOG_DEBUG, "sps_pps_resp", resp->payload, resp->payload_length);
 
 	memcpy(data, resp->payload, resp->payload_length);
@@ -704,7 +705,7 @@ error:
 	return -1;
 }
 
-int set_password(int level, char* password)
+int set_password(const int level, const char* password)
 {
     rcp_packet req;
     init_rcp_header(&req, 0, RCP_COMMAND_CONF_PASSWORD_SETTINGS, RCP_COMMAND_MODE_WRITE, RCP_DATA_TYPE_P_STRING);
@@ -721,9 +722,7 @@ int set_password(int level, char* password)
 error:
     TL_ERROR("set_password()");
     return -1;
-
 }
-
 
 int set_defaults()
 {
@@ -791,7 +790,7 @@ int get_video_input_format(int line, int* format)
         goto error;
     *format = ntohl(*(unsigned int*)resp->payload);
 
-    TL_INFO("format = %d", *format);
+    TL_DEBUG("format = %d", *format);
 
     return 0;
 
@@ -883,4 +882,3 @@ error:
     TL_ERROR("get_video_input_frequency()");
 	return -1;
 }
-
