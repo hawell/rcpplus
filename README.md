@@ -1,14 +1,11 @@
-rcpplus
-=======
+# rcpplus
 
 rcpplus is a C implementation of Bosch (formerly known as VCS Video Communication Systems AG) RCP+ (RCP plus) version 3 protocol
 
-supported platforms
--------------------
+## supported platforms
 posix compliant platforms (Linux, BSD, ...)
 
-supported cameras
------------------
+## supported cameras
 this library has been developed and tested with following cameras but it should work with any camera supporting RCP+ version 3.0
 
 VG4 AutoDome 300 series
@@ -17,12 +14,10 @@ Dinion 300 series
 NDC-265-P
 FlexiDome NDN-498-P
 
-requirements
-------------
+## requirements
 no additional library is required to use this library however you need ffmpeg and SDL in order to run some of sample codes
 
-contact
--------
+## contact
 if you have any question, suggestion, ... send me an email to arash.cordi[at]gmail.com
 
 ## ☕ Support Me
